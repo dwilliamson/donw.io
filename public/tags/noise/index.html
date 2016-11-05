@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/tags/noise/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="website" />
+    
+        <meta name="generator" content="Hugo 0.15" />
+        <title>Noise &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="http://donw.io/tags/noise/index.xml">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+	
+		<article class="li post">
+    <header class="post-header">
+        <h3 class="post-title"><a href="http://donw.io/post/high-prec-noise-hlsl/">Mixed Precision GPU Noise with HLSL</a></h3>
+        <p class="post-time"><time datetime="2016-08-25T22:05:56&#43;01:00">August 25, 2016</time></p>
+    </header>
+    
+    <section class="post-excerpt">
+        <p><p>I posted an article a while back, entitled <a href="/post/high-prec-gradient-noise/">Very Fast, High-Precision SIMD/GPU Gradient Noise</a>, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that <code>floor</code> could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.</p>
+</p>
+    </section>
+
+    <footer class="post-footer">
+        <span>
+            
+            <a href="http://donw.io/post/high-prec-noise-hlsl/#comments"><i class="fa fa-comment"></i> Comments</a>
+            
+            
+            	&nbsp;&nbsp;<i class="fa fa-tag"></i>
+            	noise, gpu
+            
+        </span>
+    </footer>
+</article>
+	
+		<article class="li post">
+    <header class="post-header">
+        <h3 class="post-title"><a href="http://donw.io/post/high-prec-gradient-noise/">Very Fast, High-Precision SIMD/GPU Gradient Noise</a></h3>
+        <p class="post-time"><time datetime="2012-12-17T11:38:22&#43;01:00">December 17, 2012</time></p>
+    </header>
+    
+    <section class="post-excerpt">
+        <p><p>A recently published article by Inigo Quilez on <a href="http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm">Voronoi Edges</a> highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.</p>
+</p>
+    </section>
+
+    <footer class="post-footer">
+        <span>
+            
+            <a href="http://donw.io/post/high-prec-gradient-noise/#comments"><i class="fa fa-comment"></i> Comments</a>
+            
+            
+            	&nbsp;&nbsp;<i class="fa fa-tag"></i>
+            	noise, simd, gpu
+            
+        </span>
+    </footer>
+</article>
+	
+	
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        messageStyle: "none",
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            displayMath: [['$$','$$'], ['\[','\]']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: { equationNumbers: { autoNumber: "AMS" },
+                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+          }
+        });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+</body>
+</html>

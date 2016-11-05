@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/reflection-cpp-2/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2012-01-03T07:21:58&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.15" />
+        <title>Reflection in C&#43;&#43;, Part2: The Simple Implementation of Splinter Cell &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">Reflection in C&#43;&#43;, Part2: The Simple Implementation of Splinter Cell</h3>
+    </header>
+
+    <section class="post-content">
+        
+
+<p>The <a href="/post/reflection-cpp-1">first part</a> in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&rsquo;m going to go into details and cover the system used to aid the rendering engine in <a href="http://store.steampowered.com/app/33229/">Splinter Cell: Conviction</a> (SC5).</p>
+
+<p>The motivation for the development of the SC5 engine was a clean break from the past. We were working with a very, very large code base that used Unreal 2.5 with many years of modifications and rewrites. While immensely stable, visually very good looking and a code base you could bet a few million dollars on, it slowed the development of new techniques required to push the SC franchise onto the next generation of consoles (the XBox 360, circa 2005).</p>
+
+<p>Compile times were painfully slow, link times were in the order of minutes and it suffered from the classic Unreal issue of requiring huge rebuilds whenever you changed a .uc script file (used to define your interfaces to the editor, among other things - partially solved in UE3, removed in UE4). There were many levels of pipeline and engine indirection added to ship titles that were slowing down the iteration and development of new techniques, simultaneously contributing to a lack of runtime performance on the target platform. After a couple of months of starting a new engine from scratch, we were at a few seconds for compile/link on the PC, sub-1 second single file iteration times, vastly simpler/faster import pipelines, multi-threaded performance that was orders of magnitude faster on the Xbox 360 than the old engine, the ability to live edit C++ rendering code and no compile dependency on Unreal.</p>
+
+<p>As a result we lost a few key technologies along the way that would have helped immensely, such as the ability to carve indoor space up using BSP volumes. We also ended up recreating some already existing features such as light channels and skeletal attachments. But the full story is something for another day and Stephen Hill&rsquo;s fantastic GDC 2010 piece on the development of some of the rendering technologies can give a bit more insight (<a href="http://blog.selfshadow.com/publications/">Rendering with Conviction</a>).</p>
+
+<p>This post will cover just the reflection API developed to replace Unreal&rsquo;s object model. The implementation was very simple, written in a couple of days, constrained to a single cpp/h file pair and slowly grew as the needs of the engine evolved. It also helped us develop the new engine while the old engine was still active, supporting 50+ developers and keeping game progress undisturbed. It is my hope that I can demonstrate how simple (and sometimes naive) solutions can help ship great games, as long as you&rsquo;re willing to rub shoulders with some pretty big limitations.</p>
+
+<p>An example of this system is <a href="https://bitbucket.org/dwilliamson/reflectabit/overview">Reflectabit</a>, written a few years ago in my spare time. It&rsquo;s unfinished but contains enough to serve as a tutorial of sorts. This post is from memory as I don&rsquo;t have the code to hand anymore.</p>
+
+<h5 id="the-type-id:34d857f412ffe3c047d6213141bf474b">The Type ID</h5>
+
+<p>The first task in any reflection API is defining what a type ID is: how can you reference types in code? For SC5 we needed a type ID that:</p>
+
+<ul>
+<li>Could reference built-in types (<code>int</code>, <code>char</code>, etc) as well as custom class types.</li>
+<li>Was unique for each type.</li>
+<li>Was persistent between program invocations.</li>
+<li>Could be used for serialisation.</li>
+</ul>
+
+<p>The simplest of solutions is to use an enum:</p>
+
+<pre><code class="language-cpp">enum TypeID
+{
+    TYPE_INT,
+    TYPE_CHAR,
+    TYPE_MYTYPE,
+    // ...
+};
+</code></pre>
+
+<p>Each time you add a new type, you add it to the end of the enum. This needs a means of mapping a C++ type to its enum:</p>
+
+<pre><code class="language-cpp">// Each reflected type must specialise this
+template &lt;typename TYPE&gt;
+inline TypeID GetTypeID()
+{
+    // Compile-time assert: Type not implemented (avoiding a return value is enough, really)
+};
+
+// Specialisation examples
+inline template &lt;&gt; TypeID GetTypeID&lt;int&gt;() { return TYPE_INT; }
+inline template &lt;&gt; TypeID GetTypeID&lt;char&gt;() { return TYPE_CHAR; }
+inline template &lt;&gt; TypeID GetTypeID&lt;MyType&gt;() { return TYPE_MYTYPE; }
+</code></pre>
+
+<p>This is not particularly extensible or maintainable in larger projects: if you&rsquo;re working on a changelist that adds a new type and you are using it for serialisation, any incoming changes from members of your own team have the potential to clobber all your data and make the act of submission a chore that is potentially very dangerous. Type IDs will accrue over time and you must ensure that types are added at the end of the list. It&rsquo;s not suitable for a reflection API that ships as part of a 3rd party library that expects its client code to add its own type, although there are many examples of such systems in decades old code (<a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms644930.aspx">WM_APP</a>).</p>
+
+<p>One good benefit of this method is that you can immediately see the type name in a debugger when inspecting values of type <code>TypeID</code>. However, you can&rsquo;t see them at runtime unless you add a means of also mapping the enum value to a string. Of course, there are ways to do this, for example:</p>
+
+<pre><code class="language-cpp">// ----- TypeIDs.inc ------------------
+
+// List all Type IDs
+TYPEID(TYPE_INT)
+TYPEID(TYPE_CHAR)
+TYPEID(TYPE_MYTYPE)
+
+// ----- TypeIDs.h --------------------
+
+// Build the enum table
+#define TYPEID(type) type,
+enum TypeID
+{
+    #include &quot;TypeIDs.inc&quot;
+};
+
+// Use the pre-processor &quot;stringiser&quot; operator to specify the name of each name
+#undef TYPEID
+#define TYPEID(type) #type,
+const char* g_TypeNames[] =
+{
+    #include &quot;TypeIDs.inc&quot;
+};
+</code></pre>
+
+<p>This is a well-used technique in many shipping C/C++ products where its variants have been branded <a href="http://drdobbs.com/184401387">X Macros</a>. At this point it&rsquo;s all getting a bit messy/overkill; we ruled it out on SC5 without much thought as there was a much simpler solution:</p>
+
+<pre><code class="language-cpp">// Each reflected type must specialise this
+template &lt;typename TYPE&gt;
+const char* GetTypeName()
+{
+    // Compile-time assert: Type not implemented
+}
+
+// Specialisation examples
+inline template &lt;&gt; const char* GetTypeName&lt;int&gt;() { return &quot;int&quot;; }
+inline template &lt;&gt; const char* GetTypeName&lt;char&gt;() { return &quot;char&quot;; }
+inline template &lt;&gt; const char* GetTypeName&lt;MyType&gt;() { return &quot;MyType&quot;; }
+
+template &lt;typename TYPE&gt;
+u32 GetTypeID()
+{
+    // Calculates the string hash once and then caches it for further use
+    static int type_id = CalcStringHash(GetTypeName&lt;TYPE&gt;());
+    return type_id;
+};
+</code></pre>
+
+<p>As long as your hash function is good this is a great way of defining your type ID support:</p>
+
+<ul>
+<li>Practically, you are guaranteed unique, persistent IDs as long as your typenames are unique (you can prefix namespaces if you like).</li>
+<li>Types can be added in isolation; all you need to do is implement your <code>GetTypeName</code> alongside its type in a header file.</li>
+<li>The type names are readily available in the debugger and are part of your executable.</li>
+</ul>
+
+<p>The choice of hash function is important but don&rsquo;t overthink the issue. SC5 used <a href="http://www.greenend.org.uk/rjk/2004/crc.html">CRC32</a> for both type names and object names but this is technically not the purpose of CRC32 (it&rsquo;s a trivial method of error detection in data packets). We used it for hashing of both type and object names and while I was working on the project we had one hash collision with some materials that was easily sorted with a rename (collisions were tracked offline in a MySQL database). These days I use <a href="https://sites.google.com/site/murmurhash/">MurmurHash3</a>, however <a href="http://www.cse.yorku.ca/~oz/hash.html">DJB2</a> is a nice simple implementation and the field is steadily progressing (e.g. see <a href="https://github.com/google/cityhash">CityHash</a>). Whatever you choose, collision visibility is essential as collisions can cause very subtle data integrity issues.</p>
+
+<p>Before going any further, a small review of some other methods of generating a type ID may be of interest.</p>
+
+<p>The first is to use C++ RTTI to replace <code>GetTypeName</code>:</p>
+
+<pre><code class="language-cpp">template &lt;typename TYPE&gt;
+const char* GetTypeName()
+{
+    return typeid(TYPE).name();
+}
+</code></pre>
+
+<p>Note that this is not using any runtime aspects of C++ RTTI support beyond calling a function in the <a href="http://www.cplusplus.com/reference/std/typeinfo/type_info/">type_info</a> object returned, which needs to store its information somewhere in memory. Technically this means you should not be penalised for its use at runtime (it doesn&rsquo;t alter the size of any of your objects) but I&rsquo;ve only tested this on MSVC platforms. This is a remarkably simple solution that doesn&rsquo;t require you to specialise <code>GetTypeName</code>.</p>
+
+<p>One issue you can encounter is that RTTI is a very loosely standardised feature of C++ and different platforms may return different names for each type. I believe GCC <a href="http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname">mangles the result in some way</a>, although none of these issues are insurmountable. Curiously, if you disable RTTI in an MSVC project, typeid still works, demonstrating the theory of no runtime penalty. However, other compilers such as GCC fail to compile.</p>
+
+<p>Another potentially non-standard side-step involves the use of the pre-defined <a href="https://msdn.microsoft.com/en-us/library/b0084kay.aspx"><strong>FUNCTION</strong></a> identifier, <a href="https://msdn.microsoft.com/en-us/library/dn919276.aspx"><strong>func</strong></a> (C99/C++11) or whatever equivalent your compiler most likely has these days:</p>
+
+<pre><code class="language-cpp">template &lt;typename TYPE&gt;
+const char* GetTypeName()
+{
+    // GCC's equivalent is __PRETTY_FUNCTION__
+    return __FUNCSIG__;
+}
+</code></pre>
+
+<p>This is MSVC-specific but the output is:</p>
+
+<pre><code>const char *__cdecl GetTypeName&lt;struct MyType&gt;(void)
+</code></pre>
+
+<p>An important realisation is that this string is unique if your type name is unique so you don&rsquo;t really need to change it. If that bothers you, however, you can do a quick parse of the string and cache it locally in a static char buffer, or similar.</p>
+
+<h5 id="types-in-memory:34d857f412ffe3c047d6213141bf474b">Types in Memory</h5>
+
+<p>The next step is in defining how types are represented in memory, their dynamic retrieval and how they can be used to create objects of that type. This involved a few structures:</p>
+
+<pre><code class="language-cpp">// Used for both type names and object names
+struct Name
+{
+    unsigned int hash;
+    const char* text;
+};
+
+// Function types for the constructor and destructor of registered types
+typedef void (*ConstructObjectFunc)(void*);
+typedef void (*DestructObjectFunc)(void*);
+
+// The basic type representation
+struct Type
+{
+    // Parent type database
+    class TypeDB* type_db;
+    
+    // Scoped C++ name of the type
+    Name name;
+    
+    // Pointers to the constructor and destructor functions
+    ConstructObjectFunc constructor;
+    DestructObjectFunc destructor;
+    
+    // Result of sizeof(type) operation
+    size_t size;
+};
+
+// A big registry of all types in the game with methods to manipulate them
+class TypeDB
+{
+public:
+    // Example methods; implementations discussed later
+    Type&amp; CreateType(Name name);
+    Type* GetType(Name name);
+private:
+    typedef std::map&lt;Name, Type*&gt; TypeMap;
+    TypeMap m_Types;
+};
+</code></pre>
+
+<p>We didn&rsquo;t use the STL to define our types; I&rsquo;m using it above to demonstrate intent.</p>
+
+<p>The <code>Name</code> type always stored both the null-terminated string pointer and hash of that string. Type names were always present, stored in a read-only segment of memory when the compiler encounters any calls to <code>GetTypeName</code>. Object names were never stored in memory. Instead, they were stored in a MySQL database which was queried by a Visual Studio debugger plugin whenever it wanted to display a name in the watch window. This was a great way of always having object names present in console builds without consuming runtime memory, even in our most final release builds.</p>
+
+<p>Types are created dynamically as part of game initialisation and a simple implementation of <code>CreateType</code> would be:</p>
+
+<pre><code class="language-cpp">template &lt;typename TYPE&gt;
+Type&amp; CreateType(Name name)
+{
+    // Only allocate the type once (GetType will call CreateType if the type doesn't exist)
+    Type* type = 0;
+    TypeMap::iterator type_i = m_Types.find(name);
+    if (type_i == m_Types.end())
+    {
+        type = new Type;
+        m_Types[name] = type;
+    }
+    else
+    {
+        type = i-&gt;second;
+    }
+    
+    // Apply type properties
+    type-&gt;type_db = this;
+    type-&gt;name = name;
+    type-&gt;size = sizeof(TYPE);
+    return *type;
+}
+
+// Example registration on initialisation
+TypeDB db;
+db.CreateType&lt;MyType&gt;();
+</code></pre>
+
+<p>This gives enough information to be able to allocate space for objects of a given type, however a means of constructing/destructing that object has yet to be defined. In C++ you can&rsquo;t create function pointers to the constructor or destructor (see C++98 12.1 for more info) but given a memory address, they can be called:</p>
+
+<pre><code class="language-cpp">template &lt;typename TYPE&gt; void ConstructObject(void* object)
+{
+    // Use placement new to call the constructor
+    new (object) TYPE;
+}
+template &lt;typename TYPE&gt; void DestructObject(void* object)
+{
+    // Explicit call of the destructor
+    ((TYPE*)object)-&gt;TYPE::~TYPE();
+}
+</code></pre>
+
+<p>This now allows <code>CreateType</code> to fully define <code>Type</code>:</p>
+
+<pre><code class="language-cpp">template &lt;typename TYPE&gt;
+Type* CreateType(NAME name)
+{
+    // ... alloc type ...
+    
+    // Apply type properties
+    type-&gt;size = sizeof(TYPE);
+    type-&gt;constructor = ConstructObject&lt;TYPE&gt;;
+    type-&gt;destructor = DestructObject&lt;TYPE&gt;;
+    return *type;
+}
+</code></pre>
+
+<p>This is enough information to dynamically create objects of a given type, which will be discussed later. Finally, the default type database needs to register all C++ types that were supported in its constructor:</p>
+
+<pre><code class="language-cpp">TypeDB::TypeDB()
+{
+    CreateType&lt;char&gt;();
+    CreateType&lt;short&gt;();
+    CreateType&lt;int&gt;();
+    CreateType&lt;float&gt;();
+    // ... and so on ...
+}
+</code></pre>
+
+<h5 id="fields:34d857f412ffe3c047d6213141bf474b">Fields</h5>
+
+<p>Each type contains an array of fields that describe it - called a <code>PropertyInfo</code> in SC5. We needed the field descriptions to be able to serialise and inspect any object, requiring the following structure:</p>
+
+<pre><code class="language-cpp">struct Field
+{
+    // C++ name of the field, unscoped
+    Name name;
+    
+    // Name of the field type name and a pointer to its type
+    Name type_name;
+    Type* type;
+    
+    // Is this a pointer field? Note that this becomes a flag later on...
+    bool is_pointer;
+    
+    // Offset of this field within the type
+    size_t offset;
+};
+</code></pre>
+
+<p>Only value and pointer field types were supported and the const-ness was irrelevant. We wanted a means of automatically generating the properties of a field to avoid manually-specified registration errors. A typical structure with the desired registration mechanism could look like this:</p>
+
+<pre><code class="language-cpp">struct MyType
+{
+    int x;
+    float y;
+    char z;
+    
+    OtherType other;
+    OtherType* other_ptr;
+};
+
+Field fields[] =
+{
+    Field(&quot;x&quot;, &amp;MyType::x),
+    Field(&quot;y&quot;, &amp;MyType::y),
+    Field(&quot;z&quot;, &amp;MyType::z),
+    Field(&quot;other&quot;, &amp;MyType::other),
+    Field(&quot;other_ptr&quot;, &amp;MyType::other_ptr)
+};
+
+// Create the type and specify its fields
+TypeDB db;
+db.CreateType&lt;MyType&gt;().Fields(fields);
+</code></pre>
+
+<p>Of course, while the properties of a field are automatically deduced, the specification of what fields comprise a type is manual. This caused a few errors along the way on our small team and it was thought that the effort involved trying to minimise this wasn&rsquo;t a priority.</p>
+
+<p>Note that the field for <code>OtherType</code> is created before <code>OtherType</code> is potentially created. To offset the need to register types in any specific order, any calls to <code>GetType</code> would allocate the type if it didn&rsquo;t already exist. Subsequent calls to <code>CreateType</code> would retrieve the allocated copy and describe it.</p>
+
+<p>Note also that the field name is manually specified, which is another potential source of user error. Instead, we could have used the pre-processor stringising operator to ensure it was in sync. Again, this wasn&rsquo;t considered important and at the time and I didn&rsquo;t fancy adding extra layers with pre-processor macros. I did start playing around this a couple of years ago and some investigative results can be found in <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/Test/TestSerialisation.cpp">Reflectabit&rsquo;s serialisation tests</a>. I still prefer the manual solution, however.</p>
+
+<p>Implementing the Field constructor requires answering three questions at compile-time:</p>
+
+<ul>
+<li>What type is the field?</li>
+<li>Is it a pointer?</li>
+<li>What is the field offset?</li>
+</ul>
+
+<p>This required two utility functions that used <a href="http://www.gotw.ca/gotw/049.htm">partial template specialisation</a> on the type qualifiers to identify a pointer and also strip a pointer from the type:</p>
+
+<pre><code class="language-cpp">// Does a type specification contain a pointer?
+template &lt;typename TYPE&gt;
+struct IsPointer
+{
+    static bool val = false;
+};
+// Specialise for yes
+template &lt;typename TYPE&gt;
+struct IsPointer&lt;TYPE*&gt;
+{
+    static bool val = true;
+};
+
+// Exactly the same, except the result is the type without the pointer
+template &lt;typename TYPE&gt;
+struct StripPointer
+{
+    typedef TYPE Type;
+};
+// Specialise for yes
+template &lt;typename TYPE&gt;
+struct StripPointer&lt;TYPE*&gt;
+{
+    typedef TYPE Type;
+};
+</code></pre>
+
+<p>It also required the use of the <a href="http://www.cplusplus.com/reference/clibrary/cstddef/offsetof/">offsetof</a> macro, making the assumption that we never use virtual or multiple inheritance (we didn&rsquo;t). With these tools, the <code>Field</code> constructor is quite simple:</p>
+
+<pre><code class="language-cpp">struct Field
+{
+    template &lt;typename OBJECT_TYPE, typename FIELD_TYPE&gt;
+    Field(Name name, FIELD_TYPE OBJECT_TYPE::*field)
+        : name(name)
+        
+        // Store the type name as we don't have an owning type database yet
+        , type_name(GetTypeName&lt; StripPointer&lt;FIELD_TYPE&gt;::Type &gt;())
+        , type(0)
+        
+        , is_pointer(IsPointer&lt;FIELD_TYPE&gt;::val)
+        , offset(offsetof(OBJECT_TYPE, *field))
+    {
+    }
+};
+</code></pre>
+
+<p>The <code>Fields</code> method in <code>Type</code> uses the <a href="http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.20">Named Parameter Idiom</a> to assign a field list to a type. This technique is used pretty frequently to make registration as friendly as possible. Fields is implemented using templates to figure out the size of the C array:</p>
+
+<pre><code class="language-cpp">struct Type
+{
+    template &lt;int SIZE&gt;
+    Type&amp; Fields(Field (&amp;init_fields)[SIZE])
+    {
+        for (int i = 0; i &lt; SIZE; i++)
+        {
+            Field f = init_fields[i];
+            
+            // Assign the type pointer using the parent type database and add to the type's field list
+            f.type = type_db-&gt;GetType(f.type_name);
+            fields.push_back(f);
+        }
+        return *type;
+    }
+    
+    // New vector of fields for this type
+    std::vector&lt;Field&gt; fields;
+};
+</code></pre>
+
+<h5 id="inheritance:34d857f412ffe3c047d6213141bf474b">Inheritance</h5>
+
+<p>All registered types could only have one base class and fields declared within that type only existed in the fields array of that type (i.e. the fields within an inheritance hierarchy weren&rsquo;t merged). Registering a base class was done with another method in <code>Type</code>:</p>
+
+<pre><code class="language-cpp">struct Type
+{
+    template &lt;typename TYPE&gt;
+    Type&amp; Base()
+    {
+        base = type_db-&gt;GetType(GetTypeName&lt;TYPE&gt;());
+    }
+    
+    Type* base_type;
+};
+
+// Example registration
+TypeDB db;
+db.CreateType&lt;SomeType&gt;().Base&lt;ItsBaseType&gt;();
+</code></pre>
+
+<h5 id="enumerations:34d857f412ffe3c047d6213141bf474b">Enumerations</h5>
+
+<p>Similar to what was described in part 1 of this series, enumeration constants were simply a name/value pair:</p>
+
+<pre><code class="language-cpp">struct EnumConst
+{
+    EnumConst(Name name, int value) : name(name), value(value) { }
+    Name name;
+    int value;
+};
+</code></pre>
+
+<p>However, in an attempt to keep the API simple and avoid any inheritance trees, there was no enumeration type. Instead, each type had a list of enum constants which would be empty if the type was not an enumeration:</p>
+
+<pre><code class="language-cpp">struct Type
+{
+    template &lt;int SIZE&gt;
+    Type&amp; EnumConstants(EnumConst (&amp;input_enum_consts)[SIZE])
+    {
+        for (int i = 0; i &lt; SIZE; i++)
+            enum_constants.push_back(input_enum_consts[i]);
+    }
+    
+    // Only used if the type is an enum type
+    std::vector&lt;EnumConst&gt; enum_constants;
+};
+</code></pre>
+
+<p>Registering of enumeration constants then became as easy as:</p>
+
+<pre><code class="language-cpp">enum TestEnumType
+{
+    VAL_A, VAL_B, VAL_C
+};
+
+// Collate the enum constants
+EnumConst enum_consts[] =
+{
+    EnumConst(&quot;VAL_A&quot;, VAL_A),
+    EnumConst(&quot;VAL_B&quot;, VAL_B),
+    EnumConst(&quot;VAL_C&quot;, VAL_C),
+};
+
+// Create the enum type
+TypeDB db;
+db.CreateType&lt;TestEnumType&gt;().EnumConstants(enum_consts);
+</code></pre>
+
+<p>Again, this relies upon manual registration of any enumeration constants you have and can be error-prone if you forget to add a constant or incorrectly name it. I can&rsquo;t recall this causing us any issues but the potential for making mistakes was there. We were careful and determined that going any further would not be a good investment of our time.</p>
+
+<h5 id="attributes:34d857f412ffe3c047d6213141bf474b">Attributes</h5>
+
+<p>Attribute systems can get pretty complicated but we wanted something quick and simple that could be improved at a later date if necessary. We pretty much knew from the outset what attributes we would require so each field was extended to contain:</p>
+
+<pre><code class="language-cpp">struct Field
+{
+    Field&amp; Flags(unsigned int f)
+    {
+        flags = f;
+        return *this;
+    }
+    
+    Field&amp; Desc(const char* desc)
+    {
+        description = desc;
+        return *this;
+    }
+    
+    Field&amp; Group(const char* g)
+    {
+        group = g;
+        return *this;
+    }
+    
+    // An ORing of boolean attributes and a version number (explained later)
+    unsigned int flags;
+    
+    // An optional property description for editors
+    Name description;
+    
+    // An optional user interface grouping node name for editors
+    Name group;
+};
+</code></pre>
+
+<p>These are entirely hard-coded attributes that the reflection system defines. There are only two string attributes: <code>description</code> and <code>group</code>, that are used for user interface population. If you&rsquo;re defining a material type then you can group its properties into (for example) &ldquo;Textures&rdquo; and &ldquo;Lighting&rdquo;.</p>
+
+<p>The rest of the attributes were boolean flags, merged into the single flags field. Some examples are:</p>
+
+<pre><code class="language-cpp">enum Flags
+{
+    // Is this field a pointer type? (replacing the is_pointer bool in Field)
+    F_Pointer = 0x01,
+    
+    // Is this a transient field, ignored during serialisation?
+    F_Transient = 0x02,
+    
+    // Is this a network transient field, ignored during network serialisation?
+    // A good example for this use-case is a texture type which contains a description
+    // and its data. For disk serialisation you want to save everything, for network
+    // serialisation you don't really want to send over all the texture data.
+    F_NetworkTransient = 0x04,
+    
+    // Can this field be edited by tools?
+    F_ReadOnly = 0x08,
+    
+    // Is this a simple type that can be serialised in terms of a memcpy?
+    // Examples include int, float, any vector types or larger types that you're not
+    // worried about versioning.
+    F_SimpleType = 0x10,
+    
+    // Set if the field owns the memory it points to.
+    // Any loading code must allocate it before populating it with data.
+    F_OwningPointer = 0x20
+};
+</code></pre>
+
+<p>As evident, you could only add new boolean attributes if there were flag bits left and adding attributes with more complexity required extending <code>Field</code>. Perfect for our use-case but not ideal for a more general system.</p>
+
+<h5 id="containers:34d857f412ffe3c047d6213141bf474b">Containers</h5>
+
+<p>Our container support was very primitive, similar to the <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/inc/rflb/Container.h">container support in Reflectabit</a> but lacking its completeness. The basic premise was to use an interface pointer to an underlying container wrapper, like so:</p>
+
+<pre><code class="language-cpp">struct IContainer
+{
+    virtual int GetCount() = 0;
+    virtual void* GetValue(void* container, int index) = 0;
+    // ...etc...
+};
+
+// An example container implementation for std::vector
+template &lt;typename TYPE&gt;
+struct VectorContainer
+{
+    int GetCount()
+    {
+        return ((std::vector&lt;TYPE&gt;*)container)-&gt;size();
+    }
+    void* GetValue(void* container, int index)
+    {
+        return &amp;((std::vector&lt;TYPE&gt;*)container)-&gt;at(index);
+    }
+};
+
+struct Field
+{
+    // The first constructor, specified above
+    Field(// ...
+    
+    // An overload for std::vector container fields
+    template &lt;typename OBJECT_TYPE, typename FIELD_TYPE&gt;
+    Field(Name name, std::vector&lt;FIELD_TYPE&gt; OBJECT_TYPE::*field)
+        : name(name)
+        , type_name(GetTypeName&lt; StripPointer&lt;FIELD_TYPE&gt;::Type &gt;())
+        , type(0)
+        , is_pointer(IsPointer&lt;FIELD_TYPE&gt;::val)
+        , offset(offsetof(OBJECT_TYPE, *field))
+    {
+        // Allocate the implementation
+        container = new VectorContainer&lt;TYPE&gt;();
+    }
+    
+    IContainer* container;
+};
+</code></pre>
+
+<p>There is more information on the technique in part 1 of this series. Again, we didn&rsquo;t use any STL code, opting for our own custom containers, so the above is just an example to highlight how it was achieved. For each field container type, the compiler will generate all of the necessary code to access/mutate the containers which are controlled through the container interface. It&rsquo;s not ideal in terms of generated code size but it&rsquo;s simple and it works well enough.</p>
+
+<h5 id="working-with-objects:34d857f412ffe3c047d6213141bf474b">Working with objects</h5>
+
+<p>We had the luxury of not having to create a controlling object model as Unreal&rsquo;s package system was already doing a good enough job. As a result, all of our objects were anonymously contained by an equivalent <code>UObject</code> and we merely had a resource database that mapped object names to their instances:</p>
+
+<pre><code class="language-cpp">// The base object type for root-serialisable objects
+struct Object
+{
+    // Called after post-load or any UI modified properties, allowing the internal
+    // representation to update itself
+    virtual void OnChanged() = 0;
+    
+    Name name;
+    Type* type;
+};
+
+class ResourceDB
+{
+public:
+    // Fundamental object management methods
+    Object* CreateObject(Name name, Type* type);
+    void DestroyObject(Object* object);
+    
+    // Helper for retrieving the type and applying the appropriate cast
+    template &lt;typename TYPE&gt;
+    TYPE* CreateObject(Name name)
+    {
+        return (TYPE*)CreateObject(name, m_TypeDB-&gt;GetType(GetTypeName&lt;TYPE&gt;()));
+    }
+    
+    Object* GetObject(Name name);
+    
+private:
+    TypeDB* m_TypeDB;
+
+    // Map of all objects
+    typedef std::map&lt;Name, Object*&gt; ObjectMap;
+    ObjectMap m_Objects;
+};
+</code></pre>
+
+<p><code>CreateObject</code> was used everywhere: from serialisation to networked object creation. It used the description of whatever type was being created to safely construct whatever you needed:</p>
+
+<pre><code class="language-cpp">Object* ResourceDB::CreateObject(Name name, Type* type)
+{
+    // Allocate enough space for the object and call its constructor
+    Object* object = (Object*)malloc(type-&gt;size);
+    type-&gt;constructor(object);
+    
+    // Assign its properties
+    object-&gt;name = name;
+    object-&gt;type = type;
+    return object;
+}
+</code></pre>
+
+<p>This was paired with <code>DestroyObject</code> and both replaced typical <code>new</code>/<code>delete</code> use:</p>
+
+<pre><code class="language-cpp">void ResourceDB::DestroyObject(Object* object)
+{
+    // Call destructor and release memory
+    object-&gt;type-&gt;destructor(object);
+    free(object);
+}
+</code></pre>
+
+<p>With a few helpers, you already can do some pretty funky things not normally possible with C++:</p>
+
+<pre><code class="language-cpp">struct Field
+{
+    // Helper to get a pointer to the field within an object
+    void* GetPtr(void* object)
+    {
+        return (char*)object + offset;
+    }
+};
+
+struct Type
+{
+    // A simple linear search looking for a field by name
+    Field* GetField(const char* name)
+    {
+        for (size_t i = 0; i &lt; fields.size(); i++)
+        {
+            // This is just a hash comparison
+            if (Name(name) == fields[i]-&gt;name)
+                return fields[i];
+        }
+        
+        // Recurse up through base type
+        if (base_type)
+            return base_type-&gt;GetField(name);
+            
+        return 0;
+    }
+};
+
+// Create an object using its type name
+TypeDB db;
+ResourceDB rdb;
+MyType* mt = rdb.CreateObject(&quot;objectname&quot;, db.GetType(&quot;MyType&quot;));
+
+// Assign a field within that object using its field name
+Field* x = mt-&gt;type-&gt;GetField(&quot;x&quot;);
+int* x_ptr = (int*)x-&gt;GetPtr(mt);
+*x_ptr = 3;
+</code></pre>
+
+<p>That covers the fundamentals, from which the rest of the code was built upon.</p>
+
+<h5 id="serialisation:34d857f412ffe3c047d6213141bf474b">Serialisation</h5>
+
+<p>We only supported one form of a serialisation and that was a versionable, binary IFF variant. Serialisation was only ever applied to a memory buffer that grew as more data was added to it. The chunk header was similar to:</p>
+
+<pre><code class="language-cpp">struct ChunkHeader
+{
+    // Hash of the field name to uniquely identify the chunk
+    unsigned int name_hash;
+    
+    // Size of the data
+    unsigned int size;
+    
+    // Type data when the field was serialised
+    unsigned int type_name_hash;
+    unsigned int type_flags;
+};
+</code></pre>
+
+<p>Unlike IFF, this uses the hash of the field name to uniquely identify a chunk. If the field didn&rsquo;t exist, the data was skipped during load and not preserved. It also uses 8 bytes to carry a small description of the type of the field when it was serialised. This allowed us to change the type or attributes of a field and have the loading code skip over the data or convert it if any of those changed.</p>
+
+<p>The serialisation logic was very similar to that discussed in part 1 with some additions. Reflectabit&rsquo;s <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/src/SerialiseBinary.cpp">binary serialisation</a> contains a simpler example of this.</p>
+
+<p>One minor feature was the ability to use masks to specify what fields would be serialised based on what attributes the field had set. This allowed the use of the same code path for serialising files on disk and network messages, described shortly.</p>
+
+<p>As we only supported one file format, custom loading and saving function pointers were attached to each field, keeping everything simple and fast:</p>
+
+<pre><code class="language-cpp">typedef void (*LoadFieldFunc)(Buffer&amp; inbuf, unsigned int flags, void* object);
+typedef void (*SaveFieldFunc)(Buffer&amp; outbuf, unsigned int flags, void* object);
+
+struct Field
+{
+    // additions to Field...
+    
+    Field&amp; LoadSave(LoadFieldFunc load, SaveFieldFunc save)
+    {
+        load_field = load;
+        save_field = save;
+        return *this;
+    }
+    
+    LoadFieldFunc load_field;
+    SaveFieldFunc save_field;
+};
+
+// An example of texture type registration with custom load/save for the data
+
+enum Format
+{
+    FMT_RGBA,
+    // etc...
+};
+
+EnumConst format_enums[] =
+{
+    EnumConst(&quot;FMT_RGBA&quot;, FMT_RGBA),
+};
+
+struct Texture
+{
+    int width, height;
+    Format format;
+    IDirect3DTexture9* data;
+};
+
+Field texture_fields[] =
+{
+    Field(&quot;width&quot;, &amp;Texture::width),
+    Field(&quot;height&quot;, &amp;Texture::height),
+    Field(&quot;format&quot;, &amp;Texture::format),
+    Field(&quot;data&quot;, &amp;Texture::data).LoadSave(LoadTextureData, SaveTextureData),
+};
+
+TypeDB db;
+db.CreateType&lt;Format&gt;().EnumConstants(format_enums);
+db.CreateType&lt;Texture&gt;().Base&lt;Object&gt;().Fields(texture_fields);
+</code></pre>
+
+<p>The <code>data</code> field above is a raw <code>IDirect3DTexture</code> pointer. A version number was embedded in the field flags, occupying about 5 or 6 bits, I can&rsquo;t recall which exactly. This allowed the loading code to skip version numbers it didn&rsquo;t know how to load or, in the case of custom loading code, forward onto the appropriate loading code:</p>
+
+<pre><code class="language-cpp">void LoadTextureData2(Buffer&amp; inbuf, unsigned int flags, void* object)
+{       
+    // Given the already known texture dimensions and format (serialised in order)
+    // Create the D3D texture object
+    Texture* texture = (Texture*)object;
+    texture-&gt;data = g_Resources-&gt;CreateTexture(texture);
+    
+    // Lock the texture, copy the data into it, unlock
+    LockRect r = texture-&gt;Lock();
+    memcpy(r.data, inbuf.MemBuf(), TexSizeBytes(texture));
+    texture-&gt;Unlock();
+}
+
+void LoadTextureData(Buffer&amp; inbuf, unsigned int flags, void* object)
+{
+    // Dispatch to the correct loader
+    unsigned int version = GetVersion(flags);
+    switch (version)
+    {
+        case 1: LoadTextureData1(inbuf, flags, object); break;
+        case 2: LoadTextureData2(inbuf, flags, object); break;
+    }
+}
+
+void SaveTextureData2(Buffer&amp; outbuf, unsigned int flags, void* object)
+{
+    // Lock the texture, read the data from it, unlock
+    Texture* texture = (Texture*)object;
+    LockRect r = texture-&gt;Lock();
+    outbuf.Write(r.data, TexSizeBytes(texture));
+    texture-&gt;Unlock();
+}
+
+void SaveTextureData(Buffer&amp; outbuf, unsigned int flags, void* object)
+{
+    // Always save as the latest format
+    SaveTextureData2(outbuf, flags, object);
+}
+</code></pre>
+
+<p>The code above describes the texture loading code in its early state. Eventually, texture streaming was supported; at which point, the texture data was serialised on-demand and the reflection code was merely responsible for creating texture handles.</p>
+
+<p>Unreal performs version upgrades incrementally: it can load old file formats and when you save your package, it will be saved in the new format. Tools can be written which further automate this process. When it comes to serialising complicated data, Unreal&rsquo;s solution is a single method within your object. Over time you prune old loading code as your compiled data catches up. We found that our modification to this process was more stable and easier to maintain.</p>
+
+<p>Pointers were serialised as the hash of the name of any object being pointed to. Because we didn&rsquo;t control the order of loading (that was up to Unreal) we had to come up with ways of ensuring pointers to objects that weren&rsquo;t yet created were satisfied. I think the solution we settled on was to create a proxy object using the type information embedded in the field chunk before actual object creation came along later and completed the creation. While this also handled the issue of circular references, it wasn&rsquo;t a great solution, but it worked!</p>
+
+<p>After adding support for stream writing containers of PODs as an optimisation, bitfields and automatic endianness swapping, the serialisation didn&rsquo;t change much and was a pretty straight-forward piece of code.</p>
+
+<h5 id="the-network-server:34d857f412ffe3c047d6213141bf474b">The Network Server</h5>
+
+<p>The engine had the ability to accept arbitrary TCP/IP connections while running on Windows or console, using Winsock. Again, the code was pretty minimal, just a bunch of socket, <code>bind</code>, <code>accept</code>, <code>send</code>, <code>recv</code> calls for dealing with anonymous chunks of data.</p>
+
+<p>The network server ran on the same thread as the engine, polling once a frame for any incoming connections or data. Obviously you don&rsquo;t want to do this kind of thing for actual game network code but for development code it works superbly - don&rsquo;t let any work-hungry programmers try to convince you otherwise.</p>
+
+<p>There was only one format of network message it could send and receive, but those messages were of arbitrary length and contained reflection-serialised data within them:</p>
+
+<pre><code class="language-cpp">struct MessageHeader
+{
+    unsigned int type_name_hash;
+    unsigned int object_name_hash;
+    unsigned int message_size;
+};
+</code></pre>
+
+<p>There were two ways the network server could respond based on the contents of the Message type:</p>
+
+<ul>
+<li>The network server had an internal map of event type names to handler functions. If the message type name matched anything in that map, the message data would be deserialised and passed onto the handler function.</li>
+<li>Failing that, the message would be interpreted as a full or partial object replication request. The message data would be deserialised and assigned to the requested object.</li>
+</ul>
+
+<p>This was enough to allow tools written in C# to remotely interact with the game through a network socket, with the appropriate network and marshalling code written on the C# side:</p>
+
+<pre><code class="language-cpp">bool NetworkServer::ReceiveNextMessage()
+{
+    // Receive an entire message header before proceeding or leave if there are no more messages
+    MessageHeader header;
+    if (!m_Network-&gt;Receive(&amp;header, sizeof(header)))
+        return false;
+    
+    // Read the message data into a memory buffer
+    Buffer data(header.message_size);
+    m_Network-&gt;Receive(data.MemBuf(), header.message_size);
+    
+    // Get the message type, skipping the data if it can't be handled
+    Type* message_type = m_TypeDB-&gt;GetType(header.type_name_hash);
+    if (message_type == 0)
+        return true;
+    
+    // Is this an event being sent remotely?
+    if (Event* event = m_Events.find(header.type_name_hash))
+    {
+        // Create an object of the event type and parse its data
+        Object* object = m_ResourceDB-&gt;CreateObject(header.type_name_hash);
+        SerialiseLoadBinary(data, object);
+        
+        // Dispatch to the handler and destroy the message object
+        event-&gt;handler(object);
+        m_ResourceDB-&gt;DestroyObject(object);
+        return true;
+    }
+    
+    // This is an object replication request; need to get the object and serialise all or only
+    // a few of its fields - at least, only those that are specified due to the binary IFF nature
+    // of the serialisation code.
+    Object* object = m_ResourceDB-&gt;GetObject(header.object_name_hash);
+    if (object)
+        SerialiseLoadBinary(data, object);
+    
+    return true;
+}
+</code></pre>
+
+<p>The network server could similarly send events and replication requests to remote machines if it needed to.</p>
+
+<h5 id="c-tools-development:34d857f412ffe3c047d6213141bf474b">C# Tools Development</h5>
+
+<p>Regardless of your wrapper of choice, developing tools in C/C++ can be quite painful. Microsoft managed to hit a sweet spot with with C#, .NET and Forms development that was very easy to use and not interminably slow and bloated. However, it did require the use of 3rd party libraries to get some truly useful/fast user interfaces to replace stuff like the woeful grid control. We used it to good effect, developing a few tools in C# that would communicate directly with the running game on either Windows or the console, such as:</p>
+
+<ul>
+<li>A material editor.</li>
+<li>A sort-of &ldquo;realtime PIX&rdquo; profiling and debugging tool.</li>
+<li>A post-processing editor.</li>
+</ul>
+
+<p>These were all small applications that existed outside the UnrealEd framework that, once launched, could connect to any running game and manipulate/read its state.</p>
+
+<p>The profiling tool is one example I can share. In “real-time” (every couple of ms), it updated all of its panels with performance info on the GPU and CPU – much of the information that PIX was providing back in 2006:</p>
+
+<p><img src="/img/profiler.gif" alt="Lead 3D Debug Client" /></p>
+
+<p>In order to achieve this, we needed a set of C# libraries that understood the C++ reflection API, its serialisation and its object model. Network communication was trivial and much easier than using Winsock on the C++ side - we just used <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.aspx">System.Net.Sockets</a> to build the C# equivalent of the C++ NetworkServer.</p>
+
+<p>The C# clients and the C++ network server would communicate with messages that would be serialised either end. The steps involved in getting messages from C# to C++ were:</p>
+
+<ul>
+<li>All messages and their parameters were defined in C#.</li>
+<li>A separate C# tool would use <a href="http://msdn.microsoft.com/en-us/library/system.reflection.aspx">System.Reflection</a> to walk the message types and automatically generate C++ code with the equivalent message structures, alongside their C++ reflection registration code.</li>
+<li>At runtime, marshalling code would use <code>System.Reflection</code> to create messages of the requested type and serialise their parameters into an intermediate runtime object model.</li>
+<li>The intermediate representation would then be serialised to a byte stream that the C++ code could load (we only used the binary serialisation discussed above) and sent over the network.</li>
+<li>The <code>NetworkServer</code> code would pick up the message and use the C++ reflection to create the message object and deserialise its contents.</li>
+<li>Several message handlers attached to <code>NetworkServer</code> would pick up and respond to the messages using the message structures already defined.</li>
+</ul>
+
+<p>While this covers how the two programs logically interacted with each other, it doesn&rsquo;t explain how the C# tools could modify any object running live in the game. Whenever a C# tool connected to the game, one of the first messages it would send would be a request for the entire C++ type database. Once received, it could use that type information to auto-generate user interfaces, swapping in whatever widget was necessary for the type being edited (e.g. an HSB colour selector, slider, check-box for bools, list-box for enum lookup) and adding tool-tips/descriptions from the C++ metadata.</p>
+
+<p>This was a very stable means of getting type descriptions, as the editor could never be out-of-sync with the game it was editing. Contrast this to methods that involve loading a description of types from a separate file that must be integrated with your build system, somehow.</p>
+
+<p>After that the C# tool would request a copy of all objects currently live in the game. This is where the intermediate object model comes into play. The C# type description API would look something like:</p>
+
+<pre><code class="language-cpp">// Equivalent to C++ Name using a C# port of CRC32
+public class Name
+{
+    public string text;
+    public uint hash;
+}
+
+// A minimal copy of the C++ Type structure
+public class Type
+{
+    public Name name;
+    public List&lt;Field&gt; fields;
+    public List&lt;EnumConst&gt; enum_constants;
+}
+
+// Just enough information to control marshalling/serialisation and UI generation
+public class Field
+{
+    public Name name;
+    public Type type;
+    public string display_name;
+    public string description;
+    public string group;
+}
+
+public class EnumConst
+{
+    public Name name;
+    public int value;
+}
+</code></pre>
+
+<p>Each allocated C++ object would have an equivalent C# object of the type:</p>
+
+<pre><code class="language-cpp">public class Object
+{
+    Name name;
+    Value value;
+}
+</code></pre>
+
+<p>There would also be a big map of names to allocated C# objects, so whenever a message came through that referenced an object, that object could be retrieved. The intermediate object model was thus:</p>
+
+<pre><code class="language-cpp">// Base value object with the type its paired to
+public class Value
+{
+    Type type;
+}
+
+// Objects for each type of value representable in C++
+public class StringValue : Value
+{
+    public string data;
+}
+public class IntValue : Value
+{
+    public int value;
+}
+public class UIntValue  : Value{ // ...
+public class FloatValue  : Value{ // ...
+// ...
+
+// A enum constant where its data is the enum value (can be paired with EnumConst above to get descriptive value)
+public class EnumConstValue : Value
+{
+    public int data;
+}
+
+// Pointers could be network-serialised and represented in the tools, also.
+// They were just names, after-all, and the type could be used to ensure you couldn't point to objects
+// of an incorrect type.
+public class PointerValue : Value
+{
+    public Name name;
+}
+
+// Each C++ container had a C# equivalent - the C# equivalent stored Value's
+public class ArrayValue : Value
+{
+    public ArrayList data;
+}
+
+public ClassValue : Value
+{
+    public Dictionary&lt;Name, Value&gt; values;
+}
+</code></pre>
+
+<p>Each <code>Value</code> implementation had various functions for displaying the type at runtime, generating widget controls, serialising and marshalling (converting between C# native and the object model) their contents.</p>
+
+<p>Once you wrote your code for displaying/editing the objects, entire objects could be replicated or the same code could be used to partially replicate an object. The C++ code would simply locate the existing object by name and overwrite only the fields which were present in the network-serialised data. The editor tools could request that the runtime generate data for it; the material editor, for example, would request material, mesh and texture thumbnails be generated and sent over the network on demand.</p>
+
+<p>And finally, on Windows, the C# tools could create a blank canvas window, send its <code>HWND</code> over the network and the 3D renderer would happily render into it, taking cues from whatever keyboard and mouse input was sent along with it. This meant that we didn&rsquo;t need to send over any of the heavyweight data, such as textures or vertices, choosing instead to give them the &ldquo;network transient&rdquo; attribute. Of course, that information could be sent over on-demand (for when you wanted to inspect all pixels of a texture, for example) but it was never stored persistently.</p>
+
+<p>This method of tools development was really quite natural: you could iterate amazingly quickly on the C# tools code while the game was still running, edit your C# code, build (a couple of seconds), and have it running and connected another couple of seconds later without any expensive level/data reloads!</p>
+
+<h5 id="conclusion:34d857f412ffe3c047d6213141bf474b">Conclusion</h5>
+
+<p>The methods contained within are among those that you should keep in your bag of tricks and bring out when you need good, scalable solutions quickly. If you&rsquo;re into the new-fangled idea of developing your tools in a web browser, these techniques will get you most of the way there and even allow you to write native browser games without having to write plugins!</p>
+
+<p>If you&rsquo;re meta-programming hungry, part 3 will cover some more elaborate reflection technology which I wouldn&rsquo;t necessarily recommend these days. It will hopefully serve as a lesson in how things can get complicated very fast. Stay tuned, as the internals of a basic IDL compiler will also be covered.</p>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+                <span class="f-post-tags"><i class="fa fa-tag"></i>
+                c++, reflection
+                </span>
+            
+            <p class="f-post-time"><time datetime="2012-01-03T07:21:58&#43;01:00">January 3, 2012</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=Reflection%20in%20C%2b%2b%2c%20Part2%3a%20The%20Simple%20Implementation%20of%20Splinter%20Cell&url=http%3a%2f%2fdonw.io%2fpost%2freflection-cpp-2%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2freflection-cpp-2%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2freflection-cpp-2%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+                
+        <section id="comments">
+            <div id="disqus_thread" class="post-comments"></div>
+            <script type="text/javascript">
+              if (window.location.hostname != "localhost") {
+                var disqus_shortname = 'gazoo';
+                (function() {
+                  var dsq = document.createElement('script');
+                  dsq.type = 'text/javascript';
+                  dsq.async = true;
+                  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              }
+            </script>
+            <noscript>
+              Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+            </noscript>
+        </section>
+                
+    </footer>
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        messageStyle: "none",
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            displayMath: [['$$','$$'], ['\[','\]']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: { equationNumbers: { autoNumber: "AMS" },
+                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+          }
+        });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+
+</body>
+</html>

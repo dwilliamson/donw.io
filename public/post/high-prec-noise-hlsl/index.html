@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/high-prec-noise-hlsl/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2016-08-25T22:05:56&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.15" />
+        <title>Mixed Precision GPU Noise with HLSL &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">Mixed Precision GPU Noise with HLSL</h3>
+    </header>
+
+    <section class="post-content">
+        <p>I posted an article a while back, entitled <a href="/post/high-prec-gradient-noise/">Very Fast, High-Precision SIMD/GPU Gradient Noise</a>, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that <code>floor</code> could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.</p>
+
+<p>The GPU code was initially written in OpenCL and then ported to CUDA using <a href="https://github.com/Celtoys/ComputeBridge">ComputeBridge</a>. Neither were good platforms for releasing a game; releasing them on both at the same time was a recipe for madness so I ported everything to HLSL. Unfortunately HLSL SM5 doesn&rsquo;t support <code>floor(double)</code>.</p>
+
+<p>So I sat down and took some time to cook up a software version. The first task was to isolate the fraction:</p>
+
+<pre><code class="language-cpp">double MaskOutFraction(double v)
+{
+    // Alias double as 2 32-bit integers
+    uint d0, d1;
+    asuint(v, d0, d1);
+
+    // 0  ... 51   mantissa     0  ... 19
+    // 52 ... 62   exponent     20 ... 30
+    // 63 ... 63   sign
+
+    // Already a fraction?
+    int exponent = ((d1 &gt;&gt; 20) &amp; 0x7FF) - 1023;
+    if (exponent &lt; 0)
+        return 0;
+
+    // Calculate how many bits to shift to remove the fraction
+    // As there is no check here for mask_bits &lt;= 0, if the input double is large enough
+    // such that it can't have any fractional representation, thie function will return
+    // an incorrect result.
+    // As this is the GPU, I've decided against that branch.
+    int mask_bits = max(52 - exponent, 0);
+
+    // Calculate low 31-bits of the inverted mantissa mask
+    uint lo_shift_bits = min(mask_bits, 31);
+    uint lo_mask = (1 &lt;&lt; lo_shift_bits) - 1;
+
+    // Can't do (1&lt;&lt;32)-1 with 32-bit integer so OR in the final bit if need be
+    lo_mask |= mask_bits &gt; 31 ? 0x80000000 : 0;
+
+    // Calculate high 20 bits of the inverted mantissa mask
+    uint hi_shift_bits = max(mask_bits - 32, 0);
+    uint hi_mask = (1 &lt;&lt; hi_shift_bits) - 1;
+
+    // Mask out the fractional bits and recombine as a double
+    d0 &amp;= ~lo_mask;
+    d1 &amp;= ~hi_mask;
+    v = asdouble(d0, d1);
+
+    return v;
+}
+</code></pre>
+
+<p>With that you can then subtract the fraction and provide necessary overloads:</p>
+
+<pre><code class="language-cpp">// HLSL(SM5) doesn't support floor(double) so implement it in software
+double Floor(double v)
+{
+    double r = MaskOutFraction(v);
+    return v - r &lt; 0 ? r - 1 : r;
+}
+double2 Floor(double2 v)
+{
+    v.x = Floor(v.x);
+    v.y = Floor(v.y);
+    return v;
+}
+double3 Floor(double3 v)
+{
+    v.x = Floor(v.x);
+    v.y = Floor(v.y);
+    v.z = Floor(v.z);
+    return v;
+}
+double4 Floor(double4 v)
+{
+    v.x = Floor(v.x);
+    v.y = Floor(v.y);
+    v.z = Floor(v.z);
+    v.w = Floor(v.w);
+    return v;
+}
+</code></pre>
+
+<p>Performance is admirably close to the CUDA/OpenCL versions (on nVidia/AMD hardware, respectively) and the same mask function can be reused for <code>Round</code> or <code>Ceil</code> functions.</p>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+                <span class="f-post-tags"><i class="fa fa-tag"></i>
+                noise, gpu
+                </span>
+            
+            <p class="f-post-time"><time datetime="2016-08-25T22:05:56&#43;01:00">August 25, 2016</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=Mixed%20Precision%20GPU%20Noise%20with%20HLSL&url=http%3a%2f%2fdonw.io%2fpost%2fhigh-prec-noise-hlsl%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fhigh-prec-noise-hlsl%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fhigh-prec-noise-hlsl%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+                
+        <section id="comments">
+            <div id="disqus_thread" class="post-comments"></div>
+            <script type="text/javascript">
+              if (window.location.hostname != "localhost") {
+                var disqus_shortname = 'gazoo';
+                (function() {
+                  var dsq = document.createElement('script');
+                  dsq.type = 'text/javascript';
+                  dsq.async = true;
+                  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              }
+            </script>
+            <noscript>
+              Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+            </noscript>
+        </section>
+                
+    </footer>
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        messageStyle: "none",
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            displayMath: [['$$','$$'], ['\[','\]']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: { equationNumbers: { autoNumber: "AMS" },
+                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+          }
+        });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+
+</body>
+</html>

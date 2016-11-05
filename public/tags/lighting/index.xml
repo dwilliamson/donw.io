@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Lighting on Gazoo.vrv</title>
+    <link>http://donw.io/tags/lighting/</link>
+    <description>Recent content in Lighting on Gazoo.vrv</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 11 Feb 2015 12:58:23 +0100</lastBuildDate>
+    <atom:link href="http://donw.io/tags/lighting/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Distant Spherical Area Light Sources</title>
+      <link>http://donw.io/post/distant-sphere-lights/</link>
+      <pubDate>Wed, 11 Feb 2015 12:58:23 +0100</pubDate>
+      
+      <guid>http://donw.io/post/distant-sphere-lights/</guid>
+      <description>&lt;p&gt;This is a small test post exercising math notation with &lt;a href=&#34;http://www.mathjax.org/&#34;&gt;MathJax&lt;/a&gt; in &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Epic use the following equation for a spherical light source  [&lt;a href=&#34;http://blog.selfshadow.com/publications/s2013-shading-course/&#34; title=&#34;Real Shading in Unreal Engine 4&#34;&gt;1&lt;/a&gt;]:&lt;/p&gt;
+
+&lt;p&gt;$$\mathbf{C} = (\mathbf{L} \cdot \mathbf{r})\mathbf{r} - \mathbf{L}$$
+$$\mathbf{P} = \mathbf{L} + \langle \frac{sourceRadius}{ &amp;verbar; \mathbf{C} &amp;verbar; } \rangle \mathbf{C}$$&lt;/p&gt;
+
+&lt;p&gt;where the point with the smallest distance to the reflected ray is then $&amp;par;\mathbf{P}&amp;par;$.&lt;/p&gt;
+
+&lt;p&gt;Implicit in this equation is that $\mathbf{L}$ is unnormalised. With a Sun/Earth distance of 149,600,000km and Sun radius of 695,800km these calculations are not really going to work in limited precision shaders. To get around this we need to separate the length of $\mathbf{L}$ from its direction and hope that the large value terms fall out at the end. Using this substitution:&lt;/p&gt;
+
+&lt;p&gt;$$d\mathbf{l} = \mathbf{L}$$&lt;/p&gt;
+
+&lt;p&gt;we start with:&lt;/p&gt;
+
+&lt;p&gt;$$\mathbf{C} = (d\mathbf{l} \cdot \mathbf{r})\mathbf{r} - d\mathbf{l}$$&lt;/p&gt;
+
+&lt;p&gt;As the dot product is homogeneous under scaling we can pull $d$ out and factor it:&lt;/p&gt;
+
+&lt;p&gt;$$\mathbf{C} = d((\mathbf{l} \cdot \mathbf{r})\mathbf{r} - \mathbf{l})$$&lt;/p&gt;
+
+&lt;p&gt;leaving $\mathbf{P}$ at:&lt;/p&gt;
+
+&lt;p&gt;$$\mathbf{P} = d\mathbf{l} + \langle \frac{sourceRadius}{ sqrt(\mathbf{C} \cdot \mathbf{C}) } \rangle \mathbf{C}$$&lt;/p&gt;
+
+&lt;p&gt;Things become a little easier if we make the simple substitution:&lt;/p&gt;
+
+&lt;p&gt;$$\mathbf{D} = (\mathbf{l} \cdot \mathbf{r})\mathbf{r} - \mathbf{l}$$
+$$\mathbf{C} = d\mathbf{D}$$&lt;/p&gt;
+
+&lt;p&gt;After a little reduction, $\mathbf{P}$ simplifies to:&lt;/p&gt;
+
+&lt;p&gt;$$\mathbf{P} = d\mathbf{l} + \langle \frac{sourceRadius}{d} \frac{1}{sqrt(\mathbf{D} \cdot \mathbf{D})} \rangle d\mathbf{D}$$&lt;/p&gt;
+
+&lt;p&gt;This allows two things:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;The $\frac{sourceRadius}{d}$ term can be precalculated outside the shader at whatever precision you like. As long as the result is float-representable then you&amp;rsquo;re good to go. As an example, the Sun/Earth ratio is roughly 0.00465.&lt;/li&gt;
+&lt;li&gt;The remaining $d$ scalar can be factored and ignored as we&amp;rsquo;re only interested in the direction of $\mathbf{P}$.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The shader code is just as simple:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cpp&#34;&gt;float3 r = reflect(surface_to_camera, normal);
+float3 D = dot(l, r) * r - l;
+float3 P = l + D * saturate(radius_over_distance * rsqrt(dot(D, D)));
+float3 specular_l = normalize(P);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is a little simpler than the area disk light presented in [&lt;a href=&#34;http://www.frostbite.com/2014/11/moving-frostbite-to-pbr/&#34; title=&#34;Moving Frostbite to PBR&#34;&gt;2&lt;/a&gt;] and allows you to use Epic&amp;rsquo;s energy normalisation constant.&lt;/p&gt;
+
+&lt;p&gt;References:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://blog.selfshadow.com/publications/s2013-shading-course/&#34; title=&#34;Real Shading in Unreal Engine 4&#34;&gt;Real Shading in Unreal Engine 4&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.frostbite.com/2014/11/moving-frostbite-to-pbr/&#34; title=&#34;Moving Frostbite to PBR&#34;&gt;Moving Frostbite to PBR&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

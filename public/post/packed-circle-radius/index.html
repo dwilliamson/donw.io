@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/packed-circle-radius/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2016-10-15T21:45:31&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.15" />
+        <title>A Convenient Expression for Packed Circle Radius &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">A Convenient Expression for Packed Circle Radius</h3>
+    </header>
+
+    <section class="post-content">
+        <p>When you develop a solver for the Tammes problem you&rsquo;re usually concerned with <a href="http://paulbourke.net/geometry/circlesphere/#spherepoints">distributing points evenly on the sphere</a>, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:</p>
+
+<p><center><img src="/img/CirclePacking/snapshot2.png" alt="d" /></center></p>
+
+<p>There are known solutions for a <a href="https://arxiv.org/abs/1509.01768">given number of circles</a> but there is no known solution for any number of points. Relaxation can be used in the general case.</p>
+
+<p>Once the unit sphere is packed with circles, finding the radius can start with two circles and the planes they lie within:</p>
+
+<p><center><img src="/img/CirclePacking/planes.png" alt="d" /></center></p>
+
+<p>If the circle center points $p_0$ and $p_1$ are on the unit sphere, they can also be considered the normals of the planes they lie within. The acute angle $\theta$ between these two planes is called the <em>dihedral angle</em> and is easily calculated as:</p>
+
+<p>$$\theta = acos(p_0 \cdot p_1)$$</p>
+
+<p>The obtuse angle, $\alpha$, is called the <em>anhedral angle</em> and is thus:</p>
+
+<p>$$\alpha = \pi - \theta$$</p>
+
+<p>The adjacent/opposite sides of the triangle formed by the two planes and the line joining $p_0$ and $p_1$ will be the same size and can be considered the desired circle radius:</p>
+
+<p><center><img src="/img/CirclePacking/triangle.png" alt="d" /></center></p>
+
+<p>Using the <a href="http://mathworld.wolfram.com/LawofCosines.html">Law of Cosines</a> an expression for $d$ and then $r$, can quickly be attained:</p>
+
+<p>$$d^2 = r^2 + r^2 - 2r^2cos(\alpha)$$
+$$d^2 = 2r^2(1 - cos(\alpha))$$
+$$r = \sqrt{\frac{d^2}{2(1 - cos(\alpha))}}$$</p>
+
+<p>This works well enough to get the radius you want but the overuse of transcendentals feels like it can be squeezed some more. Following the <a href="http://mathworld.wolfram.com/LawofSines.html">Law of Sines</a> makes things even worse but there&rsquo;s a clue in the $cos(\alpha)$ term which expands to:</p>
+
+<p>$$cos(\pi - \theta)$$</p>
+
+<p>This can be reduced using a common trigonometric identity:</p>
+
+<p>$$cos(\pi - \theta) = cos(\pi)cos(\theta) + sin(\pi)sin(\theta)$$</p>
+
+<p>Given that $cos(\pi)=-1$, $sin(\pi)=0$ and $\theta=acos(p_0 \cdot p_1)$, this immediately reduces to:</p>
+
+<p>$$cos(\pi - \theta) = -(p_0 \cdot p_1)$$</p>
+
+<p>Leaving the final substitution:</p>
+
+<p>$$r = \sqrt{\frac{d^2}{2(p_0 \cdot p_1 + 1)}}$$</p>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+                <span class="f-post-tags"><i class="fa fa-tag"></i>
+                math
+                </span>
+            
+            <p class="f-post-time"><time datetime="2016-10-15T21:45:31&#43;01:00">October 15, 2016</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=A%20Convenient%20Expression%20for%20Packed%20Circle%20Radius&url=http%3a%2f%2fdonw.io%2fpost%2fpacked-circle-radius%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fpacked-circle-radius%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fpacked-circle-radius%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+                
+        <section id="comments">
+            <div id="disqus_thread" class="post-comments"></div>
+            <script type="text/javascript">
+              if (window.location.hostname != "localhost") {
+                var disqus_shortname = 'gazoo';
+                (function() {
+                  var dsq = document.createElement('script');
+                  dsq.type = 'text/javascript';
+                  dsq.async = true;
+                  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              }
+            </script>
+            <noscript>
+              Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+            </noscript>
+        </section>
+                
+    </footer>
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        messageStyle: "none",
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            displayMath: [['$$','$$'], ['\[','\]']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: { equationNumbers: { autoNumber: "AMS" },
+                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+          }
+        });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+
+</body>
+</html>

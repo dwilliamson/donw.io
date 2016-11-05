@@ -1,0 +1,11 @@
+<div id="{{.Get 0}}" style="width:400px;height:250px;margin-left:auto;margin-right:auto;"></div>
+<script type="text/javascript">
+	new Dygraph(document.getElementById("{{.Get 0}}"), "{{.Get 1}}",
+		{
+			title: "{{.Get 2}}",
+			titleHeight: 22,
+			xlabel: "Click and drag to zoom; double-click to restore zoom level",
+			xLabelHeight: 12,
+		});
+</script>
+<br/>

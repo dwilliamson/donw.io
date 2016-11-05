@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/animation-autocorrelation/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2012-08-20T16:07:23&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.15" />
+        <title>Skeletal Animation Looping with Autocorrelation &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">Skeletal Animation Looping with Autocorrelation</h3>
+    </header>
+
+    <section class="post-content">
+        
+
+<p>This is a bit of a fun post highlighting how some simple maths can be used to create great visual results. With some basic statistics, we can create looping skeletal animations from an input data set that contains non-exact loops. A typical example is a motion capture sampled run animation:</p>
+
+<p><center><img src="/img/AnimLooping/OriginalAnim.gif" alt="d" /></center></p>
+
+<p>This is derived from the <a href="http://mocap.cs.cmu.edu/">CMU Graphics Lab Motion Capture Database</a>, which has been <a href="https://sites.google.com/a/cgspeed.com/cgspeed/motion-capture/cmu-bvh-conversion">converted to BVH files</a> by Bruce Hahne. I can load BVH files and dynamically retarget them to my animation rigs so that I never have to worry about changing animation rigs again (this is absolutely key to some of the features of my product and would have been immensely useful for the animation pipelines in many of my past games).</p>
+
+<p>The first task is to center the animation on the origin to allow movement to be controlled by the game. Appropriate playback timing/blending and IK foot fixups are added after that. Many games simply strip the root bone offset from the animation but you lose a lot of animated weight transfer and bounce. I chose instead to send out a &ldquo;rabbit&rdquo; node that attempts to keep up with the moving skeleton via a fixed linear velocity, subtracting its position to get:</p>
+
+<p><center><img src="/img/AnimLooping/CenteredAnim.gif" alt="d" /></center></p>
+
+<p>You can notice the three-and-a-bit steps the skeleton takes, the slow raising of the torso and the hard snap at the end when the animation ends. Somewhere in there is a two step loop that can be used to create a seamlessly looping animation. The tasks required are:</p>
+
+<ul>
+<li>Use auto/cross correlation to identify potential loop lengths in the animation.</li>
+<li>Search the animation using the loop lengths for start and end frames whose poses match.</li>
+<li>Cross-fade the beginning and end of the animation to smooth out the differences.</li>
+</ul>
+
+<p>Statistics aren&rsquo;t my strong point so I would really appreciate any corrections to this post!</p>
+
+<h5 id="cross-correlation:894f9b4cb59901f5bf4506e115ff54db">Cross Correlation</h5>
+
+<p>Given two discrete real data sets:</p>
+
+<p>$$x = [ x_0, x_1, x_2, &hellip;, x_n ]$$
+$$y = [ y_0, y_1, y_2, &hellip;, y_n ]$$</p>
+
+<p><a href="http://en.wikipedia.org/wiki/Correlation_and_dependence">Correlation</a> can give you a single number that tells you how similar these two data sets are. This number is generally called the correlation coefficient and can be calculated in a number of different ways, depending on what particular features of the data set you&rsquo;re interested in highlighting.</p>
+
+<p>The most common coefficient appears to be the <a href="http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient">Pearson product-moment correlation coefficient</a>. The coefficient is in the range -1 to 1, where 1 means there is a perfect linear relationship, 0 means there is no relationship and -1 means there is a negative linear relationship. A simple definition for a population is:</p>
+
+<p>$$R(x,y) = \frac{1}{n} \sum\limits_{i=1}^n \frac{x(i) - m(x)}{s(x)} * \frac{y(i) - m(y)}{s(y)}$$</p>
+
+<p>where $m$ is the median and $s$ is the standard deviation of the population.</p>
+
+<p>Interestingly, this coefficient is independent of the unit of measurement: it can report 100% correlation between data sets that differ in scale or offset. For example, if set $x$ recorded your age in months and set $y$ recorded your height in inches at that age, it will be able to report any linear relationship (e.g. you get taller as you get older) with a correlation coefficient close to 1. This nice result is achieved by first of all centering each data set on its median and then transforming the set into units of its standard deviation.</p>
+
+<p><a href="http://en.wikipedia.org/wiki/Cross-correlation">Cross Correlation</a> uses this basic tool to evaluate how similar two input data sets are when one of them is offset (or, time-lagged in the case of audio samples). Assuming the data sets are equal in length, for every sample in $x$, the correlation coefficient is calculated with an offset version of $y$:</p>
+
+<p>$$xcorr(x, y)[n] = sum(x&rsquo; [m] * y[m + n])$$</p>
+
+<p>Here, $&lsquo;$ is the complex conjugate. As we&rsquo;ll be dealing with real numbers, this can safely be ignored. You can use this for many things, like detecting the presence of one signal (or similar) somewhere within another, measuring tempo or even auto-tuning (yes, Mathematicians helped create our current generation of <a href="http://www.time.com/time/magazine/article/0,9171,1877372,00.html">talentless musicians</a>).</p>
+
+<p>This leads to the following code:</p>
+
+<pre><code class="language-cpp">double CrossCorrelate(const std::vector&lt;double&gt;&amp; x, const std::vector&lt;double&gt;&amp; y)
+{
+    // Assume data sets are the same size
+    size_t size = x.size();
+    assert(size == y.size());
+
+    // Calculate mean and standard deviation of data sets
+    double mx = mean(x);
+    double my = mean(y);
+    double sx = stddev(x);
+    double sy = stddev(y);
+
+    // Calculate correlation coefficient for each offset
+    std::vector&lt;double&gt; Rxy(size);
+    for (size_t i = 0; i &lt; size; i++)
+    {
+        // First term can be pulled out of the inner loop
+        double a = (x[i] - mx) / sx;
+
+        double c = 0;
+        for (size_t j = 0; j &lt; size; j++)
+        {
+            // Second term is always offset by the constant 'i'
+            // I'm choosing to wrap here whereas you can also zero-pad
+            size_t ij = (i + j) % size;
+            double b = (y[ij] - my) / sy;
+
+            c += a * b;
+        }
+
+        Rxy[i] = c / size;
+    }
+}
+</code></pre>
+
+<p>Assuming the input data sets are the same size is not very useful in reality, however we don&rsquo;t need to do full cross correlation. With animation, we want to be able to detect loops within one dataset; essentially making $x$ and $y$ the same.</p>
+
+<p>This is called <a href="http://en.wikipedia.org/wiki/Autocorrelation">Autocorrelation</a> and it gets even better. Given that we&rsquo;re not interested in the unit-independent properties of cross correlation (we&rsquo;re comparing the same data set values), we can set the median to zero and standard deviation to one, leaving:</p>
+
+<p>$$R(x,y) = \frac{1}{n} \sum\limits_{i=1}^n x(i) * y(i)$$</p>
+
+<h5 id="application-to-skeletal-animation:894f9b4cb59901f5bf4506e115ff54db">Application to Skeletal Animation</h5>
+
+<p>The data set we have is the rotation values of each bone in an animation for each frame (I&rsquo;m ignoring scale as you don&rsquo;t generally get that from BVH data and translations are present only on root bones). We want to perform autocorrelation for each frame of the animation with a frame offset version of itself.</p>
+
+<p>Autocorrelation above was defined in terms of scalar value multiplication, so an equivalent data type and multiplication operator needs to be defined for a single frame of animation. This can be achieved by using a vector of all bone rotations for a specific frame, combined with a vector dot product, which is effectively a projection of one frame onto another (result is max when all bones line up).</p>
+
+<p>You can use the quaternion values directly or euler angles; it doesn&rsquo;t matter. We&rsquo;re not interested in the values themselves, we&rsquo;re just interested in how they relate to each other. I have found, though, that I&rsquo;m getting better results using rotations that are relative to their parent bone, as opposed to object-space rotations.</p>
+
+<p>This leads to the following code:</p>
+
+<pre><code class="language-cpp">struct Anim
+{
+    size_t int nb_bones;
+    size_t int nb_frames;
+
+    // Just rotation data for all bones in all frames
+    // size = nb_bones * nb_frames
+    std::vector&lt;quat&gt; frame_data;
+};
+
+double DotProduct(
+    const std::vector&lt;quat&gt;&amp; x,
+    const std::vector&lt;quat&gt;&amp; y,
+    size_t ox,
+    size_t oy,
+    size_t vector_size)
+{
+    // Dot product of two frame vectors. As they're just collections of rotation quaternions,
+    // sum all quaternion dot products.
+    double dp = 0;
+    for (size_t i = 0; i &lt; vector_size; i++)
+    {
+        quat q0 = x[ox + i];
+        quat q1 = y[oy + i];
+        dp += q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
+    }
+    return dp;
+}
+
+
+double Correlate(
+    const Anim&amp; anim,
+    const std::vector&lt;quat&gt;&amp; x,
+    const std::vector&lt;quat&gt;&amp; y,
+    size_t frame_offset)
+{
+    double Rxy = 0;
+    for (size_t i = 0; i &lt; anim.nb_frames; i++)
+    {
+        // Shift and wrap to keep the inputs the same length
+        size_t ox = i;
+        size_t oy = (frame_offset + i) % anim.nb_frames;
+
+        // Calculating the Pearson correlation co-efficient using mean of zero and stdev of 1
+        Rxy += DotProduct(x, y, ox, oy, anim.nb_bones);
+    }
+
+    return Rxy / anim.nb_frames;
+}
+
+// Calculate the cross-correlation sequence using the same animation for both inputs (auto-correlation)
+std::vector&lt;double&gt; Rxy(anim.nb_frames);
+for (size_t i = 0; i &lt; anim.nb_frames; i++)
+    Rxy[i] = Correlate(anim, anim.frame_data, anim.frame_data, i);
+</code></pre>
+
+<p>When applied to the centered animation above, the sequence looks like this:</p>
+
+<div id="xcorr_anim_graph" style="width:400px;height:250px;margin-left:auto;margin-right:auto;"></div>
+<script type="text/javascript">
+	new Dygraph(document.getElementById("xcorr_anim_graph"), "\/img\/AnimLooping\/a.csv",
+		{
+			title: "Autocorrelation Sequence",
+			titleHeight: 22,
+			xlabel: "Click and drag to zoom; double-click to restore zoom level",
+			xLabelHeight: 12,
+		});
+</script>
+<br/>
+
+
+<p>We&rsquo;re interested here in looking for the peaks of the graph, answering the question: other than at the start, where does the animation most look like itself? This is a standard local maximum search that starts off with computing the first derivative:</p>
+
+<pre><code class="language-cpp">// We want to detect the local minimum/maximum points in the sequence, as periodicity
+// estimates for the animation so calculate 1st derivative
+std::vector&lt;double&gt; Rxy_df(anim.nb_frames);
+for (size_t i = 1; i &lt; Rxy.size(); i++)
+    Rxy_df[i] = Rxy[i] - Rxy[i - 1];
+</code></pre>
+
+<p>leading to:</p>
+
+<div id="1stderiv_anim_graph" style="width:400px;height:250px;margin-left:auto;margin-right:auto;"></div>
+<script type="text/javascript">
+	new Dygraph(document.getElementById("1stderiv_anim_graph"), "\/img\/AnimLooping\/b.csv",
+		{
+			title: "First Derivative",
+			titleHeight: 22,
+			xlabel: "Click and drag to zoom; double-click to restore zoom level",
+			xLabelHeight: 12,
+		});
+</script>
+<br/>
+
+
+<p>Local minima/maxima are located at the zero crossings and local maxima can be detected where the derivative is decreasing.</p>
+
+<h5 id="searching-for-start-and-end-frames:894f9b4cb59901f5bf4506e115ff54db">Searching for Start and End Frames</h5>
+
+<p>Just as autocorrelation in audio can only measure tempo and not tell you where specific beats are, this technique will only tell you potential lengths of the animation. Autocorrelation is a function of the signal, not a frame, so we will need to search the animation for start/end frames that match each other as closely as possible.</p>
+
+<p>Beyond rotation similarity, we also want to ensure velocity/acceleration and general trajectory similarity. Given a potential start and end frame, we can determine a simple measure of similarity by summing squared distances within a set window. By walking through all possible start/end frames and keeping the smallest sum, we can get our best match.</p>
+
+<p>This code is based on Benjy Cook&rsquo;s Python mocap tools for Blender, linked below.</p>
+
+<pre><code class="language-cpp">double SqrDistance(
+    const std::vector&lt;quat&gt;&amp; x,
+    const std::vector&lt;quat&gt;&amp; y,
+    size_t ox,
+    size_t oy,
+    size_t vector_size)
+{
+    double d = 0;
+    for (size_t i = 0; i &lt; vector_size; i++)
+    {
+        quat q0 = x[ox + i];
+        quat q1 = y[oy + i];
+        quat q = { q0.x - q1.x, q0.y - q1.y, q0.z - q1.z, q0.w - q1.w };
+        d += q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+    }
+    return d;
+}
+
+static const int WINDOW_SIZE = 5;
+int best_fit_frame = -1;
+size_t best_fit_length = 0;
+double best_fit_sum = 0;
+
+for (size_t i = 0; i &lt; local_maxima.size(); i++)
+{
+    size_t length = local_maxima[i];
+
+    // Precalculate distances between all possible start/end frames at this length
+    std::vector&lt;double&gt; distance(anim.nb_frames - length);
+    for (size_t j = 0; j &lt; distance.size(); j++)
+    {
+        size_t ox = j * anim.nb_bones;
+        size_t oy = (j + length) * anim.nb_bones;
+        distance[j] = SqrDistance(anim.frame_data, anim.frame_data, ox, oy, anim.nb_bones);
+    }
+
+    // Search for the best start/end frame pair
+    for (size_t j = WINDOW_SIZE; j &lt; distance.size() - WINDOW_SIZE - 1; j++)
+    {
+        // Sum distances in local neighbourhood
+        double sum = 0;
+        for (size_t k = j - WINDOW_SIZE; k &lt;= j + WINDOW_SIZE; k++)
+            sum += distance[k];
+
+        // Keep the best fit
+        if (best_fit_frame == -1 || sum &lt; best_fit_sum)
+        {
+            best_fit_frame = j;
+            best_fit_length = length;
+            best_fit_sum = sum;
+        }
+    }
+}
+</code></pre>
+
+<p>Using the best fit frame and length, the animation can then be clipped to give:</p>
+
+<p><center><img src="/img/AnimLooping/ClippedAnim.gif" alt="d" /></center></p>
+
+<p>There are a few things to note about the result:</p>
+
+<ul>
+<li>The two step loop has been correctly identified.</li>
+<li>The start and end frames match pretty well: both leg and arm movement is almost seamless.</li>
+<li>There is a visible snap after the torso still rises for the duration of the animation.</li>
+</ul>
+
+<p>Beyond employing better loop detection methods, this is really the best we can do without modifying the original animation. Even if we tried to look for better techniques, the chances of a single mocap shoot giving a perfectly loopable animation are minimal.</p>
+
+<h5 id="cross-fading-around-the-seam:894f9b4cb59901f5bf4506e115ff54db">Cross-fading Around the Seam</h5>
+
+<p>The final simple part to this is to blend the last few frames in the animation so that they meet seamlessly with the frame at the start of the animation:</p>
+
+<pre><code class="language-cpp">static const int BLEND_SIZE = 10;
+for (size_t i = 0; i &lt; BLEND_SIZE; i++)
+{
+    size_t offset = (anim.nb_frames - BLEND_SIZE + i) * anim.nb_bones;
+    double t = (double)i / BLEND_SIZE;
+
+    for (size_t j = 0; j &lt; anim.nb_bones; j++)
+    {
+        const math::frame&amp; dst = anim.frame_data[j];
+        math::frame&amp; src = anim.frame_data[offset + j];
+        src = fLerp(src, dst, (float)t);
+    }
+}
+</code></pre>
+
+<p>A <code>frame</code> in my code base is an <a href="http://en.wikipedia.org/wiki/Affine_frame">Affine Frame</a> with vector position and quaternion rotation. I linearly interpolate both components based on their distance from the end of the animation (the quaternion lerp is normalised, as opposed to <a href="http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/">using slerp</a>). This cleans up any small position differences in the hip bone.</p>
+
+<p>The final result is pretty cool!</p>
+
+<p><center><img src="/img/AnimLooping/LoopingAnim.gif" alt="d" /></center></p>
+
+<p>You can tweak the number of blend frames a little to get a smoother transition.</p>
+
+<h5 id="conclusion:894f9b4cb59901f5bf4506e115ff54db">Conclusion</h5>
+
+<p>There is a whole bunch of stuff that you&rsquo;ll need to do to make this production-ready (loops within loops, signal filtering, artist pre/post input/modification, etc) but it this should be a good start.</p>
+
+<p>Curiously, while debugging all my code for this I found that zero-crossings of the second differential (representing local minima of the first derivative) were giving good approximations to the start and end frame in animation loops:</p>
+
+<div id="2ndderiv_anim_graph" style="width:400px;height:250px;margin-left:auto;margin-right:auto;"></div>
+<script type="text/javascript">
+	new Dygraph(document.getElementById("2ndderiv_anim_graph"), "\/img\/AnimLooping\/c.csv",
+		{
+			title: "Second Derivative",
+			titleHeight: 22,
+			xlabel: "Click and drag to zoom; double-click to restore zoom level",
+			xLabelHeight: 12,
+		});
+</script>
+<br/>
+
+
+<p>If I start this specific animation at 15 and end it at 123, it loops just as well! I&rsquo;ve not tested this on many data sets or dug into the maths further to see if there is anything to this, but it&rsquo;s an interesting avenue for future investigation.</p>
+
+<p>Here&rsquo;s some links for further reading:</p>
+
+<ul>
+<li><a href="http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Animation/Motion_Capture_Tools">Blender Mocap Tools</a> - A great source code reference for stuff like this, written by <a href="https://plus.google.com/104243235864119960562">Benjy Cook</a>. (Python)</li>
+<li><a href="http://www.hawaii.edu/powerkills/UC.HTM">Understanding Correlation</a> - Online book hoping to shed some intuition on correlation.</li>
+<li><a href="http://audiograins.com/blog/tag/cross-correlation/">Autocorrelation for Tempo Estimation</a></li>
+<li><a href="http://dsp.stackexchange.com/questions/736/how-do-i-implement-cross-correlation-to-prove-two-audio-files-are-similar">How do I implement Cross-correlation to prove two audio files are similar?</a></li>
+</ul>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+                <span class="f-post-tags"><i class="fa fa-tag"></i>
+                animation
+                </span>
+            
+            <p class="f-post-time"><time datetime="2012-08-20T16:07:23&#43;01:00">August 20, 2012</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=Skeletal%20Animation%20Looping%20with%20Autocorrelation&url=http%3a%2f%2fdonw.io%2fpost%2fanimation-autocorrelation%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fanimation-autocorrelation%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fanimation-autocorrelation%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+                
+        <section id="comments">
+            <div id="disqus_thread" class="post-comments"></div>
+            <script type="text/javascript">
+              if (window.location.hostname != "localhost") {
+                var disqus_shortname = 'gazoo';
+                (function() {
+                  var dsq = document.createElement('script');
+                  dsq.type = 'text/javascript';
+                  dsq.async = true;
+                  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              }
+            </script>
+            <noscript>
+              Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+            </noscript>
+        </section>
+                
+    </footer>
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        messageStyle: "none",
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            displayMath: [['$$','$$'], ['\[','\]']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: { equationNumbers: { autoNumber: "AMS" },
+                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+          }
+        });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+
+</body>
+</html>

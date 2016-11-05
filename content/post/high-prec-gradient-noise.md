@@ -1,0 +1,550 @@
++++
+date = "2012-12-17T11:38:22+01:00"
+draft = false
+title = "Very Fast, High-Precision SIMD/GPU Gradient Noise"
+tags = [ "noise", "simd", "gpu" ]
++++
+
+A recently published article by Inigo Quilez on [Voronoi Edges](http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm) highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.
+
+<!--more-->
+
+The GPGPU crowd have used similar techniques for a while, dubbed [Mixed Precision Methods](http://www.mpi-inf.mpg.de/~strzodka/projects/double/) and the first reference I can find to using relative values for "Infinite noise" is in Pixar's paper on [Wavelet Noise](http://graphics.pixar.com/library/WaveletNoise/paper.pdf).
+
+
+##### Perlin's Gradient Noise
+
+
+One of the simplest noise implementations involves taking "random" gradient vectors from points on a lattice nearest your sampling point and interpolating them. I say "random" because while the result effectively looks random, it's more a hashing process with no state:
+
+~~~cpp
+// A series of primes for the hash function
+const int NOISE_HASH_X = 1213;
+const int NOISE_HASH_Y = 6203;
+const int NOISE_HASH_Z = 5237;
+const int NOISE_HASH_SEED = 1039;
+const int NOISE_HASH_SHIFT = 13;
+
+float lerp(float t, float a, float b)
+{
+	return a + t * (b - a);
+}
+
+float quintic(float t)
+{
+	return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+}
+
+float grad_project(float dx, float dy, float dz, int ix, int iy, int iz)
+{
+	// Hash the lattice indices to get a gradient vector index
+	int index = NOISE_HASH_X * ix + NOISE_HASH_Y * iy + NOISE_HASH_Z * iz + NOISE_HASH_SEED;
+	index ^= (index >> NOISE_HASH_SHIFT);
+	index &= 0xFF;
+
+	// Lookup the gradient vector
+	float grad_x = g_RandomGradients[(index << 2) + 0];
+	float grad_y = g_RandomGradients[(index << 2) + 1];
+	float grad_z = g_RandomGradients[(index << 2) + 2];
+
+	// Project the local point onto the gradient vector
+	return (grad_x * dx + grad_y * dy + grad_z * dz);
+}
+
+float grad_noise(float x, float y, float z)
+{
+	// Get the nearest lattice indices
+	int x0 = (int)floor(x);
+	int y0 = (int)floor(y);
+	int z0 = (int)floor(z);
+	int x1 = x0 + 1;
+	int y1 = y0 + 1;
+	int z1 = z0 + 1;
+
+	// Get local deltas to lattice positions
+	float dx0 = x - x0;
+	float dy0 = y - y0;
+	float dz0 = z - z0;
+	float dx1 = dx0 - 1.0f;
+	float dy1 = dy0 - 1.0f;
+	float dz1 = dz0 - 1.0f;
+
+	// Get gradient projection for each local lattice point
+	float g0 = grad_project(dx0, dy0, dz0, x0, y0, z0);
+	float g1 = grad_project(dx1, dy0, dz0, x1, y0, z0);
+	float g2 = grad_project(dx0, dy1, dz0, x0, y1, z0);
+	float g3 = grad_project(dx1, dy1, dz0, x1, y1, z0);
+	float g4 = grad_project(dx0, dy0, dz1, x0, y0, z1);
+	float g5 = grad_project(dx1, dy0, dz1, x1, y0, z1);
+	float g6 = grad_project(dx0, dy1, dz1, x0, y1, z1);
+	float g7 = grad_project(dx1, dy1, dz1, x1, y1, z1);
+
+	// Remap linear interpolation to a quintic (see Perlin's Improved Noise paper)
+	float rx = quintic(dx0);
+	float ry = quintic(dy0);
+	float rz = quintic(dz0);
+
+	// Trilinear interpolation
+	float gx0 = lerp(rx, g0, g1);
+	float gx1 = lerp(rx, g2, g3);
+	float gx2 = lerp(rx, g4, g5);
+	float gx3 = lerp(rx, g6, g7);
+	float gy0 = lerp(ry, gx0, gx1);
+	float gy1 = lerp(ry, gx2, gx3);
+	return lerp(rz, gy0, gy1);
+}
+~~~
+
+`g_Gradients` is a table of randomly generated unit vectors. While my table size is 256, Perlin notes that the number of gradient vectors isn't really that important - just that they're [evenly distributed](http://http.developer.nvidia.com/GPUGems/gpugems_ch05.html). He suggests a relaxation step to achieve Poisson distribution, which I might try, but for now I'm just using a [stratified sampling of the sphere](https://bitbucket.org/dwilliamson/shrotation/src/tip/Source/NRook.cpp).
+
+In the majority of cases this all works well. There are many variants, each tailored to different use-cases, for example:
+
+* If you are doing very small-scale noisy details you might be able to get away with one gradient vector look-up, using the GPU's volume texture sampling to do the [interpolation and index wrapping for you](http://prettyprocs.wordpress.com/2012/10/20/fast-perlin-noise/). This isn't a great technique for variance, however it's useful for the small details when you have lower frequencies available to hide the repetition.
+* When table/texture lookups are not possible or too slow and when branching is expensive, you can switch to Ashima Arts' [Simplex Noise](https://github.com/ashima/webgl-noise) variant. Or you can use Simplex Noise as popularised by Perlin and brilliantly documented by [Stefan Gustavson](http://staffwww.itn.liu.se/~stegu/simplexnoise/).
+
+I've not found Simplex noise to give any real gains in terms of visuals and performance. Either the branches become a problem or the increased ALU to avoid branches steps in. As I want 100x gains here, not minor "potential" gains, it's not been worth the complexity increase for me.
+
+
+##### Single Precision Motivation
+
+
+When you start applying the noise functions on a large scale, single-precision noise breaks down entirely. The easiest way to fix this is by changing all float values in the above source to double. Depending on your use case, this can be quite a sensible solution and it's very easy to find noise examples out there where people brush over the problem entirely and switch to doubles.
+
+On modern PCs (last 8 years or so), the equivalent of the x87 co-processor has been doing floating point arithmetic at 64-bit precision. When you write floating point code on PC, you should be using doubles, as the overhead of marshalling back and forth between float/double precision can make your code slower.
+
+It's what I did, but eventually I wanted bigger and faster. Not just three or four times faster: one hundred times faster! For that you need to start exploiting AVX/SSE or your GPU, but double life in these lands is not as rosy. I have a few numbers that can demonstrate this:
+
+* **25,596,000** : C Gradient Noise double
+* **29,987,000** : C Gradient Noise float
+* **13,709,000** : SSE Gradient Noise double
+* **11,613,000** : SSE Gradient Noise float
+
+Timings are in nano-seconds. The first two results quite evidently demonstrate the benefit of working in double space to begin with. The last two results show how useful switching to SSE techniques can be but also show that doubles (implemented using recent AVX instructions) don't perform as well. However, when you compare these with GPU numbers, it becomes evident how fast we can really make things:
+
+* **875,072** : OpenCL Gradient Noise double
+* **126,016** : OpenCL Gradient Noise float
+
+The double version is around 30 times faster than the original implementation, however the real fruit from the tree is the float version at roughly 200 times faster! If we can find a way to make the float version work on a large scale, this could be very good. Of course, the economics of GPU use doesn't really net you those gains: the GPU version needs to be that fast because there are potentially several free CPU cores hanging around that could do the work in 10ms, 3 times a frame. The GPU version doesn't have that flexibility as it needs a good 30ms to render a frame.
+
+Branchless Simplex noise is worth a quick mention here:
+
+* **3,238,144** : OpenCL Simplex Noise double
+* **283,072** : OpenCL Simplex Noise float			   
+
+This demonstrates a couple of things: the lack of real double performance on GPUs and the greatly increased ALU under-performing table lookups vs. the gradient version.
+
+##### Making Single Precision Scale
+
+The above noise function is already in a format ready for improvement. The first step is to accept doubles as parameters:
+
+~~~cpp
+float grad_noise(double x, double y, double z)
+~~~
+
+This is the source position that gets scaled based on what octave it comes from. There are cases, for extremely low frequency noise, where you can get away with floats. In my planet generator (earth sized planets and larger), my first couple of octaves are entirely float-based.
+
+This also means the conversion to integer needs to be done in double-precision:
+
+~~~cpp
+// Get the nearest lattice indices
+int x0 = (int)floor(x);
+int y0 = (int)floor(y);
+int z0 = (int)floor(z);
+~~~
+
+Assuming you have a planet that is earth-sized, most detail will be generated at a distance of ~6,000,000 metres from the origin. Up there, the resolution of a float goes rapidly [from 0.0625 metres to 1 metre](http://www.altdevblogaday.com/2012/02/05/dont-store-that-in-a-float/). While the rounding won't show its effect until you get above 10,000km, there's really no point in trying to marshal the position into a float and I'd rather not have to worry about changing the function for larger planet radii.
+
+This resolution becomes extremely important in the next bit of code:
+
+~~~cpp
+// Get local deltas to lattice positions
+double dx0 = x - x0;
+double dy0 = y - y0;
+double dz0 = z - z0;
+~~~
+
+If this delta is calculated with floats at this height, you will get multiples of 0.0625 or higher. This produces stair-stepping artifacts every few centimetres and a complete loss of detail that looks quite horrendous. However, if you calculate the delta using doubles and convert the 0-1 value to float, it's all fine:
+
+~~~cpp
+// Get local deltas to lattice positions
+float dx0 = float(x - x0);
+float dy0 = float(y - y0);
+float dz0 = float(z - z0);
+~~~
+
+The rest of the code does not need to touch a double value, ever; the distance to the far lattice indices has already been adjusted so that it's not in terms of the incoming position.
+
+
+##### A SIMD Implementation
+
+
+There are two ways to write a complete double SIMD implementation. The first is to use the [SSE2](http://softpixel.com/~cwright/programming/simd/sse2.php) instructions, storing 3x double values in two 128-bit registers. This is quite painful and the resulting code has significantly less through-put than its float equivalent. I didn't get a chance to correctly profile my implementation but initial investigations proved there was little benefit, especially for the large increase in complexity.
+
+The second way is to use the more recent [AVX instructions](http://software.intel.com/en-us/avx). These have a new, extended 256-bit register set, representing a step forward for Intel that's not without its problems:
+
+* Mixing 128-bit SSE and 256-bit AVX code is very easy to do and can cause significant performance penalties. The problem and some solutions are discussed in [Avoiding AVX-SSE Transition Penalties](http://software.intel.com/en-us/articles/avoiding-avx-sse-transition-penalties) and [Intel AVX State Transitions: Migrating SSE Code to AVX](http://software.intel.com/en-us/articles/intel-avx-state-transitions-migrating-sse-code-to-avx). I used C intrinsics to write SIMD code so I was having to parse the generated assembler from MSVC on each run to double-check me or the compiler weren't making mistakes. Intel's solution of running your code through an emulator to check sounds just a little too much.
+* There is an horrendous Windows 7 WoW64 bug better explained in the post [AVX support disrupts WoW64 debugging](http://www.os2museum.com/wp/?p=960). The short version is that, for 32-bit programs, AVX state is incorrectly managed during stack walks leading to incorrect call stacks whenever you attach a debugger to a crashed application. A fix is to either run with the debugger attached at all times and have [Win32 Exceptions Enabled](http://www.altdevblogaday.com/2012/07/06/when-even-crashing-doesnt-work/) or to disable AVX support in Windows 7 altogether! Not exactly great choices, there.
+* 32-bit programs have access to only half the registers the equivalent 64-bit programs do. While not really that important for the future, it's a pain when you're trying a slow migration to 64-bit.
+* AVX is recent enough that you may still need to write an SSE implementation to make up for lack of support on older machines.
+
+Given that we now have a way of using doubles in only a small portion of the code, there's pretty much no reason to need an AVX version. Which is good!
+
+Here's an SSE version:
+
+
+~~~cpp
+namespace simd
+{
+	typedef __m128i v128i;
+	typedef __m128d v128d;
+	typedef __m128 v128f;
+}
+
+simd::v128f __fastcall grad_noise_simd(simd::v128d pos_xy, simd::v128d pos_z)
+{
+	using namespace simd;
+
+	// Round to the lowest integer boundary
+	// DOUBLE PRECISION
+	v128d pos_xy_0 = _mm_floor_pd(pos_xy);
+	v128d pos_z_0 = _mm_floor_pd(pos_z);
+
+	// Convert to integer to get the lower cube corner
+	v128i xyi = _mm_cvtpd_epi32(pos_xy_0);
+	v128i zi = _mm_cvtpd_epi32(pos_z_0);
+	zi = shuffle_epi32<Az, Aw, Ax, Ay>(zi);
+	v128i cube_pos0 = _mm_add_epi32(xyi, zi);
+
+	// Add one to get the upper cube corner
+	v128i cube_pos1 = _mm_add_epi32(cube_pos0, iONE);
+
+	// Get fractional to lower cube corner
+	// DOUBLE PRECISION
+	v128d t_xy_d = _mm_sub_pd(pos_xy, pos_xy_0);
+	v128d t_z_d = _mm_sub_pd(pos_z, pos_z_0);
+
+	// Convert to higher-throughput float
+	v128f t_xy_f = _mm_cvtpd_ps(t_xy_d);
+	v128f t_zw_f = _mm_cvtpd_ps(t_z_d);
+	v128f t0 = shuffle_ps<Ax, Ay, Bx, By>(t_xy_f, t_zw_f);
+
+	// Get fractional to upper cube corner
+	v128f t1 = _mm_sub_ps(t0, fONE);
+
+	int x0 = cube_pos0.m128i_i32[0];
+	int y0 = cube_pos0.m128i_i32[1];
+	int z0 = cube_pos0.m128i_i32[2];
+
+	int x1 = cube_pos1.m128i_i32[0];
+	int y1 = cube_pos1.m128i_i32[1];
+	int z1 = cube_pos1.m128i_i32[2];
+
+	// Partial hash of extreme cube corner indices
+	int ox0 = NOISE_X * x0 + NOISE_SEED;
+	int oy0 = NOISE_Y * y0;
+	int oz0 = NOISE_Z * z0;
+	int ox1 = NOISE_X * x1 + NOISE_SEED;
+	int oy1 = NOISE_Y * y1;
+	int oz1 = NOISE_Z * z1;
+
+	// Hash all cube corners
+	int index0 = ox0 + oy0 + oz0;
+	int index1 = ox1 + oy0 + oz0;
+	int index2 = ox0 + oy1 + oz0;
+	int index3 = ox1 + oy1 + oz0;
+	int index4 = ox0 + oy0 + oz1;
+	int index5 = ox1 + oy0 + oz1;
+	int index6 = ox0 + oy1 + oz1;
+	int index7 = ox1 + oy1 + oz1;
+	index0 ^= (index0 >> NOISE_SHIFT);
+	index1 ^= (index1 >> NOISE_SHIFT);
+	index2 ^= (index2 >> NOISE_SHIFT);
+	index3 ^= (index3 >> NOISE_SHIFT);
+	index4 ^= (index4 >> NOISE_SHIFT);
+	index5 ^= (index5 >> NOISE_SHIFT);
+	index6 ^= (index6 >> NOISE_SHIFT);
+	index7 ^= (index7 >> NOISE_SHIFT);
+	index0 &= 0xFF;
+	index1 &= 0xFF;
+	index2 &= 0xFF;
+	index3 &= 0xFF;
+	index4 &= 0xFF;
+	index5 &= 0xFF;
+	index6 &= 0xFF;
+	index7 &= 0xFF;
+
+	// Lookup gradients
+	v128f grad0 = g_RandomGradients_v128f[index0];
+	v128f grad1 = g_RandomGradients_v128f[index1];
+	v128f grad2 = g_RandomGradients_v128f[index2];
+	v128f grad3 = g_RandomGradients_v128f[index3];
+	v128f grad4 = g_RandomGradients_v128f[index4];
+	v128f grad5 = g_RandomGradients_v128f[index5];
+	v128f grad6 = g_RandomGradients_v128f[index6];
+	v128f grad7 = g_RandomGradients_v128f[index7];
+
+	// Project permuted offsets onto gradient vector
+	v128f g0_ = _mm_dp_ps(grad0, blend_ps<Ax, Ay, Az>(t0, t1), 0x7F);
+	v128f g1_ = _mm_dp_ps(grad1, blend_ps<Bx, Ay, Az>(t0, t1), 0x7F);
+	v128f g2_ = _mm_dp_ps(grad2, blend_ps<Ax, By, Az>(t0, t1), 0x7F);
+	v128f g3_ = _mm_dp_ps(grad3, blend_ps<Bx, By, Az>(t0, t1), 0x7F);
+	v128f g4_ = _mm_dp_ps(grad4, blend_ps<Ax, Ay, Bz>(t0, t1), 0x7F);
+	v128f g5_ = _mm_dp_ps(grad5, blend_ps<Bx, Ay, Bz>(t0, t1), 0x7F);
+	v128f g6_ = _mm_dp_ps(grad6, blend_ps<Ax, By, Bz>(t0, t1), 0x7F);
+	v128f g7_ = _mm_dp_ps(grad7, blend_ps<Bx, By, Bz>(t0, t1), 0x7F);
+
+	// mix g0, g2, g4, g6 for lerp
+	v128f g02__ = blend_ps<Ax, By, Az, Aw>(g0_, g2_);
+	v128f g__46 = blend_ps<Ax, Ay, Az, Bw>(g4_, g6_);
+	v128f g0246 = blend_ps<Ax, Ay, Bz, Bw>(g02__, g__46);
+
+	// mix g1, g3, g5, g7 for lerp
+	v128f g13__ = blend_ps<Ax, By, Az, Aw>(g1_, g3_);
+	v128f g__57 = blend_ps<Ax, Ay, Az, Bw>(g5_, g7_);
+	v128f g1357 = blend_ps<Ax, Ay, Bz, Bw>(g13__, g__57);
+
+	// Apply a cubic fade to the near distance parameter for trilinear interpolation
+	v128f r = _mm_mul_ps(t0, t0);
+	v128f r0 = _mm_mul_ps(fTWO, t0);
+	r0 = _mm_sub_ps(fTHREE, r0);
+	r = _mm_mul_ps(r, r0);
+
+	// Trilinear interpolation 
+	v128f rx = shuffle_ps<Ax, Ax, Bx, Bx>(r, r);
+	v128f gx0123 = simd::lerp(rx, g0246, g1357);
+
+	v128f ry = shuffle_ps<Ay, Ay, By, By>(r, r);
+	v128f gx1032 = shuffle_ps<Ay, Ax, Bw, Bz>(gx0123, gx0123);
+
+	v128f gy0_1_ = simd::lerp(ry, gx0123, gx1032);
+	v128f rz = shuffle_ps<Az, Az, Bz, Bz>(r, r);
+	v128f gy1_0_ = shuffle_ps<Az, Az, Bx, Bx>(gy0_1_, gy0_1_);
+	v128f gz = simd::lerp(rz, gy0_1_, gy1_0_);
+
+	return gz;
+}
+~~~
+
+There is a bunch of stuff you could do to get a couple milliseconds out of this but it's already over twice as fast as the C version, so it's a good enough SIMD version for now. The compiler will effectively pipeline the int operations with the SSE operations for you and on modern processors the dot product is actually quite fast. You could tranpose the inner loop for older processors to remove the dot product:
+
+~~~cpp
+// Transpose first 4 gradients within XMM registers
+v128f temp0 = _mm_unpacklo_ps(grad0, grad2);
+v128f temp1 = _mm_unpacklo_ps(grad4, grad6);
+v128f temp2 = _mm_unpackhi_ps(grad0, grad2);
+v128f temp3 = _mm_unpackhi_ps(grad4, grad6);
+v128f grad0246x = _mm_movelh_ps(temp0, temp1);
+v128f grad0246y = _mm_movehl_ps(temp1, temp0);
+v128f grad0246z = _mm_movelh_ps(temp2, temp3);
+
+// Transpose second 4 gradients within XMM registers
+temp0 = _mm_unpacklo_ps(grad1, grad3);
+temp1 = _mm_unpacklo_ps(grad5, grad7);
+temp2 = _mm_unpackhi_ps(grad1, grad3);
+temp3 = _mm_unpackhi_ps(grad5, grad7);
+v128f grad1357x = _mm_movelh_ps(temp0, temp1);
+v128f grad1357y = _mm_movehl_ps(temp1, temp0);
+v128f grad1357z = _mm_movelh_ps(temp2, temp3);
+
+// Tranpose needed permutations
+v128f t0000x = shuffle_ps<Ax, Ax, Bx, Bx>(t0, t0);
+v128f t0000y = shuffle_ps<Ay, Ay, By, By>(t0, t0);
+v128f t0000z = shuffle_ps<Az, Az, Bz, Bz>(t0, t0);
+v128f t1111x = shuffle_ps<Ax, Ax, Bx, Bx>(t1, t1);
+v128f t1111y = shuffle_ps<Ay, Ay, By, By>(t1, t1);
+v128f t1111z = shuffle_ps<Az, Az, Bz, Bz>(t1, t1);
+v128f t0101y = blend_ps<Ax, By, Az, Bw>(t0000y, t1111y);
+v128f t0011z = blend_ps<Ax, Ay, Bz, Bw>(t0000z, t1111z);
+
+// Calculate 8 dot products
+v128f mulx = _mm_mul_ps(t0000x, grad0246x);
+v128f muly = _mm_mul_ps(t0101y, grad0246y);
+v128f mulz = _mm_mul_ps(t0011z, grad0246z);
+v128f g0246 = _mm_add_ps(mulx, _mm_add_ps(muly, mulz));
+mulx = _mm_mul_ps(t1111x, grad1357x);
+muly = _mm_mul_ps(t0101y, grad1357y);
+mulz = _mm_mul_ps(t0011z, grad1357z);
+v128f g1357 = _mm_add_ps(mulx, _mm_add_ps(muly, mulz));
+~~~
+
+However, the shuffle overhead makes this slower on modern processors so it's only really a gain if your input data is already rotated.
+
+The SIMD approach is valuable. If you have enough free cores, there's nothing stopping you using it at the same time as a GPU implementation. However, better gains in terms of productivity are more likely if you use something like the [Intel SPMD Program Compiler](http://ispc.github.com/). You can also do something like use OpenCL on the CPU but the availability of CPU drivers on the PC may make this very problematic.
+
+
+##### An OpenCL Implementation
+
+
+Knowing the float/double trick above, an OpenCL implementation is more straight-forward, *provided you have your program setup for loading/running OpenCL kernels*. The same approach maps to CUDA or whatever favourite compute setup you have and you can even change and reload your noise functions on the fly (seeing the surface of a planet update in real-time as you edit its noise functions is quite funky):
+
+~~~cpp
+float gradient_noise_inner(__global const float3* gradient_table, float3 cube_pos0, float3 cube_pos1, float3 t0, float3 t1)
+{
+	int x0 = cube_pos0.x;
+	int y0 = cube_pos0.y;
+	int z0 = cube_pos0.z;
+
+	int x1 = cube_pos1.x;
+	int y1 = cube_pos1.y;
+	int z1 = cube_pos1.z;
+
+	const int NOISE_HASH_X = 1213;
+	const int NOISE_HASH_Y = 6203;
+	const int NOISE_HASH_Z = 5237;
+	const int NOISE_HASH_SEED = 1039;
+	int ox0 = NOISE_HASH_X * x0 + NOISE_HASH_SEED;
+	int oy0 = NOISE_HASH_Y * y0;
+	int oz0 = NOISE_HASH_Z * z0;
+	int ox1 = NOISE_HASH_X * x1 + NOISE_HASH_SEED;
+	int oy1 = NOISE_HASH_Y * y1;
+	int oz1 = NOISE_HASH_Z * z1;
+
+	const int NOISE_HASH_SHIFT = 13;
+	int index0 = ox0 + oy0 + oz0;
+	int index1 = ox1 + oy0 + oz0;
+	int index2 = ox0 + oy1 + oz0;
+	int index3 = ox1 + oy1 + oz0;
+	int index4 = ox0 + oy0 + oz1;
+	int index5 = ox1 + oy0 + oz1;
+	int index6 = ox0 + oy1 + oz1;
+	int index7 = ox1 + oy1 + oz1;
+	index0 ^= (index0 >> NOISE_HASH_SHIFT);
+	index1 ^= (index1 >> NOISE_HASH_SHIFT);
+	index2 ^= (index2 >> NOISE_HASH_SHIFT);
+	index3 ^= (index3 >> NOISE_HASH_SHIFT);
+	index4 ^= (index4 >> NOISE_HASH_SHIFT);
+	index5 ^= (index5 >> NOISE_HASH_SHIFT);
+	index6 ^= (index6 >> NOISE_HASH_SHIFT);
+	index7 ^= (index7 >> NOISE_HASH_SHIFT);
+	index0 &= 0xFF;
+	index1 &= 0xFF;
+	index2 &= 0xFF;
+	index3 &= 0xFF;
+	index4 &= 0xFF;
+	index5 &= 0xFF;
+	index6 &= 0xFF;
+	index7 &= 0xFF;
+
+	float3 grad0 = gradient_table[index0];
+	float3 grad1 = gradient_table[index1];
+	float3 grad2 = gradient_table[index2];
+	float3 grad3 = gradient_table[index3];
+	float3 grad4 = gradient_table[index4];
+	float3 grad5 = gradient_table[index5];
+	float3 grad6 = gradient_table[index6];
+	float3 grad7 = gradient_table[index7];
+
+	// Project permuted fractionals onto gradient vector
+	float4 g0246, g1357;
+	g0246.x = dot(grad0, select(t0, t1, (int3){ 0, 0, 0}));
+	g1357.x = dot(grad1, select(t0, t1, (int3){-1, 0, 0}));
+	g0246.y = dot(grad2, select(t0, t1, (int3){ 0,-1, 0}));
+	g1357.y = dot(grad3, select(t0, t1, (int3){-1,-1, 0}));
+	g0246.z = dot(grad4, select(t0, t1, (int3){ 0, 0,-1}));
+	g1357.z = dot(grad5, select(t0, t1, (int3){-1, 0,-1}));
+	g0246.w = dot(grad6, select(t0, t1, (int3){ 0,-1,-1}));
+	g1357.w = dot(grad7, select(t0, t1, (int3){-1,-1,-1}));
+
+	float3 r = quintic(t0);
+	float4 gx0123 = lerp4(r.x, g0246, g1357);
+	float2 gy01 = lerp2(r.y, gx0123.xz, gx0123.yw);
+	float gz = lerp1(r.z, gy01.x, gy01.y);
+
+	return gz;
+}
+
+
+float gradient_noise_d(__global const float3* gradient_table, double3 p)
+{
+	// Round to lowest integer boundary
+	double3 pos0 = floor(p);
+
+	// Convert to integer and get cube corners
+	float3 cube_pos0 = convert_float3(pos0);
+	float3 cube_pos1 = cube_pos0 + 1;
+
+	// Get fractional to the lower corner and convert to float
+	float3 t0 = convert_float3(p - pos0);
+
+	// Get fractional to upper cube corner
+	float3 t1 = t0 - 1;
+
+	return gradient_noise_inner(gradient_table, cube_pos0, cube_pos1, t0, t1);
+}
+~~~
+
+There is a crazy amount of work you can do to make this even faster, a couple of examples are:
+
+* The integer hashing is quite slow. Vectorising it is pointless but doing some form of float hash can give significant speed gains (with potential vendor differences).
+* The lookup table can be condensed and maybe moved into constant memory.
+
+It's already pretty fast but the most important additions I'd suggest are to use multiple noise functions: experiment with value noise, reduce the problem from 3D to 2D, anything. Getting great performance requires domain-specific knowledge of the patterns you're trying to emulate and an appreciation for how much you can cheat.
+
+
+##### Memorising _MM_SHUFFLE parameters
+
+
+The SSE code above contains a few calls to some cute little templates that replace use of the `_MM_SHUFFLE` macro. It's a particularly nasty macro to remember, especially when multiple calls use it differently. Here's the templates that help make life a little easier:
+
+~~~cpp
+namespace simd
+{
+	enum VectorSelect
+	{
+		Ax = 0, Ay = 1, Az = 2, Aw = 3,
+		Bx = 8, By = 9, Bz = 10, Bw = 11,
+	};
+
+
+	template <VectorSelect S0, VectorSelect S1, VectorSelect S2, VectorSelect S3>
+	inline v128f shuffle_ps(v128f x, v128f y)
+	{
+		STATIC_ASSERT(S0 >= Ax && S0 <= Aw);
+		STATIC_ASSERT(S1 >= Ax && S1 <= Aw);
+		STATIC_ASSERT(S2 >= Bx && S2 <= Bw);
+		STATIC_ASSERT(S3 >= Bx && S3 <= Bw);
+		return _mm_shuffle_ps(x, y, S0 + S1 * 4 + (S2 - Bx) * 16 + (S3 - Bx) * 64);
+	}
+
+	template<VectorSelect S0, VectorSelect S1, VectorSelect S2, VectorSelect S3>
+	inline v128f blend_ps(v128f x, v128f y)
+	{
+		STATIC_ASSERT(S0 == Ax || S0 == Bx);
+		STATIC_ASSERT(S1 == Ay || S1 == By);
+		STATIC_ASSERT(S2 == Az || S2 == Bz);
+		STATIC_ASSERT(S3 == Aw || S3 == Bw);
+		return _mm_blend_ps(x, y, (S0 / Bx) *  1 + (S1 / By) *  2 + (S2 / Bz) *  4 + (S3 / Bw) *  8);
+	}
+
+	template<VectorSelect S0, VectorSelect S1, VectorSelect S2>
+	inline v128f blend_ps(v128f x, v128f y)
+	{
+		STATIC_ASSERT(S0 == Ax || S0 == Bx);
+		STATIC_ASSERT(S1 == Ay || S1 == By);
+		STATIC_ASSERT(S2 == Az || S2 == Bz);
+		return _mm_blend_ps(x, y, (S0 / Bx) *  1 + (S1 / By) *  2 + (S2 / Bz) *  4);
+	}
+
+
+	template <VectorSelect S0, VectorSelect S1, VectorSelect S2, VectorSelect S3>
+	inline v128i shuffle_epi32(v128i x)
+	{
+		STATIC_ASSERT(S0 >= Ax && S0 <= Aw);
+		STATIC_ASSERT(S1 >= Ax && S1 <= Aw);
+		STATIC_ASSERT(S2 >= Ax && S2 <= Aw);
+		STATIC_ASSERT(S3 >= Ax && S3 <= Aw);
+		return _mm_shuffle_epi32(x, S0 + S1 * 4 + S2 * 16 + S3 * 64);
+	}
+
+
+	inline v128f lerp(v128f t, v128f a, v128f b)
+	{
+		v128f r = _mm_sub_ps(b, a);
+		r = _mm_mul_ps(r, t);
+		r = _mm_add_ps(r, a);
+		return r;
+	}
+}
+~~~
+
+The static assert should nicely catch any errors you make at compile-time, as well as providing implicit documentation on the valid range of inputs.
