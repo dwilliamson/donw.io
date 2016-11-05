@@ -1,0 +1,36 @@
+    <header id="site-header">
+        <div class="container">
+            <a href="{{ .Site.BaseURL }}" alt="{{ .Site.Title }}"><h1 class="blog-title heading">{{ .Site.Title }}</h1></a>
+            <p class="blog-description">{{ .Site.Params.description }}</p>
+			{{ if .Site.Params.twitter }}
+        	<!-- Twitter -->
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/{{ .Site.Params.twitter }}" title="@{{ .Site.Params.twitter }} on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@{{ .Site.Params.twitter }}</span> </a>
+        	</li>
+        	{{ end }}
+			{{ if .Site.Params.github }}
+        	<!-- github -->
+        	<li class="navigation__item">
+            	<a href="https://github.com/{{ .Site.Params.github }}" title="{{ .Site.Params.github }} on github"> <i class='fa fa-github'></i> <span class="label">{{ .Site.Params.github }}</span> </a>
+        	</li>
+        	{{ end }}        
+            {{ if .Site.Params.github2 }}
+            <!-- github -->
+            <li class="navigation__item">
+                <a href="https://github.com/{{ .Site.Params.github2 }}" title="{{ .Site.Params.github2 }} on github"> <i class='fa fa-github'></i> <span class="label">{{ .Site.Params.github2 }}</span> </a>
+            </li>
+            {{ end }}        
+			{{ if .Site.Params.bitbucket }}
+        	<!-- Bitbucket -->
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/{{ .Site.Params.bitbucket }}" title="{{ .Site.Params.bitbucket }} on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">{{ .Site.Params.bitbucket }}</span> </a>
+        	</li>
+        	{{ end }}
+			{{ if .Site.Params.linkedin }}
+        	<!-- Linkedin -->
+        	<li class="navigation__item">
+            	<a href="http://no.linkedin.com/in/{{ .Site.Params.linkedin }}/en" title="Linkedin"> <i class='fa fa-linkedin'></i> <span class="label">Linkedin</span> </a>
+        	</li>
+        	{{ end }}
+        </div>
+    </header>
