@@ -154,27 +154,50 @@ $$r = \sqrt{\frac{d^2}{2(1 - cos(\alpha))}}$$</p>
                 </span>
             </section>
         </section>
-                
-        <section id="comments">
-            <div id="disqus_thread" class="post-comments"></div>
-            <script type="text/javascript">
-              if (window.location.hostname != "localhost") {
-                var disqus_shortname = 'gazoo';
-                (function() {
-                  var dsq = document.createElement('script');
-                  dsq.type = 'text/javascript';
-                  dsq.async = true;
-                  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-                  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              }
-            </script>
-            <noscript>
-              Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
-            </noscript>
-        </section>
-                
     </footer>
+    
+<div id="gh-comments">
+    <br/><br/>
+    <h6>COMMENTS</h6>
+    <div id="gh-comments-list">
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    
+
+    var url = "https://github.com/dwilliamson/donw.io/issues/" + ""
+    var api_url = "https://api.github.com/repos/dwilliamson/donw.io/issues/" + "" + "/comments"
+
+    $(document).ready(function () {
+        $.ajax(api_url, {
+            headers: {Accept: "application/vnd.github.v3.html+json"},
+            dataType: "json",
+            success: function(comments) {
+                $("#gh-comments-list").append("Visit the <b><a href='" + url + "'>Github Issue</a></b> to comment on this post");
+                $.each(comments, function(i, comment) {
+
+                    var date = new Date(comment.created_at);
+
+                    var t = "<div id='gh-comment'>";
+                    t += "<img src='" + comment.user.avatar_url + "' width='24px'>";
+                    t += "<b><a href='" + comment.user.html_url + "'>" + comment.user.login + "</a></b>";
+                    t += " posted at ";
+                    t += "<em>" + date.toUTCString() + "</em>";
+                    t += "<div id='gh-comment-hr'></div>";
+                    t += comment.body_html;
+                    t += "</div>";
+                    $("#gh-comments-list").append(t);
+                });
+            },
+            error: function() {
+                $("#gh-comments-list").append("Comments are not open for this post yet.");
+            }
+        });
+    });
+
+</script>
 </article>
 	</div>
 </main>

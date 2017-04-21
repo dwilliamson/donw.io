@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/std-function-alt/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2016-10-06T00:04:20&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.15" />
+        <title>A Simpler, Bindable std::function &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">A Simpler, Bindable std::function</h3>
+    </header>
+
+    <section class="post-content">
+        
+
+<p>The purpose of <code>std::function</code> is to be a unified abstraction around callable entities such as:</p>
+
+<ul>
+<li>Free functions (including class static functions).</li>
+<li>Class methods (class member functions).</li>
+<li><code>operator()</code>-callable objects (functors).</li>
+<li>Lambas.</li>
+</ul>
+
+<p>Each of these resolve to different types and can not be readily assigned to the same type without library intervention. <code>std::function</code> can be combined with <code>std::bind</code> to forward pre-defined values to a function, only requiring the caller to pass unspecified values. A simple example would be:</p>
+
+<pre><code class="language-cpp">// Bind a method to an object 
+std::function&lt;void()&gt; f = std::bind(&amp;Class::method, &amp;class_instance);
+
+// Method is now callable as a void() function
+f();
+</code></pre>
+
+<p>Contents of this blog post:</p>
+
+<ul>
+<li><a href="#motivation:90fb4ac868415acc09e734b00e226dab">Motivation</a></li>
+<li><a href="#wrapping-function-pointers:90fb4ac868415acc09e734b00e226dab">Wrapping Function Pointers</a></li>
+<li><a href="#the-virtual-abstraction:90fb4ac868415acc09e734b00e226dab">The Virtual Abstraction</a></li>
+<li><a href="#wrapping-class-functions:90fb4ac868415acc09e734b00e226dab">Wrapping Class Functions</a></li>
+<li><a href="#storing-parameter-references:90fb4ac868415acc09e734b00e226dab">Storing Parameter References</a></li>
+<li><a href="#storing-parameter-copies:90fb4ac868415acc09e734b00e226dab">Storing Parameter Copies</a></li>
+<li>A Case for Language Support</li>
+<li>DO NOT USE std::function Variants</li>
+</ul>
+
+<hr />
+
+<h5 id="motivation:90fb4ac868415acc09e734b00e226dab">Motivation</h5>
+
+<p>While these types are largely well written within the scope of the problem they set out to solve, there is a lot of room for improvement if you&rsquo;re prepared to compromise. Specifically, these issues can be addressed:</p>
+
+<ul>
+<li>The implementations are very large and drag in many thousands of lines of code that slow compile times and lead to more generated code than there needs to be.</li>
+<li>Debug builds are incredibly important and games should require them to perform well. STL implementations in particular lead to a maze of poorly-performing code that&rsquo;s very difficult to step-debug. That your implementation reduces to a single instruction in release is pointless if it renders your debug builds unusable.</li>
+<li>Large amounts of generated template code leads to an increased burden on the linker in builds that strive to coalesce sections of generated code that are the same.</li>
+<li>Simpler template code allows compilers to easier reason about side-effects and inline/discard more generated code.</li>
+<li>Compilers are notoriously bad at reporting user errors with template libraries. Simpler template code reduces this issue but will not solve it completely.</li>
+<li>STL versions differ between platforms, with enough subtle differences to cause a maintenance burden. STLport used to be a common way of addressing this but that hasn&rsquo;t been updated in many years.</li>
+</ul>
+
+<p>It&rsquo;s important to bear in mind that the STL needs to cater for the needs of as many users as possible. We, in comparison, need to cater for orders of magnitude less scenarios and have room to work with much simpler code. As long as the implementation does also not introduce unnecessary technical debt (e.g you don&rsquo;t try to write a full-blown replacement), the returns can be good.</p>
+
+<p>Some compromises made:</p>
+
+<ul>
+<li>Bind all parameters or no parameters. Partial parameter lists are not supported.</li>
+<li>There is no support for positional parameter reassignment or reuse.</li>
+<li>Method pointers are always bound to an object.</li>
+<li>Functions transfer ownership on copy.</li>
+<li>No explicit allocator model (my main use-case could source non-heap allocations without this).</li>
+</ul>
+
+<p>The loss of more general argument binding was a net-win for me considering that everywhere I&rsquo;ve rolled out a similar solution in the past, people would complain of API complexity. The limited use-cases for partial argument binding did not warrant the obsfuscated call sites and larger implementation, especially given modern C++ supports lambdas.</p>
+
+<p>To summarise; this article will build a much simpler, bindable std::function with no standard library dependencies.</p>
+
+<hr />
+
+<h5 id="wrapping-function-pointers:90fb4ac868415acc09e734b00e226dab">Wrapping Function Pointers</h5>
+
+<p>First comes the class itself:</p>
+
+<pre><code class="language-cpp">// Introduce the class as a forward declaration only, requiring specialisations
+// to specify valid instantiations. Function call arguments typed with 
+// variadic templates.
+template &lt;typename Functor, typename... Arguments&gt;
+struct Function;
+
+// Specialisation with function signature
+template &lt;typename Return, typename... Arguments&gt;
+struct Function&lt;Return(Arguments...)&gt;
+{
+    // Call operator for the function, passing arguments as
+    // rvalue references so that perfect forwarding can be used
+    Return operator() (Arguments&amp;&amp;... arguments);
+};
+</code></pre>
+
+<p>The easiest case to address is binding free functions:</p>
+
+<pre><code class="language-cpp">template &lt;typename Return, typename... Arguments&gt;
+struct Function&lt;Return(Arguments...)&gt;
+{
+    Function(Return (*function)(Arguments...)) : arguments(arguments) { }
+
+    Return operator() (Arguments&amp;&amp;... arguments)
+    {
+        // Unpack the arguments and forward them onto the user function
+        return function(std::forward&lt;Arguments&gt;(arguments)...);
+    }
+
+    // Function pointer that matches template signature
+    Return (*function)(Arguments...);
+};
+
+int fn(char, short) {   }
+
+// Example construction and use
+Function&lt;int(char, short)&gt; f(&amp;fn);
+f('a', 1);
+</code></pre>
+
+<p>When used in combination with rvalue reference parameters, <code>std::forward&lt;T&gt;(t)</code> is a wrapper around <code>static_cast&lt;T&amp;&amp;&gt;(t)</code>. This is a new C++11 construct that can be used to employ perfect forwarding of function arguments to another function; an <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm">historically tricky problem</a> with no ideal solution. From <a href="http://scottmeyers.blogspot.co.uk/2012/11/on-superfluousness-of-stdmove.html">a talk</a> by Scott Meyers, pseudo-code for the implementation is:</p>
+
+<pre><code class="language-cpp">template&lt;typename T&gt; T&amp;&amp; std::forward(T&amp;&amp; obj)
+{ 
+    if (T is a reference)
+        return (T&amp;)obj;     // return obj as an lvalue 
+    else
+        return (T&amp;&amp;)obj;    // return obj as an rvalue 
+}
+</code></pre>
+
+<p>One possible implementation would be:</p>
+
+<pre><code class="language-cpp">// If a type is a reference, partial specialisations will remove it
+template &lt;typename T&gt; struct RemoveReferenceImpl        { using Type = T; };
+template &lt;typename T&gt; struct RemoveReferenceImpl&lt;T&amp;&gt;    { using Type = T; };
+template &lt;typename T&gt; struct RemoveReferenceImpl&lt;T&amp;&amp;&gt;   { using Type = T; };
+
+// Helper to automate typename prefix and ::Type specification
+template &lt;typename T&gt; using RemoveReference = typename RemoveReferenceImpl&lt;T&gt;::Type;
+
+// Use RemoveReference to force everything through the else branch
+template &lt;typename T&gt; T&amp;&amp; Forward(RemoveReference&lt;T&gt;&amp; arg)
+{
+    return static_cast&lt;T&amp;&amp;&gt;(arg);
+}
+</code></pre>
+
+<p>There is no actual need for a <code>std::forward</code> function as you can just use <code>static_cast&lt;T&amp;&amp;&gt;(t)</code> wherever you intend to use perfect forwarding. Introducing such a function requires you pay a library overhead for potentially making call sites a little clearer.</p>
+
+<hr />
+
+<h5 id="the-virtual-abstraction:90fb4ac868415acc09e734b00e226dab">The Virtual Abstraction</h5>
+
+<p>Right now this is a pretty pointless abstraction as there is no benefit to using <code>Function</code> over a simple function pointer. The next step would be to add support for functors and lambdas. There&rsquo;s no exceptional reason for me to support functors, it&rsquo;s more that their support falls out of the code required for lambas. The use cases are:</p>
+
+<pre><code class="language-cpp">// Support lambdas with capture
+int x = 3;
+Function&lt;int(char, short)&gt; f0([=](char a, short b){ return a + b + c; } -&gt; int);
+f0('a', 1);
+
+// Support functors with state
+struct Functor
+{
+    Functor(int x) : x(x) { }
+    int operator () (char a, short b) const { return a + b + c; }
+    int x;
+};
+Function&lt;int(char, short)&gt; f1(Functor());
+f1('b', 2);
+</code></pre>
+
+<p><code>Function</code> can clearly no longer store just a function pointer; the object stored must vary depending on the type of object used to create it and must expose a callable interface shared by all types. The most general solution involves creating an abstract base class for callable objects to implement:</p>
+
+<pre><code class="language-cpp">// Anonymous Caller interface
+template &lt;typename Return, typename... Arguments&gt;
+struct Caller;
+{
+    // Destructor needed for cleaning up lambda/functor state
+    virtual ~Caller() { }
+
+    virtual Return Call(Arguments&amp;&amp;...) = 0;
+};
+</code></pre>
+
+<p>This can then be implemented by a single type that can store references to functions, functors or lambdas:</p>
+
+<pre><code class="language-cpp">template &lt;typename Functor, typename Return, typename... Arguments&gt;
+struct FunctorCaller : public Caller&lt;Return, Arguments...&gt;
+{
+    FunctorCaller(const Functor&amp; functor)
+        : functor(functor)
+    {
+    }
+    virtual Return Call(Arguments&amp;&amp;... arguments) final
+    {
+        return functor(Forward&lt;Arguments&gt;(arguments)...);
+    }
+
+    // A copy of the passed in object, allowing functor/lambda state to be preserved and used later
+    Functor functor;
+};
+</code></pre>
+
+<p>With those in place, <code>Function</code> can be updated:</p>
+
+<pre><code class="language-cpp">template &lt;typename Return, typename... Arguments&gt;
+struct Function&lt;Return(Arguments...)&gt;
+{
+    // Templated constructor to accept any callable object
+    template &lt;typename Functor&gt;
+    Function(const Functor&amp; functor)
+        : caller(new FunctorCaller&lt;Functor, Return, Arguments...&gt;(functor))
+    {
+    }
+
+    ~Function()
+    {
+        // Cleanup functor/lambda state
+        delete caller;
+    }
+
+    Return operator() (Arguments&amp;&amp;... arguments)
+    {
+        // Unpack the arguments and forward them onto the caller implementation
+        return caller-&gt;Call(Forward&lt;Arguments&gt;(arguments)...);
+    }
+
+    // Pointer to caller implementation
+    Caller&lt;Return, Arguments...&gt;* caller;
+};
+</code></pre>
+
+<hr />
+
+<h5 id="wrapping-class-functions:90fb4ac868415acc09e734b00e226dab">Wrapping Class Functions</h5>
+
+<p>The abstraction as it stands can accept class methods as construction arguments but there are some problems:</p>
+
+<ul>
+<li>The syntax for calling methods is different from that of functions and so will cause a compile errors.</li>
+<li>You need an object pointer to call the method on and that isn&rsquo;t specified or stored anywhere.</li>
+<li>Methods can haave const/volatile qualifiers that change its type.</li>
+</ul>
+
+<p>Another implementation of <code>Caller</code> can be added to store and calli methods:</p>
+
+<pre><code class="language-cpp">// Make no explicit method pointer type, instead allowing it to vary so that const/volatile differences
+// can use the same MethodCaller
+template &lt;typename Object, typename Method, typename Return, typename... Arguments&gt;
+struct MethodCaller : public Caller&lt;Return, Arguments...&gt;
+{
+    // Construct with both 'this' pointer and method pointer
+    MethodCaller(Object* object, Method method)
+        : object(object)
+        , method(method)
+    {
+    }
+
+    Return Call(Arguments&amp;&amp;... arguments) final
+    {
+        return (object-&gt;*method)(Forward&lt;Arguments&gt;(arguments)...);
+    }
+
+    Object* object;
+    Method method;
+};
+
+</code></pre>
+
+<p>The implementation of <code>Function</code> needs two further constructors:</p>
+
+<pre><code class="language-cpp">// Construct from non-const methods and bind to an object
+template &lt;typename Object&gt;
+Function(Object* object, Return(Object::*method)(Arguments...))
+    : caller(new MethodCaller&lt;Object, Return(Object::*)(Arguments...), Return, Arguments...&gt;
+        (object, method))
+{
+}
+
+// Construct from const methods 
+template &lt;typename Object&gt;
+Function(const Object* object, Return(Object::*method)(Arguments...) const)
+    : caller(new MethodCaller&lt;const Object, Return(Object::*)(Arguments...) const, Return, Arguments...&gt;
+        (object, method))
+{
+}
+</code></pre>
+
+<p>Use is simple:</p>
+
+<pre><code class="language-cpp">struct Class
+{
+    Class(int b) : b(b) { }
+    int Do(int a) { return a + b; }
+    int b;
+};
+
+Class c(3);
+Function&lt;int(int)&gt; f(&amp;c, &amp;Class::Do);
+f(2);
+</code></pre>
+
+<p>The original <code>std::function</code> requires the use of <code>std::bind</code> with the object in order to store references to methods. This simplified interface is a good example of the reduction in scope.</p>
+
+<hr />
+
+<h5 id="storing-parameter-references:90fb4ac868415acc09e734b00e226dab">Storing Parameter References</h5>
+
+<p>The next challenge is to bind parameters to specific function calls, similar to what <code>std::bind</code> does. This requires parameters passed into a <code>Function</code> to be stored within the class. With variadic templates, it would be good if we could do this:</p>
+
+<pre><code class="language-cpp">template &lt;typename... Arguments&gt;
+struct Class
+{
+    // for each argument in Arguments
+    //    add a new data member
+};
+</code></pre>
+
+<p>Unfortunately, variadic template packing/unpacking only works in terms of parameter arguments and this isn&rsquo;t directly possible. One way to achieve this is to enlist compile-time Type Lists, a concept I first saw discussed in Alexandrescu&rsquo;s <a href="http://erdani.com/index.php/books/modern-c-design/">Modern C++ Design</a>. This can be expressed by the <code>Tuple</code> class:</p>
+
+<pre><code class="language-cpp">// A Tuple is effectively a type linked list with values stored for each type
+// Repeatedly split a type list into (i, i+1...N) pairs, recursively inheriting
+// from the second half until there's nothing left; similar to Lisp's car/cdr.
+template &lt;typename First, typename... Rest&gt;
+struct Tuple : public Tuple&lt;Rest...&gt;
+{
+    using Value = First;
+    using Next = Tuple&lt;Rest...&gt;;
+
+    // Constructor for unpacking an argument list
+    // Ensure perfect parameter forwarding is used
+    Tuple(First&amp;&amp; first, Rest&amp;&amp;... rest)
+        : Next(Forward&lt;Rest&gt;(rest)...)
+        , value(first)
+    {
+    }
+
+    Value value;
+};
+
+// Terminate a tuple's type list
+template &lt;typename First&gt;
+struct Tuple&lt;First&gt;
+{
+    using Value = First;
+    // Next not here to cause compile error on attempt to reference
+
+    Tuple(First&amp;&amp; first)
+        : value(first)
+    {
+    }
+
+    First value;
+};
+</code></pre>
+
+<p><code>Tuple</code> now allows construction of arbitrary lists of types with accompanying values:</p>
+
+<pre><code class="language-cpp">using T = Tuple&lt;int, char, float, double&gt;;
+T tuple(10, 65, 3.141592f, 2.718281);
+</code></pre>
+
+<p>Starting with Functors, we can build a new <code>Caller</code> implementation that copies parameter references from a variadic template argument list:</p>
+
+<pre><code class="language-cpp">// No need to specify both an argument list and a bound argument list as there
+// is only support for binding all arguments and those are encoded in 'Functor'
+template &lt;typename Functor, typename Return, typename... BoundArguments&gt;
+struct BoundFunctorCaller : public Caller&lt;Return&gt;
+{
+    BoundFunctorCaller(const Functor&amp; functor, BoundArguments&amp;&amp;... arguments)
+        : functor(functor)
+        , arguments(Forward&lt;BoundArguments&gt;(arguments)...)
+    {
+    }
+
+    // No Call implementation yet; that's covered later
+
+    Functor functor;
+
+    // Unpack bound template arguments to create Tuple type list of them and their values
+    Tuple&lt;BoundArguments...&gt; arguments;
+};
+</code></pre>
+
+<p>The associated <code>Function</code> constructor can look like:</p>
+
+<pre><code class="language-cpp">template &lt;typename Functor, typename... BoundArguments&gt;
+Function(const Functor&amp; functor, BoundArguments&amp;&amp;... arguments)
+    : caller(
+        new BoundFunctorCaller&lt;Functor, Return, BoundArguments...&gt;
+            (functor, Forward&lt;BoundArguments&gt;(arguments)...))
+{
+}
+</code></pre>
+
+<p>As mentioned in the title, this only stores references to the incoming parameters and we want to store copies. If you pass an <code>int</code> lvalue to the constructor, the argument type will be deduced as <code>int&amp;</code>. Even worse, the constructor will refuse to accept rvalues of type <code>int</code>.</p>
+
+<hr />
+
+<h5 id="storing-parameter-copies:90fb4ac868415acc09e734b00e226dab">Storing Parameter Copies</h5>
+
+<p>To make the problem a little clearer, consider this test:</p>
+
+<pre><code class="language-cpp">// Deduce a packed list of template argument types, construct a Tuple and display its type
+template &lt;typename... BoundArguments&gt;
+void Deduce(BoundArguments&amp;&amp;... arguments)
+{
+    using T = Tuple&lt;BoundArguments...&gt;;
+    T bound(Forward&lt;BoundArguments&gt;(arguments)...);
+    printf(&quot;%s\n&quot;, typeid(T).name());
+}
+
+// Test
+Type t;
+int x = 1;
+Deduce(x, t);
+
+// This causes a compile error
+//Deduce(1, Type());
+
+// OUTPUT:
+// struct Tuple&lt;int &amp;,struct Type &amp;&gt;
+
+</code></pre>
+
+<p>It&rsquo;s clear that the bound argument types need to be transformed into something that stores copies instead of references. The specific goals of this transformation would be:</p>
+
+<ul>
+<li>If the type is a C array convert it to a pointer.</li>
+<li>If the type is a function type convert to a function pointer.</li>
+<li>Else just remove all cv-qualifiers and references but maintain pointers.</li>
+</ul>
+
+<p>You&rsquo;ll need a whole bunch of little tools before you can address this problem and they can be reduced to:</p>
+
+<pre><code class="language-cpp">// Types can inherit from these to conveniently aggregate true/false values
+struct True     { static const bool value = true; };
+struct False    { static const bool value = false; };
+
+// Checks to see if a type is a C array
+template &lt;typename TYPE&gt;        struct IsArray : False { };
+template &lt;typename TYPE&gt;        struct IsArray&lt;TYPE[]&gt; : True{};
+template &lt;typename TYPE, int N&gt; struct IsArray&lt;TYPE[N]&gt; : True{};
+
+// Checks to see if a type is a function type
+template &lt;typename&gt;                 struct IsFunction : False { };
+template &lt;class Ret, class... Args&gt; struct IsFunction&lt;Ret(Args...)&gt; : True{};
+template &lt;class Ret, class... Args&gt; struct IsFunction&lt;Ret(Args..., ...)&gt; : True{};
+
+// Remove const from a type if it exists
+template &lt;typename TYPE&gt; struct RemoveConstImpl             { using Type = TYPE; };
+template &lt;typename TYPE&gt; struct RemoveConstImpl&lt;const TYPE&gt; { using Type = TYPE; };
+template &lt;typename TYPE&gt; using  RemoveConst = typename RemoveConstImpl&lt;TYPE&gt;::Type;
+
+// Remove volatile from a type if it exists
+template &lt;typename TYPE&gt; struct RemoveVolatileImpl                  { using Type = TYPE; };
+template &lt;typename TYPE&gt; struct RemoveVolatileImpl&lt;volatile TYPE&gt;   { using Type = TYPE; };
+template &lt;typename TYPE&gt; using  RemoveVolatile = typename RemoveVolatileImpl&lt;TYPE&gt;::Type;
+
+// Remove const/volatile from a type if it exists
+template &lt;typename TYPE&gt; using  RemoveCV = RemoveConst&lt;RemoveVolatile&lt;TYPE&gt;&gt;;
+
+// Remove a pointer from a type if it exists
+template &lt;typename TYPE&gt; struct RemovePointerImpl           { using Type = TYPE; };
+template &lt;typename TYPE&gt; struct RemovePointerImpl&lt;TYPE*&gt;    { using Type = TYPE; };
+template &lt;typename TYPE&gt; using  RemovePointer = typename RemovePointerImpl&lt;TYPE&gt;::Type;
+
+// Remove a reference from a type if it exists
+template &lt;typename TYPE&gt; struct RemoveReferenceImpl         { using Type = TYPE; };
+template &lt;typename TYPE&gt; struct RemoveReferenceImpl&lt;TYPE&amp;&gt;  { using Type = TYPE; };
+template &lt;typename TYPE&gt; struct RemoveReferenceImpl&lt;TYPE&amp;&amp;&gt; { using Type = TYPE; };
+template &lt;typename TYPE&gt; using  RemoveReference = typename RemoveReferenceImpl&lt;TYPE&gt;::Type;
+
+// Remove array qualifiers if present
+template &lt;typename TYPE&gt;        struct RemoveExtentImpl                 { using Type = TYPE; };
+template &lt;typename TYPE&gt;        struct RemoveExtentImpl&lt;TYPE[]&gt;         { using Type = TYPE; };
+template &lt;typename TYPE, int N&gt; struct RemoveExtentImpl&lt;TYPE[N]&gt;    { using Type = TYPE; };
+template &lt;typename TYPE&gt;        using  RemoveExtent = typename RemoveExtentImpl&lt;TYPE&gt;::Type;
+
+// Adds a pointer qualifier to a type
+template &lt;typename TYPE&gt; using AddPointer = RemoveReference&lt;TYPE&gt;*;
+
+// Conditional type selection
+template &lt;bool, typename A, typename B&gt;         struct IfImpl { using Type = B; };
+template&lt;typename A, typename B&gt;                struct IfImpl&lt;true, A, B&gt; { using Type = A; };
+template &lt;bool Cond, typename A, typename B&gt;    using  If = typename IfImpl&lt;Cond, A, B&gt;::Type;
+</code></pre>
+
+<p>With these and the transformation requirements, a new type similar to <code>std::decay</code> can be introduced:</p>
+
+<pre><code class="language-cpp">template&lt;class TYPE&gt;
+struct DecayImpl
+{
+    using ReflessType = RemoveReference&lt;TYPE&gt;;
+    using Type =
+        If&lt;IsArray&lt;ReflessType&gt;::value,
+            RemoveExtent&lt;ReflessType&gt;*,
+            If&lt;IsFunction&lt;ReflessType&gt;::value,
+                AddPointer&lt;ReflessType&gt;,
+                RemoveCV&lt;ReflessType&gt;&gt;&gt;;
+};
+template &lt;typename TYPE&gt; using Decay = typename DecayImpl&lt;TYPE&gt;::Type;
+</code></pre>
+
+<p><code>Decay</code> is then used to transform the type into something storable:</p>
+
+<pre><code class="language-cpp">template &lt;typename Functor, typename Return, typename... BoundArguments&gt;
+struct BoundFunctorCaller : public Caller&lt;Return&gt;
+{
+    // Unpack bound template arguments to create Tuple type list of them and their values
+    Tuple&lt;Decay&lt;BoundArguments&gt; ...&gt; arguments;
+};
+</code></pre>
+
+<p>Stored like this, parameters will have been taken out of their packed argument form and thus</p>
+
+<hr />
+
+<p>Decay functor ONLY for VC2013
+What you can achieve with custom allocators (use container storage)
+Code-gen numbers
+godbolt links
+Decay the function reference?
+Manual writing of template variants
+Use of pycgen</p>
+
+<hr />
+
+<ul>
+<li><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm</a></li>
+<li><a href="http://stackoverflow.com/questions/3582001/advantages-of-using-forward/3582313#3582313">http://stackoverflow.com/questions/3582001/advantages-of-using-forward/3582313#3582313</a></li>
+<li><a href="http://scottmeyers.blogspot.co.uk/2012/11/on-superfluousness-of-stdmove.html">http://scottmeyers.blogspot.co.uk/2012/11/on-superfluousness-of-stdmove.html</a></li>
+<li><a href="https://channel9.msdn.com/Shows/Going+Deep/Cpp-and-Beyond-2012-Scott-Meyers-Universal-References-in-Cpp11">https://channel9.msdn.com/Shows/Going+Deep/Cpp-and-Beyond-2012-Scott-Meyers-Universal-References-in-Cpp11</a></li>
+</ul>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+                <span class="f-post-tags"><i class="fa fa-tag"></i>
+                c++
+                </span>
+            
+            <p class="f-post-time"><time datetime="2016-10-06T00:04:20&#43;01:00">October 6, 2016</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=A%20Simpler%2c%20Bindable%20std%3a%3afunction&url=http%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+                        
+    </footer>
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        messageStyle: "none",
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            displayMath: [['$$','$$'], ['\[','\]']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: { equationNumbers: { autoNumber: "AMS" },
+                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+          }
+        });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+
+</body>
+</html>

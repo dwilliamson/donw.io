@@ -8,7 +8,6 @@ tag = "tags"
 [params]
  author = "Don Williamson"
  description = "Don Williamson, Consultant Game Technology Programmer/Director of Celtoys"
- disqusShortname = "gazoo"
  twitter = "Donzanoid"
  github = "dwilliamson"
  github2 = "Celtoys"

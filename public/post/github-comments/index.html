@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/github-comments/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2017-04-21T20:30:00&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.15" />
+        <title>Replacing Disqus with Github Comments &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">Replacing Disqus with Github Comments</h3>
+    </header>
+
+    <section class="post-content">
+        
+
+<p>I&rsquo;ve been considering removing comments from this blog for a while; mainly because the site doesn&rsquo;t
+trigger much discussion and I didn&rsquo;t like keeping the overhead of <a href="https://disqus.com/">Disqus</a>
+around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
+on people loading the site (although you really should be using the likes of <a href="https://www.eff.org/privacybadger">Privacy Badger</a> and <a href="https://github.com/gorhill/uBlock">uBlock Origin</a>).</p>
+
+<p>This post is Hugo-specific but the very little code required can be adapted to any website.</p>
+
+<h5 id="what-s-wrong-with-disqus:af117f676af06886470c26b129325aaa">What&rsquo;s Wrong with Disqus?</h5>
+
+<p>This is a typical request log with Disqus <em>enabled</em>:</p>
+
+<p><center><a href="/img/GithubComments/DisqusLoadLogHigh.png"><img src="/img/GithubComments/DisqusLoadLog.png" alt="d" /></a></center></p>
+
+<p>This is the same request log with Disqus <em>disabled</em>:</p>
+
+<p><center><a href="/img/GithubComments/LoadLogHigh.png"><img src="/img/GithubComments/LoadLog.png" alt="d" /></a></center></p>
+
+<p><center><strong><em>WAT!?</em></strong></center></p>
+
+<p>Relevant points are:</p>
+
+<ul>
+<li>Load-time goes from 6 seconds to 2 seconds.</li>
+<li>There are 105 network requests vs. 16.</li>
+<li>There are a lot of non-relevant requests going through to networks that will be tracking your movements.</li>
+</ul>
+
+<p>Among the networks you can find:</p>
+
+<ul>
+<li><code>disqus.com</code> - Obviously!</li>
+<li><code>google-analytics.com</code> - Multiple requests; no idea who&rsquo;s capturing your movements.</li>
+<li><code>connect.facebook.net</code> - If you&rsquo;re logged into Facebook, they know you visit this site.</li>
+<li><code>accounts.google.com</code> - Google will also map your visits to this site with any of your Google accounts.</li>
+<li><code>pippio.com</code> - LiveRamp identify mapping for harvesting your details for commercial gain.</li>
+<li><code>bluekai.com</code> - Identity tracking for marketing campaigns.</li>
+<li><code>crwdcntrl.net</code> - Pretty suspect site listed as referenced by viruses and spyware.</li>
+<li><code>exelator.com</code> - More identity and movement tracking site which even has a virus named after it!</li>
+<li><code>doubleclick.net</code> - We all know this one: ad services and movement tracking, owned by Google.</li>
+<li><code>tag.apxlv.net</code> - Very shady and <a href="https://better.fyi/trackers/apxlv.com/">tricky to pin-point an owner</a> as they obsfuscate their domain (I didn&rsquo;t even know this was a thing!). Adds a tracking pixel to your site.</li>
+<li><code>adnxs.com</code> - More tracking garbage, albeit slightly <a href="https://www.theguardian.com/technology/2012/apr/23/adnxs-tracking-trackers-cookies-web-monitoring">more prolific</a>.</li>
+<li><code>adsymptotic.com</code> - Advertising and tracking that suppposedly uses machine learning.</li>
+<li><code>rlcdn.com</code> - Obsfuscated advertising/tracking from Rapleaf.</li>
+<li><code>adbrn.com</code> - <em>&ldquo;Deliver a personalized customer journey across devices, channels and platforms with Adbrain customer ID mapping technology.&rdquo;</em></li>
+<li><code>nexac.com</code> - Oracle&rsquo;s Datalogix, their own tracking and behavioural pattern rubbish.</li>
+<li><code>tapad.com</code> - OK, I cant&rsquo;t be bothered to search to look this up anymore.</li>
+<li><code>liadm.com</code> - More? Oh, ok, then&hellip;</li>
+<li><code>sohern.com</code> - Yup. Tracking.</li>
+<li><code>demdex.net</code> - Tracking. From Adobe.</li>
+<li><code>bidswitch.net</code> - I&rsquo;ll give you one guess&hellip;</li>
+<li><code>agkn.com</code> - &hellip;</li>
+<li><code>mathtag.com</code> - Curious name, maybe it&rsquo;s&hellip; no. It&rsquo;s tracking you.</li>
+</ul>
+
+<p>I can&rsquo;t visit many of these sites because I have them blocked in uBlock Origin so information was
+gleaned from google crawl results of the webpages and 3rd parties. Needless to say, it&rsquo;s a pretty disgusting insight into how certain free products turn you into
+the product. What&rsquo;s more worrying are the services that go to lengths to hide who they are and
+what their purposes are for tracking your movements.</p>
+
+<p>Anyway. Delete it. I&rsquo;m sorry for poisoning this site with these networks. Foward to better things&hellip;</p>
+
+<h5 id="using-github-for-comments:af117f676af06886470c26b129325aaa">Using Github for Comments</h5>
+
+<p>I was discussing removing Disqus with others and <a href="https://twitter.com/HarryDenholm">@HarryDenholm</a>
+mentioned that a friend managed to get comments on their Github-hosted static blog using Pull Requests. I thought this was pretty genius and wanted to figure out if I could do something
+similar for Hugo on external sites.</p>
+
+<p>The answer came from the <a href="https://developer.github.com/v3/issues/">Github Issue API</a>. The process is quite simple and is already active on this blog post:</p>
+
+<ol>
+<li>For each blog post you make, open an Issue on some repo on Github. The Issue for this post is <a href="https://github.com/dwilliamson/donw.io/issues/1">here</a>.</li>
+<li>All comments are posted directly on Github.</li>
+<li>Add some Javascript to your site that reads Github&rsquo;s JSON description of the Issue comments and displays them.</li>
+</ol>
+
+<p>The benefits are immediate:</p>
+
+<ul>
+<li>There is zero tracking of you as a reader to this website. Github themselves only see network read requests from unnamed IPs.</li>
+<li>All comments are written in <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">Markdown</a>, allowing inline code, images, lists and formatting.</li>
+<li>You can use Github&rsquo;s notifications to informed of responses; you don&rsquo;t even have to visit this site to read and contribute to discussion.</li>
+<li>Although somewhat superflous, you can also integrate <a href="https://developer.github.com/v3/reactions/">Github Reactions</a> (maybe useful on larger sites).</li>
+</ul>
+
+<p>You don&rsquo;t need an API key to read Github JSON data; it&rsquo;s free for all to access. The comments for
+this post can be read as JSON <a href="https://api.github.com/repos/dwilliamson/donw.io/issues/1/comments">here</a>. The first comment looks like:</p>
+
+<pre><code class="language-json">{
+    &quot;url&quot;: &quot;https://api.github.com/repos/dwilliamson/donw.io/issues/comments/295004846&quot;,
+    &quot;html_url&quot;: &quot;https://github.com/dwilliamson/donw.io/issues/1#issuecomment-295004846&quot;,
+    &quot;issue_url&quot;: &quot;https://api.github.com/repos/dwilliamson/donw.io/issues/1&quot;,
+    &quot;id&quot;: 295004846,
+    &quot;user&quot;: {
+        &quot;login&quot;: &quot;dwilliamson&quot;,
+        &quot;id&quot;: 1532903,
+        &quot;avatar_url&quot;: &quot;https://avatars3.githubusercontent.com/u/1532903?v=3&quot;,
+        &quot;gravatar_id&quot;: &quot;&quot;,
+        &quot;url&quot;: &quot;https://api.github.com/users/dwilliamson&quot;,
+        &quot;html_url&quot;: &quot;https://github.com/dwilliamson&quot;,
+        &quot;followers_url&quot;: &quot;https://api.github.com/users/dwilliamson/followers&quot;,
+        &quot;following_url&quot;: &quot;https://api.github.com/users/dwilliamson/following{/other_user}&quot;,
+        &quot;gists_url&quot;: &quot;https://api.github.com/users/dwilliamson/gists{/gist_id}&quot;,
+        &quot;starred_url&quot;: &quot;https://api.github.com/users/dwilliamson/starred{/owner}{/repo}&quot;,
+        &quot;subscriptions_url&quot;: &quot;https://api.github.com/users/dwilliamson/subscriptions&quot;,
+        &quot;organizations_url&quot;: &quot;https://api.github.com/users/dwilliamson/orgs&quot;,
+        &quot;repos_url&quot;: &quot;https://api.github.com/users/dwilliamson/repos&quot;,
+        &quot;events_url&quot;: &quot;https://api.github.com/users/dwilliamson/events{/privacy}&quot;,
+        &quot;received_events_url&quot;: &quot;https://api.github.com/users/dwilliamson/received_events&quot;,
+        &quot;type&quot;: &quot;User&quot;,
+        &quot;site_admin&quot;: false
+    },
+    &quot;created_at&quot;: &quot;2017-04-18T22:39:16Z&quot;,
+    &quot;updated_at&quot;: &quot;2017-04-18T22:39:16Z&quot;,
+    &quot;body&quot;: &quot;This is a comment&quot;
+},    
+</code></pre>
+
+<p>The first step is to add a new template to your partials directory that reads and displays Github
+comments (<code>comments.html</code>). Here&rsquo;s the code I use:</p>
+
+<pre><code class="language-js">var url = &quot;https://github.com/dwilliamson/donw.io/issues/&quot; + {{ $.Params.ghcommentid }}
+var api_url = &quot;https://api.github.com/repos/dwilliamson/donw.io/issues/&quot; + {{ $.Params.ghcommentid }} + &quot;/comments&quot;
+
+$(document).ready(function () {
+    $.ajax(api_url, {
+        headers: {Accept: &quot;application/vnd.github.v3.html+json&quot;},
+        dataType: &quot;json&quot;,
+        success: function(comments) {
+            $(&quot;#gh-comments-list&quot;).append(&quot;Visit the &lt;b&gt;&lt;a href='&quot; + url + &quot;'&gt;Github Issue&lt;/a&gt;&lt;/b&gt; to comment on this post&quot;);
+            $.each(comments, function(i, comment) {
+
+                var date = new Date(comment.created_at);
+
+                var t = &quot;&lt;div id='gh-comment'&gt;&quot;;
+                t += &quot;&lt;img src='&quot; + comment.user.avatar_url + &quot;' width='24px'&gt;&quot;;
+                t += &quot;&lt;b&gt;&lt;a href='&quot; + comment.user.html_url + &quot;'&gt;&quot; + comment.user.login + &quot;&lt;/a&gt;&lt;/b&gt;&quot;;
+                t += &quot; posted at &quot;;
+                t += &quot;&lt;em&gt;&quot; + date.toUTCString() + &quot;&lt;/em&gt;&quot;;
+                t += &quot;&lt;div id='gh-comment-hr'&gt;&lt;/div&gt;&quot;;
+                t += comment.body_html;
+                t += &quot;&lt;/div&gt;&quot;;
+                $(&quot;#gh-comments-list&quot;).append(t);
+            });
+        },
+        error: function() {
+            $(&quot;#gh-comments-list&quot;).append(&quot;Comments are not open for this post yet.&quot;);
+        }
+    });
+});
+</code></pre>
+
+<p>This can then be invoked from your blog post html:</p>
+
+<pre><code>{{ partial &quot;comments.html&quot; . }}
+</code></pre>
+
+<p>The variables it references need to be added to the header of your html page. In this case it&rsquo;s
+the single variable <code>ghcommentid</code> which is set to the number of the Issue used for comments.</p>
+
+<h5 id="summary:af117f676af06886470c26b129325aaa">Summary</h5>
+
+<p>There&rsquo;s nothing more beyond that. Technically, you could actually write your blog posts as Github
+Issues themselves and forgo the need for a blog engine. But that seems too much like using a system
+in ways it was never intended to be used.</p>
+
+<p>This website is managed on Github as <a href="https://github.com/dwilliamson/donw.io">dwilliamson/donw.io</a>.
+It contains the complete code for using Github for your comments.</p>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+                <span class="f-post-tags"><i class="fa fa-tag"></i>
+                blog
+                </span>
+            
+            <p class="f-post-time"><time datetime="2017-04-21T20:30:00&#43;01:00">April 21, 2017</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=Replacing%20Disqus%20with%20Github%20Comments&url=http%3a%2f%2fdonw.io%2fpost%2fgithub-comments%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fgithub-comments%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fgithub-comments%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+    </footer>
+    
+<div id="gh-comments">
+    <br/><br/>
+    <h6>COMMENTS</h6>
+    <div id="gh-comments-list">
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    
+
+    var url = "https://github.com/dwilliamson/donw.io/issues/" +  1 
+    var api_url = "https://api.github.com/repos/dwilliamson/donw.io/issues/" +  1  + "/comments"
+
+    $(document).ready(function () {
+        $.ajax(api_url, {
+            headers: {Accept: "application/vnd.github.v3.html+json"},
+            dataType: "json",
+            success: function(comments) {
+                $("#gh-comments-list").append("Visit the <b><a href='" + url + "'>Github Issue</a></b> to comment on this post");
+                $.each(comments, function(i, comment) {
+
+                    var date = new Date(comment.created_at);
+
+                    var t = "<div id='gh-comment'>";
+                    t += "<img src='" + comment.user.avatar_url + "' width='24px'>";
+                    t += "<b><a href='" + comment.user.html_url + "'>" + comment.user.login + "</a></b>";
+                    t += " posted at ";
+                    t += "<em>" + date.toUTCString() + "</em>";
+                    t += "<div id='gh-comment-hr'></div>";
+                    t += comment.body_html;
+                    t += "</div>";
+                    $("#gh-comments-list").append(t);
+                });
+            },
+            error: function() {
+                $("#gh-comments-list").append("Comments are not open for this post yet.");
+            }
+        });
+    });
+
+</script>
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        messageStyle: "none",
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            displayMath: [['$$','$$'], ['\[','\]']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: { equationNumbers: { autoNumber: "AMS" },
+                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+          }
+        });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+
+</body>
+</html>

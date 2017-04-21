@@ -6,8 +6,186 @@
     <description>Recent content on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 23 Oct 2016 19:14:32 +0100</lastBuildDate>
+    <lastBuildDate>Fri, 21 Apr 2017 20:30:00 +0100</lastBuildDate>
     <atom:link href="http://donw.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Replacing Disqus with Github Comments</title>
+      <link>http://donw.io/post/github-comments/</link>
+      <pubDate>Fri, 21 Apr 2017 20:30:00 +0100</pubDate>
+      
+      <guid>http://donw.io/post/github-comments/</guid>
+      <description>
+
+&lt;p&gt;I&amp;rsquo;ve been considering removing comments from this blog for a while; mainly because the site doesn&amp;rsquo;t
+trigger much discussion and I didn&amp;rsquo;t like keeping the overhead of &lt;a href=&#34;https://disqus.com/&#34;&gt;Disqus&lt;/a&gt;
+around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
+on people loading the site (although you really should be using the likes of &lt;a href=&#34;https://www.eff.org/privacybadger&#34;&gt;Privacy Badger&lt;/a&gt; and &lt;a href=&#34;https://github.com/gorhill/uBlock&#34;&gt;uBlock Origin&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;This post is Hugo-specific but the very little code required can be adapted to any website.&lt;/p&gt;
+
+&lt;h5 id=&#34;what-s-wrong-with-disqus:af117f676af06886470c26b129325aaa&#34;&gt;What&amp;rsquo;s Wrong with Disqus?&lt;/h5&gt;
+
+&lt;p&gt;This is a typical request log with Disqus &lt;em&gt;enabled&lt;/em&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;center&gt;&lt;a href=&#34;http://donw.io/img/GithubComments/DisqusLoadLogHigh.png&#34;&gt;&lt;img src=&#34;http://donw.io/img/GithubComments/DisqusLoadLog.png&#34; alt=&#34;d&#34; /&gt;&lt;/a&gt;&lt;/center&gt;&lt;/p&gt;
+
+&lt;p&gt;This is the same request log with Disqus &lt;em&gt;disabled&lt;/em&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;center&gt;&lt;a href=&#34;http://donw.io/img/GithubComments/LoadLogHigh.png&#34;&gt;&lt;img src=&#34;http://donw.io/img/GithubComments/LoadLog.png&#34; alt=&#34;d&#34; /&gt;&lt;/a&gt;&lt;/center&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;center&gt;&lt;strong&gt;&lt;em&gt;WAT!?&lt;/em&gt;&lt;/strong&gt;&lt;/center&gt;&lt;/p&gt;
+
+&lt;p&gt;Relevant points are:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Load-time goes from 6 seconds to 2 seconds.&lt;/li&gt;
+&lt;li&gt;There are 105 network requests vs. 16.&lt;/li&gt;
+&lt;li&gt;There are a lot of non-relevant requests going through to networks that will be tracking your movements.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Among the networks you can find:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;disqus.com&lt;/code&gt; - Obviously!&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;google-analytics.com&lt;/code&gt; - Multiple requests; no idea who&amp;rsquo;s capturing your movements.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;connect.facebook.net&lt;/code&gt; - If you&amp;rsquo;re logged into Facebook, they know you visit this site.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;accounts.google.com&lt;/code&gt; - Google will also map your visits to this site with any of your Google accounts.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;pippio.com&lt;/code&gt; - LiveRamp identify mapping for harvesting your details for commercial gain.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;bluekai.com&lt;/code&gt; - Identity tracking for marketing campaigns.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;crwdcntrl.net&lt;/code&gt; - Pretty suspect site listed as referenced by viruses and spyware.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;exelator.com&lt;/code&gt; - More identity and movement tracking site which even has a virus named after it!&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;doubleclick.net&lt;/code&gt; - We all know this one: ad services and movement tracking, owned by Google.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tag.apxlv.net&lt;/code&gt; - Very shady and &lt;a href=&#34;https://better.fyi/trackers/apxlv.com/&#34;&gt;tricky to pin-point an owner&lt;/a&gt; as they obsfuscate their domain (I didn&amp;rsquo;t even know this was a thing!). Adds a tracking pixel to your site.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;adnxs.com&lt;/code&gt; - More tracking garbage, albeit slightly &lt;a href=&#34;https://www.theguardian.com/technology/2012/apr/23/adnxs-tracking-trackers-cookies-web-monitoring&#34;&gt;more prolific&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;adsymptotic.com&lt;/code&gt; - Advertising and tracking that suppposedly uses machine learning.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;rlcdn.com&lt;/code&gt; - Obsfuscated advertising/tracking from Rapleaf.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;adbrn.com&lt;/code&gt; - &lt;em&gt;&amp;ldquo;Deliver a personalized customer journey across devices, channels and platforms with Adbrain customer ID mapping technology.&amp;rdquo;&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nexac.com&lt;/code&gt; - Oracle&amp;rsquo;s Datalogix, their own tracking and behavioural pattern rubbish.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tapad.com&lt;/code&gt; - OK, I cant&amp;rsquo;t be bothered to search to look this up anymore.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;liadm.com&lt;/code&gt; - More? Oh, ok, then&amp;hellip;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sohern.com&lt;/code&gt; - Yup. Tracking.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;demdex.net&lt;/code&gt; - Tracking. From Adobe.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;bidswitch.net&lt;/code&gt; - I&amp;rsquo;ll give you one guess&amp;hellip;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;agkn.com&lt;/code&gt; - &amp;hellip;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;mathtag.com&lt;/code&gt; - Curious name, maybe it&amp;rsquo;s&amp;hellip; no. It&amp;rsquo;s tracking you.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I can&amp;rsquo;t visit many of these sites because I have them blocked in uBlock Origin so information was
+gleaned from google crawl results of the webpages and 3rd parties. Needless to say, it&amp;rsquo;s a pretty disgusting insight into how certain free products turn you into
+the product. What&amp;rsquo;s more worrying are the services that go to lengths to hide who they are and
+what their purposes are for tracking your movements.&lt;/p&gt;
+
+&lt;p&gt;Anyway. Delete it. I&amp;rsquo;m sorry for poisoning this site with these networks. Foward to better things&amp;hellip;&lt;/p&gt;
+
+&lt;h5 id=&#34;using-github-for-comments:af117f676af06886470c26b129325aaa&#34;&gt;Using Github for Comments&lt;/h5&gt;
+
+&lt;p&gt;I was discussing removing Disqus with others and &lt;a href=&#34;https://twitter.com/HarryDenholm&#34;&gt;@HarryDenholm&lt;/a&gt;
+mentioned that a friend managed to get comments on their Github-hosted static blog using Pull Requests. I thought this was pretty genius and wanted to figure out if I could do something
+similar for Hugo on external sites.&lt;/p&gt;
+
+&lt;p&gt;The answer came from the &lt;a href=&#34;https://developer.github.com/v3/issues/&#34;&gt;Github Issue API&lt;/a&gt;. The process is quite simple and is already active on this blog post:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;For each blog post you make, open an Issue on some repo on Github. The Issue for this post is &lt;a href=&#34;https://github.com/dwilliamson/donw.io/issues/1&#34;&gt;here&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;All comments are posted directly on Github.&lt;/li&gt;
+&lt;li&gt;Add some Javascript to your site that reads Github&amp;rsquo;s JSON description of the Issue comments and displays them.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The benefits are immediate:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;There is zero tracking of you as a reader to this website. Github themselves only see network read requests from unnamed IPs.&lt;/li&gt;
+&lt;li&gt;All comments are written in &lt;a href=&#34;https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet&#34;&gt;Markdown&lt;/a&gt;, allowing inline code, images, lists and formatting.&lt;/li&gt;
+&lt;li&gt;You can use Github&amp;rsquo;s notifications to informed of responses; you don&amp;rsquo;t even have to visit this site to read and contribute to discussion.&lt;/li&gt;
+&lt;li&gt;Although somewhat superflous, you can also integrate &lt;a href=&#34;https://developer.github.com/v3/reactions/&#34;&gt;Github Reactions&lt;/a&gt; (maybe useful on larger sites).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;You don&amp;rsquo;t need an API key to read Github JSON data; it&amp;rsquo;s free for all to access. The comments for
+this post can be read as JSON &lt;a href=&#34;https://api.github.com/repos/dwilliamson/donw.io/issues/1/comments&#34;&gt;here&lt;/a&gt;. The first comment looks like:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+    &amp;quot;url&amp;quot;: &amp;quot;https://api.github.com/repos/dwilliamson/donw.io/issues/comments/295004846&amp;quot;,
+    &amp;quot;html_url&amp;quot;: &amp;quot;https://github.com/dwilliamson/donw.io/issues/1#issuecomment-295004846&amp;quot;,
+    &amp;quot;issue_url&amp;quot;: &amp;quot;https://api.github.com/repos/dwilliamson/donw.io/issues/1&amp;quot;,
+    &amp;quot;id&amp;quot;: 295004846,
+    &amp;quot;user&amp;quot;: {
+        &amp;quot;login&amp;quot;: &amp;quot;dwilliamson&amp;quot;,
+        &amp;quot;id&amp;quot;: 1532903,
+        &amp;quot;avatar_url&amp;quot;: &amp;quot;https://avatars3.githubusercontent.com/u/1532903?v=3&amp;quot;,
+        &amp;quot;gravatar_id&amp;quot;: &amp;quot;&amp;quot;,
+        &amp;quot;url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson&amp;quot;,
+        &amp;quot;html_url&amp;quot;: &amp;quot;https://github.com/dwilliamson&amp;quot;,
+        &amp;quot;followers_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/followers&amp;quot;,
+        &amp;quot;following_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/following{/other_user}&amp;quot;,
+        &amp;quot;gists_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/gists{/gist_id}&amp;quot;,
+        &amp;quot;starred_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/starred{/owner}{/repo}&amp;quot;,
+        &amp;quot;subscriptions_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/subscriptions&amp;quot;,
+        &amp;quot;organizations_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/orgs&amp;quot;,
+        &amp;quot;repos_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/repos&amp;quot;,
+        &amp;quot;events_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/events{/privacy}&amp;quot;,
+        &amp;quot;received_events_url&amp;quot;: &amp;quot;https://api.github.com/users/dwilliamson/received_events&amp;quot;,
+        &amp;quot;type&amp;quot;: &amp;quot;User&amp;quot;,
+        &amp;quot;site_admin&amp;quot;: false
+    },
+    &amp;quot;created_at&amp;quot;: &amp;quot;2017-04-18T22:39:16Z&amp;quot;,
+    &amp;quot;updated_at&amp;quot;: &amp;quot;2017-04-18T22:39:16Z&amp;quot;,
+    &amp;quot;body&amp;quot;: &amp;quot;This is a comment&amp;quot;
+},    
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The first step is to add a new template to your partials directory that reads and displays Github
+comments (&lt;code&gt;comments.html&lt;/code&gt;). Here&amp;rsquo;s the code I use:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-js&#34;&gt;var url = &amp;quot;https://github.com/dwilliamson/donw.io/issues/&amp;quot; + {{ $.Params.ghcommentid }}
+var api_url = &amp;quot;https://api.github.com/repos/dwilliamson/donw.io/issues/&amp;quot; + {{ $.Params.ghcommentid }} + &amp;quot;/comments&amp;quot;
+
+$(document).ready(function () {
+    $.ajax(api_url, {
+        headers: {Accept: &amp;quot;application/vnd.github.v3.html+json&amp;quot;},
+        dataType: &amp;quot;json&amp;quot;,
+        success: function(comments) {
+            $(&amp;quot;#gh-comments-list&amp;quot;).append(&amp;quot;Visit the &amp;lt;b&amp;gt;&amp;lt;a href=&#39;&amp;quot; + url + &amp;quot;&#39;&amp;gt;Github Issue&amp;lt;/a&amp;gt;&amp;lt;/b&amp;gt; to comment on this post&amp;quot;);
+            $.each(comments, function(i, comment) {
+
+                var date = new Date(comment.created_at);
+
+                var t = &amp;quot;&amp;lt;div id=&#39;gh-comment&#39;&amp;gt;&amp;quot;;
+                t += &amp;quot;&amp;lt;img src=&#39;&amp;quot; + comment.user.avatar_url + &amp;quot;&#39; width=&#39;24px&#39;&amp;gt;&amp;quot;;
+                t += &amp;quot;&amp;lt;b&amp;gt;&amp;lt;a href=&#39;&amp;quot; + comment.user.html_url + &amp;quot;&#39;&amp;gt;&amp;quot; + comment.user.login + &amp;quot;&amp;lt;/a&amp;gt;&amp;lt;/b&amp;gt;&amp;quot;;
+                t += &amp;quot; posted at &amp;quot;;
+                t += &amp;quot;&amp;lt;em&amp;gt;&amp;quot; + date.toUTCString() + &amp;quot;&amp;lt;/em&amp;gt;&amp;quot;;
+                t += &amp;quot;&amp;lt;div id=&#39;gh-comment-hr&#39;&amp;gt;&amp;lt;/div&amp;gt;&amp;quot;;
+                t += comment.body_html;
+                t += &amp;quot;&amp;lt;/div&amp;gt;&amp;quot;;
+                $(&amp;quot;#gh-comments-list&amp;quot;).append(t);
+            });
+        },
+        error: function() {
+            $(&amp;quot;#gh-comments-list&amp;quot;).append(&amp;quot;Comments are not open for this post yet.&amp;quot;);
+        }
+    });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This can then be invoked from your blog post html:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{{ partial &amp;quot;comments.html&amp;quot; . }}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The variables it references need to be added to the header of your html page. In this case it&amp;rsquo;s
+the single variable &lt;code&gt;ghcommentid&lt;/code&gt; which is set to the number of the Issue used for comments.&lt;/p&gt;
+
+&lt;h5 id=&#34;summary:af117f676af06886470c26b129325aaa&#34;&gt;Summary&lt;/h5&gt;
+
+&lt;p&gt;There&amp;rsquo;s nothing more beyond that. Technically, you could actually write your blog posts as Github
+Issues themselves and forgo the need for a blog engine. But that seems too much like using a system
+in ways it was never intended to be used.&lt;/p&gt;
+
+&lt;p&gt;This website is managed on Github as &lt;a href=&#34;https://github.com/dwilliamson/donw.io&#34;&gt;dwilliamson/donw.io&lt;/a&gt;.
+It contains the complete code for using Github for your comments.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Three Methods to Extract Frustum Points</title>
