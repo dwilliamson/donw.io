@@ -1,5 +1,5 @@
 // use of ajax vs getJSON for headers use to get markdown (body vs body_htmml)
-// todo: new comment location, pages, configure issue url
+// todo: pages, configure issue url
 
 function DoGithubComments(comment_id)
 {
@@ -11,7 +11,7 @@ function DoGithubComments(comment_id)
             headers: {Accept: "application/vnd.github.v3.html+json"},
             dataType: "json",
             success: function(comments) {
-                $("#gh-comments-list").append("Visit the <b><a href='" + url + "'>Github Issue</a></b> to comment on this post");
+                $("#gh-comments-list").append("Visit the <b><a href='" + url + "#new_comment_field' rel='nofollow'>Github Issue</a></b> to comment on this post");
                 $.each(comments, function(i, comment) {
 
                     var date = new Date(comment.created_at);
