@@ -19,14 +19,6 @@ function ParseLinkHeader(link)
     return links;
 }
 
-function PageLink(comment_id, page_id, link_id, text)
-{
-    var state = (link_id == page_id) ? "class='active' " : " ";
-    var scroll = '$("#gh-comments-list")[0].scrollIntoView(true);';
-    var fn = "onclick='DoGithubComments(" + comment_id + "," + link_id + ");" + scroll + "' ";
-    return "<a href='javascript:void(0)' " + state + fn +  ">" + text + "</a>";
-}
-
 function DoGithubComments(comment_id, page_id)
 {
     var repo_name = "dwilliamson/donw.io";
@@ -51,8 +43,9 @@ function DoGithubComments(comment_id, page_id)
             dataType: "json",
             success: function(comments, textStatus, jqXHR) {
 
-                $("#gh-comments-list").empty();
-                $("#gh-comments-list").append("<a href='" + url + "#new_comment_field' rel='nofollow' class='btn'>Post a comment on Github</a>");
+                // Add post button to first page
+                if (page_id == 1)
+                    $("#gh-comments-list").append("<a href='" + url + "#new_comment_field' rel='nofollow' class='btn'>Post a comment on Github</a>");
 
                 // Individual comments
                 $.each(comments, function(i, comment) {
@@ -77,19 +70,10 @@ function DoGithubComments(comment_id, page_id)
                 if ("last" in links)
                     last_page = links["last"].page;
 
-                // Page links
-                var pages = "";
-                pages += "<div class='center'><div class='pages'>";
-                if (page_id > 1)
-                    pages += PageLink(comment_id, page_id, page_id - 1, "&laquo");
-                for (var i = 0; i < last_page; i++)
-                {
-                    pages += PageLink(comment_id, page_id, i + 1, i + 1);
-                }
-                if (page_id < last_page)
-                    pages += PageLink(comment_id, page_id, page_id + 1, "&raquo");
-                pages += "</div></div>";
-                $("#gh-comments-list").append(pages);
+                // Add load comments button
+                $("#gh-load-comments").attr("onclick", "DoGithubComments(" + comment_id + "," + (page_id + 1) + ");");
+                if (page_id == last_page)
+                    $("#gh-load-comments").hide();
             },
             error: function() {
                 $("#gh-comments-list").append("Comments are not open for this post yet.");
