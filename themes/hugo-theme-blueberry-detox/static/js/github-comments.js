@@ -1,17 +1,60 @@
 // use of ajax vs getJSON for headers use to get markdown (body vs body_htmml)
-// todo: pages, configure issue url
+// todo: pages, configure issue url, open in new window?
 
-function DoGithubComments(comment_id)
+var CurrentPage = 0;
+
+function ParseLinkHeader(link)
 {
-    var url = "https://github.com/dwilliamson/donw.io/issues/" + comment_id;
-    var api_url = "https://api.github.com/repos/dwilliamson/donw.io/issues/" + comment_id + "/comments"
+    var entries = link.split(",");
+    var links = { };
+    for (var i in entries)
+    {
+        var entry = entries[i];
+        var link = { };
+        link.name = entry.match(/rel=\"([^\"]*)/)[1];
+        link.url = entry.match(/<([^>]*)/)[1];
+        link.page = entry.match(/page=(\d+).*$/)[1];
+        links[link.name] = link;
+    }
+    return links;
+}
 
-    $(document).ready(function () {
-        $.ajax(api_url, {
+function PageLink(comment_id, page_id, link_id, text)
+{
+    var state = (link_id == page_id) ? "class='active' " : " ";
+    var scroll = '$("#gh-comments-list")[0].scrollIntoView(true);';
+    var fn = "onclick='DoGithubComments(" + comment_id + "," + link_id + ");" + scroll + "' ";
+    return "<a href='javascript:void(0)' " + state + fn +  ">" + text + "</a>";
+}
+
+function DoGithubComments(comment_id, page_id)
+{
+    var repo_name = "dwilliamson/donw.io";
+
+    if (page_id === undefined)
+        page_id = 1;
+
+    var api_url = "https://api.github.com/repos/" + repo_name;
+    var api_issue_url = api_url + "/issues/" + comment_id;
+    var api_comments_url = api_url + "/issues/" + comment_id + "/comments" + "?page=" + page_id;
+
+    var url = "https://github.com/dwilliamson/donw.io/issues/" + comment_id;
+
+    $(document).ready(function ()
+    {
+        $.getJSON(api_issue_url, function(data) {
+            NbComments = data.comments;
+        });
+
+        $.ajax(api_comments_url, {
             headers: {Accept: "application/vnd.github.v3.html+json"},
             dataType: "json",
-            success: function(comments) {
-                $("#gh-comments-list").append("Visit the <b><a href='" + url + "#new_comment_field' rel='nofollow'>Github Issue</a></b> to comment on this post");
+            success: function(comments, textStatus, jqXHR) {
+
+                $("#gh-comments-list").empty();
+                $("#gh-comments-list").append("<a href='" + url + "#new_comment_field' rel='nofollow' class='btn'>Post a comment on Github</a>");
+
+                // Individual comments
                 $.each(comments, function(i, comment) {
 
                     var date = new Date(comment.created_at);
@@ -26,6 +69,27 @@ function DoGithubComments(comment_id)
                     t += "</div>";
                     $("#gh-comments-list").append(t);
                 });
+
+                // Get page count from response header
+                // This all seems a bit obtuse but the "last" key isn't present on the last page
+                var links = ParseLinkHeader(jqXHR.getResponseHeader("Link"));
+                var last_page = page_id;
+                if ("last" in links)
+                    last_page = links["last"].page;
+
+                // Page links
+                var pages = "";
+                pages += "<div class='center'><div class='pages'>";
+                if (page_id > 1)
+                    pages += PageLink(comment_id, page_id, page_id - 1, "&laquo");
+                for (var i = 0; i < last_page; i++)
+                {
+                    pages += PageLink(comment_id, page_id, i + 1, i + 1);
+                }
+                if (page_id < last_page)
+                    pages += PageLink(comment_id, page_id, page_id + 1, "&raquo");
+                pages += "</div></div>";
+                $("#gh-comments-list").append(pages);
             },
             error: function() {
                 $("#gh-comments-list").append("Comments are not open for this post yet.");
