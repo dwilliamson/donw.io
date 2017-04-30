@@ -63,17 +63,17 @@ function DoGithubComments(comment_id, page_id)
                     $("#gh-comments-list").append(t);
                 });
 
-                // Get page count from response header
-                // This all seems a bit obtuse but the "last" key isn't present on the last page
+                // Setup comments button if there are more pages to display
                 var links = ParseLinkHeader(jqXHR.getResponseHeader("Link"));
-                var last_page = page_id;
-                if ("last" in links)
-                    last_page = links["last"].page;
-
-                // Add load comments button
-                $("#gh-load-comments").attr("onclick", "DoGithubComments(" + comment_id + "," + (page_id + 1) + ");");
-                if (page_id == last_page)
+                if ("next" in links)
+                {
+                    $("#gh-load-comments").attr("onclick", "DoGithubComments(" + comment_id + "," + (page_id + 1) + ");");
+                    $("#gh-load-comments").show();
+                }
+                else
+                {
                     $("#gh-load-comments").hide();
+                }
             },
             error: function() {
                 $("#gh-comments-list").append("Comments are not open for this post yet.");
