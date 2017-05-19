@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>C&#43;&#43; on Gazoo.vrv</title>
+    <link>http://donw.io/tags/c&#43;&#43;/</link>
+    <description>Recent content in C&#43;&#43; on Gazoo.vrv</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 03 Jan 2012 07:21:58 +0100</lastBuildDate>
+    
+	<atom:link href="http://donw.io/tags/c++/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Reflection in C&#43;&#43;, Part2: The Simple Implementation of Splinter Cell</title>
+      <link>http://donw.io/post/reflection-cpp-2/</link>
+      <pubDate>Tue, 03 Jan 2012 07:21:58 +0100</pubDate>
+      
+      <guid>http://donw.io/post/reflection-cpp-2/</guid>
+      <description>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&amp;rsquo;m going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5).
+The motivation for the development of the SC5 engine was a clean break from the past.</description>
+    </item>
+    
+    <item>
+      <title>Reflection in C&#43;&#43;, Part 1: Introduction</title>
+      <link>http://donw.io/post/reflection-cpp-1/</link>
+      <pubDate>Sun, 25 Sep 2011 23:34:13 +0100</pubDate>
+      
+      <guid>http://donw.io/post/reflection-cpp-1/</guid>
+      <description>If there was one job I&amp;rsquo;d love to do other than writing games it&amp;rsquo;d be writing compilers. This probably explains my obsession with the subject of reflection; a topic I&amp;rsquo;ve been hammering away at for almost 10 years now. Having written a few compilers in the past, it became glaringly obvious to me that reflection would be quite simple to add to C++ &amp;ndash; if you&amp;rsquo;re willing to place some limits on it &amp;ndash; and that the language has suffered from its absence.</description>
+    </item>
+    
+  </channel>
+</rss>

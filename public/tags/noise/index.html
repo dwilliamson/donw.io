@@ -22,7 +22,7 @@
     
         <meta property="og:type" content="website" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Noise &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="http://donw.io/tags/noise/index.xml">
@@ -80,7 +80,8 @@
     
     <section class="post-excerpt">
         <p><p>I posted an article a while back, entitled <a href="/post/high-prec-gradient-noise/">Very Fast, High-Precision SIMD/GPU Gradient Noise</a>, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that <code>floor</code> could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.</p>
-</p>
+
+<p></p></p>
     </section>
 
     <footer class="post-footer">
@@ -102,7 +103,8 @@
     
     <section class="post-excerpt">
         <p><p>A recently published article by Inigo Quilez on <a href="http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm">Voronoi Edges</a> highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.</p>
-</p>
+
+<p></p></p>
     </section>
 
     <footer class="post-footer">
@@ -150,11 +152,11 @@
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

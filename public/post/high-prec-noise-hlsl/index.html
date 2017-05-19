@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2016-08-25T22:05:56&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Mixed Precision GPU Noise with HLSL &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -80,6 +80,8 @@
 
     <section class="post-content">
         <p>I posted an article a while back, entitled <a href="/post/high-prec-gradient-noise/">Very Fast, High-Precision SIMD/GPU Gradient Noise</a>, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that <code>floor</code> could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.</p>
+
+<p></p>
 
 <p>The GPU code was initially written in OpenCL and then ported to CUDA using <a href="https://github.com/Celtoys/ComputeBridge">ComputeBridge</a>. Neither were good platforms for releasing a game; releasing them on both at the same time was a recipe for madness so I ported everything to HLSL. Unfortunately HLSL SM5 doesn&rsquo;t support <code>floor(double)</code>.</p>
 
@@ -159,7 +161,6 @@ double4 Floor(double4 v)
 </code></pre>
 
 <p>Performance is admirably close to the CUDA/OpenCL versions (on nVidia/AMD hardware, respectively) and the same mask function can be reused for <code>Round</code> or <code>Ceil</code> functions.</p>
-
     </section>
 
     <hr>
@@ -240,11 +241,11 @@ double4 Floor(double4 v)
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

@@ -7,7 +7,9 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 19 Jun 2016 21:48:11 +0100</lastBuildDate>
-    <atom:link href="http://donw.io/tags/website/index.xml" rel="self" type="application/rss+xml" />
+    
+	<atom:link href="http://donw.io/tags/website/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>A New Host, Server and Site Generator</title>
@@ -15,20 +17,8 @@
       <pubDate>Sun, 19 Jun 2016 21:48:11 +0100</pubDate>
       
       <guid>http://donw.io/post/a-new-host-server-site/</guid>
-      <description>&lt;p&gt;And we are back! It must be a year now since my old site &lt;code&gt;donw.org&lt;/code&gt; went dark for many reasons, including being busy working on my own game. There&amp;rsquo;s some big changes with this new setup:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;I own the domain &lt;a href=&#34;donw.io&#34;&gt;donw.io&lt;/a&gt; this time round. I&amp;rsquo;ve gone through a bunch of domains &amp;ndash; &lt;code&gt;donw.org&lt;/code&gt;, &lt;code&gt;donw.co.uk&lt;/code&gt;, etc. &amp;ndash; that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.&lt;/li&gt;
-&lt;li&gt;My old websites were on servers hosted by an old work colleague who was very difficult to contact. I&amp;rsquo;m now running a shared hosting plan at &lt;a href=&#34;https://www.digitalocean.com/&#34;&gt;Digital Ocean&lt;/a&gt; and really enjoy maintaining all the software on that. Digital Ocean&amp;rsquo;s setup is really great, they&amp;rsquo;ve got a good community and are reasonably priced.&lt;/li&gt;
-&lt;li&gt;Rather than writing my own blog software &lt;a href=&#34;https://github.com/dwilliamson/b&#34;&gt;like I did previously&lt;/a&gt;, I&amp;rsquo;ve switched to the static website generator &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;. It&amp;rsquo;s some seriously awesome software and updating the site no longer feels like a chore.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;This all means that I am now in complete control and the site will never go dark again.&lt;/p&gt;
-
-&lt;p&gt;I plan to kick-off by bringing back a lot of my older posts that were popular. I used my own Markdown-style engine previously so will have to port all the text over, but that will give me a chance to proof-read and update links.&lt;/p&gt;
-
-&lt;p&gt;Let&amp;rsquo;s get this party started!&lt;/p&gt;
-</description>
+      <description>And we are back! It must be a year now since my old site donw.org went dark for many reasons, including being busy working on my own game. There&amp;rsquo;s some big changes with this new setup:
+ I own the domain donw.io this time round. I&amp;rsquo;ve gone through a bunch of domains &amp;ndash; donw.org, donw.co.uk, etc. &amp;ndash; that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</description>
     </item>
     
   </channel>

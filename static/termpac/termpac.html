@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en-us">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>termpac</title>
+		<style>
+			body
+			{
+				font-family: arial;
+				margin: 0;
+				padding: none;
+			}
+
+			.emscripten
+			{
+				padding-right: 0;
+				display: block;
+			}
+
+			div.emscripten
+			{
+				text-align: center;
+			}
+
+			/* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+			canvas.emscripten
+			{
+				border: 0px none;
+				width: 640px;
+				height: 400px;
+				background-image: url("dosbox_background.png");
+				background-color: black;
+			}
+
+			.spinner
+			{
+				position: absolute;
+				height: 30px;
+				width: 30px;
+				left: 305px;
+				top: 185px;
+
+				border-left: 5px solid rgb(235, 235, 235);
+				border-right: 5px solid rgb(235, 235, 235);
+				border-bottom: 5px solid rgb(235, 235, 235);
+				border-top: 5px solid rgb(235, 235, 235);
+				
+				border-radius: 100%;
+				background-color: rgb(189, 215, 46);
+			}
+
+			.spinner:hover
+			{
+				border-radius: 100%;
+				background-color: rgb(142, 161, 35);
+			}
+
+			.spinner_animated
+			{
+				border-top: 5px solid rgb(120, 120, 120);
+
+				-webkit-animation: rotation .8s linear infinite;
+				-moz-animation: rotation .8s linear infinite;
+				-o-animation: rotation .8s linear infinite;
+				animation: rotation 0.8s linear infinite;
+			}
+
+			@-webkit-keyframes rotation
+			{
+				from {-webkit-transform: rotate(0deg);}
+				to {-webkit-transform: rotate(360deg);}
+			}
+			@-moz-keyframes rotation
+			{
+				from {-moz-transform: rotate(0deg);}
+				to {-moz-transform: rotate(360deg);}
+			}
+			@-o-keyframes rotation
+			{
+				from {-o-transform: rotate(0deg);}
+				to {-o-transform: rotate(360deg);}
+			}
+			@keyframes rotation
+			{
+				from {transform: rotate(0deg);}
+				to {transform: rotate(360deg);}
+			}
+
+			#status
+			{
+				position: absolute;
+				margin-left: auto;
+				margin-right: auto;
+				left: 0;
+				right: 0;
+				top: 220px;
+				vertical-align: top;
+				font-weight: bold;
+				color: #EEE;
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<div class="spinner" id='spinner' onclick="Boot()"></div>
+		<div class="emscripten" id="status" style="z-index: 10;">Click to Start</div>
+
+		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()">
+		</canvas>
+
+		<script type='text/javascript'>
+			var statusElement = document.getElementById('status');
+			var spinnerElement = document.getElementById('spinner');
+
+			var Module = {
+				preRun: [],
+				postRun: [],
+
+				print: function(text)
+				{
+					if (arguments.length > 1)
+						text = Array.prototype.slice.call(arguments).join(' ');
+					console.log(text);
+				},
+
+				printErr: function(text)
+				{
+					if (arguments.length > 1)
+						text = Array.prototype.slice.call(arguments).join(' ');
+					console.error(text);
+				},
+
+				canvas: (function()
+				{
+					var canvas = document.getElementById('canvas');
+
+					// As a default initial behavior, pop up an alert when webgl context is lost. To make your
+					// application robust, you may want to override this behavior before shipping!
+					// See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+					canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+					return canvas;
+				})(),
+
+				setStatus: function(text)
+				{
+					if (!Module.setStatus.last)
+						Module.setStatus.last = { time: Date.now(), text: '' };
+
+					if (text === Module.setStatus.text)
+						return;
+
+					// if this is a progress update, skip it if too soon
+					var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+					var now = Date.now();
+					if (m && now - Date.now() < 30)
+						return;
+
+					if (m)
+					{
+						text = m[1];
+						spinnerElement.hidden = false;
+					}
+					else
+					{
+						if (!text)
+							spinnerElement.style.display = 'none';
+					}
+
+					statusElement.innerHTML = text;
+				},
+
+				totalDependencies: 0,
+
+				monitorRunDependencies: function(left)
+				{
+					this.totalDependencies = Math.max(this.totalDependencies, left);
+					Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+				}
+			};
+
+			window.onerror = function(event)
+			{
+				// TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+				Module.setStatus('Exception thrown, see JavaScript console');
+				spinnerElement.style.display = 'none';
+				Module.setStatus = function(text)
+				{
+					if (text)
+						Module.printErr('[post-exception status] ' + text);
+				};
+			};
+
+			var Module;
+			if (typeof Module === 'undefined')
+				Module = eval('(function() { try { return Module || {} } catch(e) { return {} } })()');
+
+			if (!Module.expectedDataFileDownloads)
+			{
+				Module.expectedDataFileDownloads = 0;
+				Module.finishedDataFileDownloads = 0;
+			}
+			Module.expectedDataFileDownloads++;
+
+			function LoadGame()
+			{
+ 				var loadPackage = function(metadata)
+				{
+					var PACKAGE_PATH;
+					if (typeof window === 'object')
+					{
+						PACKAGE_PATH = window['encodeURIComponent'](window.location.pathname.toString().substring(0, window.location.pathname.toString().lastIndexOf('/')) + '/');
+					}
+					else if (typeof location !== 'undefined')
+					{
+						// worker
+						PACKAGE_PATH = encodeURIComponent(location.pathname.toString().substring(0, location.pathname.toString().lastIndexOf('/')) + '/');
+					}
+					else
+					{
+						throw 'using preloaded data can only be done on a web page or in a web worker';
+					}
+
+					var PACKAGE_NAME = '/home/dev/develop/em-dosbox/src/termpac/termpac.data';
+					var REMOTE_PACKAGE_BASE = 'termpac.data';
+					if (typeof Module['locateFilePackage'] === 'function' && !Module['locateFile'])
+					{
+						Module['locateFile'] = Module['locateFilePackage'];
+						Module.printErr('warning: you defined Module.locateFilePackage, that has been renamed to Module.locateFile (using your locateFilePackage for now)');
+					}
+
+					var REMOTE_PACKAGE_NAME = typeof Module['locateFile'] === 'function' ?
+												Module['locateFile'](REMOTE_PACKAGE_BASE) :
+												((Module['filePackagePrefixURL'] || '') + REMOTE_PACKAGE_BASE);
+	
+					var REMOTE_PACKAGE_SIZE = metadata.remote_package_size;
+					var PACKAGE_UUID = metadata.package_uuid;
+	
+					function fetchRemotePackage(packageName, packageSize, callback, errback)
+					{
+						var xhr = new XMLHttpRequest();
+						xhr.open('GET', packageName, true);
+						xhr.responseType = 'arraybuffer';
+
+						xhr.onprogress = function(event)
+						{
+							var url = packageName;
+							var size = packageSize;
+							if (event.total)
+								size = event.total;
+
+							if (event.loaded)
+							{
+								if (!xhr.addedTotal)
+								{
+									xhr.addedTotal = true;
+									if (!Module.dataFileDownloads)
+										Module.dataFileDownloads = {};
+									Module.dataFileDownloads[url] =
+									{
+										loaded: event.loaded,
+										total: size
+									};
+								}
+								else
+								{
+									Module.dataFileDownloads[url].loaded = event.loaded;
+								}
+
+								var total = 0;
+								var loaded = 0;
+								var num = 0;
+
+								for (var download in Module.dataFileDownloads)
+								{
+									var data = Module.dataFileDownloads[download];
+									total += data.total;
+									loaded += data.loaded;
+									num++;
+								}
+
+								total = Math.ceil(total * Module.expectedDataFileDownloads/num);
+
+								if (Module['setStatus'])
+									Module['setStatus']('Downloading data... (' + loaded + '/' + total + ')');
+
+							}
+							else if (!Module.dataFileDownloads)
+							{
+								if (Module['setStatus'])
+									Module['setStatus']('Downloading data...');
+							}
+						};
+
+						xhr.onerror = function(event)
+						{
+							throw new Error("NetworkError for: " + packageName);
+						}
+
+						xhr.onload = function(event)
+						{
+							if (xhr.status == 200 || xhr.status == 304 || xhr.status == 206 || (xhr.status == 0 && xhr.response))
+							{
+								// file URLs can return 0
+								var packageData = xhr.response;
+								callback(packageData);
+							}
+							else
+							{
+								throw new Error(xhr.statusText + " : " + xhr.responseURL);
+							}
+						};
+
+						xhr.send(null);
+					};
+
+					function handleError(error)
+					{
+						console.error('package error:', error);
+					};
+		
+					var fetchedCallback = null;
+					var fetched = Module['getPreloadedPackage'] ? Module['getPreloadedPackage'](REMOTE_PACKAGE_NAME, REMOTE_PACKAGE_SIZE) : null;
+
+					if (!fetched)
+					{
+						fetchRemotePackage(REMOTE_PACKAGE_NAME, REMOTE_PACKAGE_SIZE, function(data)
+						{
+							if (fetchedCallback)
+							{
+								fetchedCallback(data);
+								fetchedCallback = null;
+							}
+							else
+							{
+								fetched = data;
+							}
+				
+						}, handleError);
+					}
+		
+					function runWithFS()
+					{
+						function assert(check, msg)
+						{
+							if (!check)
+								throw msg + new Error().stack;
+						}
+
+						Module['FS_createPath']('/', 'SFX', true, true);
+
+						function DataRequest(start, end, crunched, audio)
+						{
+							this.start = start;
+							this.end = end;
+							this.crunched = crunched;
+							this.audio = audio;
+						}
+
+						DataRequest.prototype =
+						{
+							requests: {},
+							open: function(mode, name)
+							{
+								this.name = name;
+								this.requests[name] = this;
+								Module['addRunDependency']('fp ' + this.name);
+							},
+							send: function() {},
+							onload: function()
+							{
+								var byteArray = this.byteArray.subarray(this.start, this.end);
+								this.finish(byteArray);
+
+							},
+							finish: function(byteArray)
+							{
+								var that = this;
+
+								Module['FS_createDataFile'](this.name, null, byteArray, true, true, true); // canOwn this data in the filesystem, it is a slide into the heap that will never change
+								Module['removeRunDependency']('fp ' + that.name);
+
+								this.requests[this.name] = null;
+							}
+						};
+
+						var files = metadata.files;
+						for (i = 0; i < files.length; ++i)
+						{
+							new DataRequest(files[i].start, files[i].end, files[i].crunched, files[i].audio).open('GET', files[i].filename);
+						}
+
+						function processPackageData(arrayBuffer)
+						{
+							Module.finishedDataFileDownloads++;
+							assert(arrayBuffer, 'Loading data file failed.');
+							assert(arrayBuffer instanceof ArrayBuffer, 'bad input to processPackageData');
+							var byteArray = new Uint8Array(arrayBuffer);
+							var curr;
+							
+							// Reuse the bytearray from the XHR as the source for file reads.
+							DataRequest.prototype.byteArray = byteArray;
+					
+							var files = metadata.files;
+							for (i = 0; i < files.length; ++i)
+							{
+								DataRequest.prototype.requests[files[i].filename].onload();
+							}
+
+							Module['removeRunDependency']('datafile_/home/dev/develop/em-dosbox/src/termpac/termpac.data');
+
+						};
+
+						Module['addRunDependency']('datafile_/home/dev/develop/em-dosbox/src/termpac/termpac.data');
+	
+						if (!Module.preloadResults)
+							Module.preloadResults = {};
+					
+						Module.preloadResults[PACKAGE_NAME] = {fromCache: false};
+						if (fetched)
+						{
+							processPackageData(fetched);
+							fetched = null;
+						}
+						else
+						{
+							fetchedCallback = processPackageData;
+						}
+					}
+
+					if (Module['calledRun'])
+					{
+						runWithFS();
+					}
+					else
+					{
+						if (!Module['preRun'])
+							Module['preRun'] = [];
+						Module["preRun"].push(runWithFS); // FS is not initialized yet, wait for it
+					}
+ 				}
+				
+ 				loadPackage({
+					"files": [
+						{"audio": 0, "start": 0, "crunched": 0, "end": 22048, "filename": "/level2.tpe"},
+						{"audio": 0, "start": 22048, "crunched": 0, "end": 31127, "filename": "/SOUND4.C"},
+						{"audio": 0, "start": 31127, "crunched": 0, "end": 53219, "filename": "/level6.tpe"},
+						{"audio": 0, "start": 53219, "crunched": 0, "end": 53258, "filename": "/CHEAT.TXT"},
+						{"audio": 0, "start": 53258, "crunched": 0, "end": 74002, "filename": "/pachelp.exe"},
+						{"audio": 0, "start": 74002, "crunched": 0, "end": 96134, "filename": "/level7.tpe"},
+						{"audio": 0, "start": 96134, "crunched": 0, "end": 97951, "filename": "/B2PCX.TXT"},
+						{"audio": 0, "start": 97951, "crunched": 0, "end": 98169, "filename": "/COMP.BAT"},
+						{"audio": 0, "start": 98169, "crunched": 0, "end": 130882, "filename": "/acid.gtf"},
+						{"audio": 0, "start": 130882, "crunched": 0, "end": 170418, "filename": "/PACEDIT.EXE"},
+						{"audio": 0, "start": 170418, "crunched": 0, "end": 198857, "filename": "/CHOC.GTF"},
+						{"audio": 0, "start": 198857, "crunched": 0, "end": 220941, "filename": "/level4.tpe"},
+						{"audio": 0, "start": 220941, "crunched": 0, "end": 355179, "filename": "/PACMAN.EXE"},
+						{"audio": 0, "start": 355179, "crunched": 0, "end": 377283, "filename": "/level8.tpe"},
+						{"audio": 0, "start": 377283, "crunched": 0, "end": 399319, "filename": "/shado1.tpe"},
+						{"audio": 0, "start": 399319, "crunched": 0, "end": 432215, "filename": "/HOT.GTF"},
+						{"audio": 0, "start": 432215, "crunched": 0, "end": 454243, "filename": "/TPE001JG.TPE"},
+						{"audio": 0, "start": 454243, "crunched": 0, "end": 460298, "filename": "/PACMAN.H"},
+						{"audio": 0, "start": 460298, "crunched": 0, "end": 489858, "filename": "/PUTTY.GTF"},
+						{"audio": 0, "start": 489858, "crunched": 0, "end": 586838, "filename": "/PACMAN1.C"},
+						{"audio": 0, "start": 586838, "crunched": 0, "end": 608878, "filename": "/level3.tpe"},
+						{"audio": 0, "start": 608878, "crunched": 0, "end": 630922, "filename": "/LEVEL1.TPE"},
+						{"audio": 0, "start": 630922, "crunched": 0, "end": 660682, "filename": "/FLAME.GTF"},
+						{"audio": 0, "start": 660682, "crunched": 0, "end": 682810, "filename": "/level5.tpe"},
+						{"audio": 0, "start": 682810, "crunched": 0, "end": 704858, "filename": "/SHARELEV.TPE"},
+						{"audio": 0, "start": 704858, "crunched": 0, "end": 736093, "filename": "/COOL.GTF"},
+						{"audio": 0, "start": 736093, "crunched": 0, "end": 769577, "filename": "/candy.gtf"},
+						{"audio": 0, "start": 769577, "crunched": 0, "end": 864652, "filename": "/PACMAN.C"},
+						{"audio": 0, "start": 864652, "crunched": 0, "end": 1010805, "filename": "/TITLE.H"},
+						{"audio": 0, "start": 1010805, "crunched": 0, "end": 1027242, "filename": "/PACFUNC.C"},
+						{"audio": 0, "start": 1027242, "crunched": 0, "end": 1027367, "filename": "/PACMAN.SCR"},
+						{"audio": 0, "start": 1027367, "crunched": 0, "end": 1049391, "filename": "/LIZZY.TPE"},
+						{"audio": 0, "start": 1049391, "crunched": 0, "end": 1088931, "filename": "/B2PCX.EXE"},
+						{"audio": 0, "start": 1088931, "crunched": 0, "end": 1111067, "filename": "/CHRIS.TPE"},
+						{"audio": 0, "start": 1111067, "crunched": 0, "end": 1121823, "filename": "/dosbox.conf"},
+						{"audio": 0, "start": 1121823, "crunched": 0, "end": 1152143, "filename": "/clouds.gtf"},
+						{"audio": 0, "start": 1152143, "crunched": 0, "end": 1295443, "filename": "/PACMAN.PPE"},
+						{"audio": 0, "start": 1295443, "crunched": 0, "end": 1296217, "filename": "/SCROLL.PAL"},
+						{"audio": 0, "start": 1296217, "crunched": 0, "end": 1314017, "filename": "/EDHELP.EXE"},
+						{"audio": 0, "start": 1314017, "crunched": 0, "end": 1317852, "filename": "/SFX/SPLAT1.PCM"},
+						{"audio": 0, "start": 1317852, "crunched": 0, "end": 1331365, "filename": "/SFX/GREEN.PCM"},
+						{"audio": 0, "start": 1331365, "crunched": 0, "end": 1332961, "filename": "/SFX/HITROOF.PCM"},
+						{"audio": 0, "start": 1332961, "crunched": 0, "end": 1336297, "filename": "/SFX/COLLECT.PCM"},
+						{"audio": 0, "start": 1336297, "crunched": 0, "end": 1346761, "filename": "/SFX/KEY.PCM"},
+						{"audio": 0, "start": 1346761, "crunched": 0, "end": 1386181, "filename": "/SFX/TUNE.PCM"},
+						{"audio": 0, "start": 1386181, "crunched": 0, "end": 1394269, "filename": "/SFX/OW3.PCM"},
+						{"audio": 0, "start": 1394269, "crunched": 0, "end": 1401171, "filename": "/SFX/opendoor.pcm"},
+						{"audio": 0, "start": 1401171, "crunched": 0, "end": 1411650, "filename": "/SFX/DING.PCM"}],
+					"remote_package_size": 1411650,
+					"package_uuid": "a1a93728-1835-43b0-a2d0-5f7cb8dbe3aa"
+				});
+
+			}
+
+			function InitDOSBoxMem()
+			{
+				var memoryInitializer = 'dosbox.html.mem';
+				if (typeof Module['locateFile'] === 'function')
+				{
+					memoryInitializer = Module['locateFile'](memoryInitializer);
+				}
+				else if (Module['memoryInitializerPrefixURL'])
+				{
+					memoryInitializer = Module['memoryInitializerPrefixURL'] + memoryInitializer;
+				}
+
+				var meminitXHR = Module['memoryInitializerRequest'] = new XMLHttpRequest();
+				meminitXHR.open('GET', memoryInitializer, true);
+				meminitXHR.responseType = 'arraybuffer';
+				meminitXHR.send(null);
+			}
+
+			function Boot()
+			{
+				Module.setStatus('Downloading...');
+
+				spinnerElement.className += " spinner_animated";
+
+				LoadGame();
+				Module['arguments'] = [ './PACMAN.EXE' ];
+				InitDOSBoxMem();
+
+				var script = document.createElement('script');
+				script.src = "dosbox.js";
+				document.body.appendChild(script);
+			}
+
+		</script>
+	</body>
+</html>

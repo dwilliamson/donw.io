@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2012-07-19T12:52:03&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Quaternions and Dual Quaternion Skinning &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -85,7 +85,7 @@
 
 <p>I&rsquo;m no mathematician so hopefully this information in this post should be pretty accessible.</p>
 
-<h5 id="dual-quaternion-skinning:f775451b420ca7b05862adf0dcf3e408">Dual Quaternion Skinning</h5>
+<h5 id="dual-quaternion-skinning">Dual Quaternion Skinning</h5>
 
 <p>I spent a couple of hours last week converting my skinning pipeline to use dual quaternions. My animation pipeline works with quaternions; the source animation data, skeleton pose and inverse base pose are quaternion-based. Right at the very end, the composited result is converted to matrix and sent to the GPU. In effect, I&rsquo;m doing this:</p>
 
@@ -137,7 +137,7 @@
 <li>Transform the vertex position and normal by this dual quaternion.</li>
 </ul>
 
-<h5 id="quaternion-vector-multiplication:f775451b420ca7b05862adf0dcf3e408">Quaternion/Vector Multiplication</h5>
+<h5 id="quaternion-vector-multiplication">Quaternion/Vector Multiplication</h5>
 
 <p>To cut a long story short, the reason none of this was working for me was that I was looking at Cg code, as opposed to HLSL code. Having never really used Cg, it never occurred to me that the order of cross product parameters should be swapped to account for handedness. Cross products are used to define the quaternion multiplication:</p>
 
@@ -168,7 +168,7 @@
 
 <p>If you work with Cg, make sure you have your cross products round the other way to my shader examples below!</p>
 
-<h5 id="converting-to-dual-quaternion:f775451b420ca7b05862adf0dcf3e408">Converting to Dual Quaternion</h5>
+<h5 id="converting-to-dual-quaternion">Converting to Dual Quaternion</h5>
 
 <p>I&rsquo;d suggest reading the second paper linked above to get a good introduction to what dual quaternions are and what the various components mean. For our means here it&rsquo;s enough to say that dual quaternions are just a pair of quaternions - the &ldquo;real&rdquo; quaternion and the &ldquo;dual&rdquo; quaternion:</p>
 
@@ -188,7 +188,7 @@ transform.d = qScale(qMultiplyPure(q, p), 0.5f);
 
 <p>Much nicer! <code>MultiplyPure</code> is a simple function that does a special case multiply where <code>p.w</code> is zero.</p>
 
-<h5 id="blending-dual-quaternions:f775451b420ca7b05862adf0dcf3e408">Blending Dual Quaternions</h5>
+<h5 id="blending-dual-quaternions">Blending Dual Quaternions</h5>
 
 <p>Now we can move over to the HLSL side. This is my transform loading code:</p>
 
@@ -235,7 +235,7 @@ return result / norm;
 
 <p>Simples! In the original paper, Kavan goes into great detail on why this works so well over previous solutions and why a SLERP isn&rsquo;t the ideal solution. Well worth a read.</p>
 
-<h5 id="antipodality-or-quaternion-double-cover:f775451b420ca7b05862adf0dcf3e408">Antipodality or, Quaternion Double-Cover</h5>
+<h5 id="antipodality-or-quaternion-double-cover">Antipodality or, Quaternion Double-Cover</h5>
 
 <p>Take a look at one of the classic release bugs of this generation:</p>
 
@@ -289,7 +289,7 @@ return result / norm;
 
 <p>There are cases which can still fail these checks but they are very rare for the general use-case of skinning - I can&rsquo;t imagine this working well for severe joint twists, for example (beyond the range of human constraints, that is).</p>
 
-<h5 id="transforming-the-vertex-with-dual-quaternions:f775451b420ca7b05862adf0dcf3e408">Transforming the Vertex with Dual Quaternions</h5>
+<h5 id="transforming-the-vertex-with-dual-quaternions">Transforming the Vertex with Dual Quaternions</h5>
 
 <p>Once you have the blended result you need to convert it back into quaternion/vector form and transform your vertex. There are two ways of achieving this:</p>
 
@@ -354,7 +354,7 @@ float3 pos = DualQuatTransformPoint(skin_transform[0], skin_transform[1], input.
 float3 normal = QuatRotateVector(skin_transform[0], input.normal);
 </code></pre>
 
-<h5 id="optimising-the-vertex-transformation:f775451b420ca7b05862adf0dcf3e408">Optimising the Vertex Transformation</h5>
+<h5 id="optimising-the-vertex-transformation">Optimising the Vertex Transformation</h5>
 
 <p>There&rsquo;s a bit of redundancy in the transformation code above; results being thrown away and inputs being used when they could be discarded. There are also some identities we can apply to the rotation equation that can simplify it. As it stands, reconstruction of the translation is good enough.</p>
 
@@ -385,7 +385,7 @@ float3 QuatRotateVector(float4 Qr, float3 v)
 
 <p>Realistically, the shader compiler should be able to handle all that for you. However, it gives us a good starting point to take this further.</p>
 
-<h5 id="we-can-do-better-than-that:f775451b420ca7b05862adf0dcf3e408">We can do better than that</h5>
+<h5 id="we-can-do-better-than-that">We can do better than that</h5>
 
 <p>Let&rsquo;s try to explode the transformation and bring it back to something far simpler. I&rsquo;ll work through the steps I took in simplifying this explicitly - it serves as a nice record for me and will hopefully help if you&rsquo;re trying to understand where the final result came from (I was always losing signs during my school days - I&rsquo;m no better 15 years on!)</p>
 
@@ -557,11 +557,11 @@ $$P_r = (w^2  + R \cdot R)V+ 2wR \times V + 2R \times (R \times V)$$</p>
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

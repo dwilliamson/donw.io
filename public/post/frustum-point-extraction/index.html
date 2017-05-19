@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2016-10-23T19:14:32&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Three Methods to Extract Frustum Points &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -79,11 +79,11 @@
     </header>
 
     <section class="post-content">
-        
+        <p>Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.</p>
 
-<p>Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.</p>
+<p></p>
 
-<h5 id="reverse-projection:fd36dbbb65d24a21fc8a65073d1aa07e">Reverse Projection</h5>
+<h5 id="reverse-projection">Reverse Projection</h5>
 
 <p>If you have access to the world to clip-space matrix you can invert it and transform the clip-space frustum cube back into world-space:</p>
 
@@ -116,7 +116,7 @@ for (int i = 0; i &lt; 8; i++)
 
 <p>This is an incredibly useful little snippet that can be used at any part of the pipeline without needing to know specifics of the projection.</p>
 
-<h5 id="plane-intersection:fd36dbbb65d24a21fc8a65073d1aa07e">Plane Intersection</h5>
+<h5 id="plane-intersection">Plane Intersection</h5>
 
 <p>If you have 6 planes which define the frustum in world-space, 3 planes at a time can be intersected to find each point in the frustum. In the general case, 3 intersecting planes either intersect at a point or a line. Given the 3 planes defined by their normal and distance from origin:</p>
 
@@ -188,7 +188,7 @@ v[7] = IntersectPlanes(planes[Far],  planes[Right], planes[Bottom]);
 
 <p><br></p>
 
-<h5 id="near-far-plane-interpolation:fd36dbbb65d24a21fc8a65073d1aa07e">Near/Far Plane Interpolation</h5>
+<h5 id="near-far-plane-interpolation">Near/Far Plane Interpolation</h5>
 
 <p>This method is by far the fastest and tailored to a perspective projection. If you have access to the field of view and aspect ratio early in the pipeline, it&rsquo;s also the most accurate. Beyond that, all you need is the camera&rsquo;s world rotation:</p>
 
@@ -220,7 +220,6 @@ v[7] = far_center  + axis_x * far_ext_x  - axis_y * far_ext_y;
 </code></pre>
 
 <p>It&rsquo;s always helpful to keep each of these around and pick and choose based on situation. Add the clear case first and use a combination of experience and profiling to determine when stages need to be more tightly bound and generation needs to be optimised.</p>
-
     </section>
 
     <hr>
@@ -301,11 +300,11 @@ v[7] = far_center  + axis_x * far_ext_x  - axis_y * far_ext_y;
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

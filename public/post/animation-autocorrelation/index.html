@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2012-08-20T16:07:23&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Skeletal Animation Looping with Autocorrelation &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -101,7 +101,7 @@
 
 <p>Statistics aren&rsquo;t my strong point so I would really appreciate any corrections to this post!</p>
 
-<h5 id="cross-correlation:894f9b4cb59901f5bf4506e115ff54db">Cross Correlation</h5>
+<h5 id="cross-correlation">Cross Correlation</h5>
 
 <p>Given two discrete real data sets:</p>
 
@@ -167,7 +167,7 @@ $$y = [ y_0, y_1, y_2, &hellip;, y_n ]$$</p>
 
 <p>$$R(x,y) = \frac{1}{n} \sum\limits_{i=1}^n x(i) * y(i)$$</p>
 
-<h5 id="application-to-skeletal-animation:894f9b4cb59901f5bf4506e115ff54db">Application to Skeletal Animation</h5>
+<h5 id="application-to-skeletal-animation">Application to Skeletal Animation</h5>
 
 <p>The data set we have is the rotation values of each bone in an animation for each frame (I&rsquo;m ignoring scale as you don&rsquo;t generally get that from BVH data and translations are present only on root bones). We want to perform autocorrelation for each frame of the animation with a frame offset version of itself.</p>
 
@@ -274,7 +274,7 @@ for (size_t i = 1; i &lt; Rxy.size(); i++)
 
 <p>Local minima/maxima are located at the zero crossings and local maxima can be detected where the derivative is decreasing.</p>
 
-<h5 id="searching-for-start-and-end-frames:894f9b4cb59901f5bf4506e115ff54db">Searching for Start and End Frames</h5>
+<h5 id="searching-for-start-and-end-frames">Searching for Start and End Frames</h5>
 
 <p>Just as autocorrelation in audio can only measure tempo and not tell you where specific beats are, this technique will only tell you potential lengths of the animation. Autocorrelation is a function of the signal, not a frame, so we will need to search the animation for start/end frames that match each other as closely as possible.</p>
 
@@ -351,7 +351,7 @@ for (size_t i = 0; i &lt; local_maxima.size(); i++)
 
 <p>Beyond employing better loop detection methods, this is really the best we can do without modifying the original animation. Even if we tried to look for better techniques, the chances of a single mocap shoot giving a perfectly loopable animation are minimal.</p>
 
-<h5 id="cross-fading-around-the-seam:894f9b4cb59901f5bf4506e115ff54db">Cross-fading Around the Seam</h5>
+<h5 id="cross-fading-around-the-seam">Cross-fading Around the Seam</h5>
 
 <p>The final simple part to this is to blend the last few frames in the animation so that they meet seamlessly with the frame at the start of the animation:</p>
 
@@ -378,7 +378,7 @@ for (size_t i = 0; i &lt; BLEND_SIZE; i++)
 
 <p>You can tweak the number of blend frames a little to get a smoother transition.</p>
 
-<h5 id="conclusion:894f9b4cb59901f5bf4506e115ff54db">Conclusion</h5>
+<h5 id="conclusion">Conclusion</h5>
 
 <p>There is a whole bunch of stuff that you&rsquo;ll need to do to make this production-ready (loops within loops, signal filtering, artist pre/post input/modification, etc) but it this should be a good start.</p>
 
@@ -488,11 +488,11 @@ for (size_t i = 0; i &lt; BLEND_SIZE; i++)
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

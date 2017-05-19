@@ -22,7 +22,7 @@
     
         <meta property="og:type" content="website" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Animation &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="http://donw.io/tags/animation/index.xml">
@@ -79,7 +79,9 @@
     </header>
     
     <section class="post-excerpt">
-        <p>This is a bit of a fun post highlighting how some simple maths can be used to create great visual results. With some basic statistics, we can create looping skeletal animations from an input data set that contains non-exact loops. A typical example is a motion capture sampled run animation: This is derived from the CMU Graphics Lab Motion Capture Database, which has been converted to BVH files by Bruce Hahne.</p>
+        <p>This is a bit of a fun post highlighting how some simple maths can be used to create great visual results. With some basic statistics, we can create looping skeletal animations from an input data set that contains non-exact loops. A typical example is a motion capture sampled run animation:
+
+This is derived from the CMU Graphics Lab Motion Capture Database, which has been converted to BVH files by Bruce Hahne.</p>
     </section>
 
     <footer class="post-footer">
@@ -148,11 +150,11 @@
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

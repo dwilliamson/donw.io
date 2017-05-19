@@ -22,7 +22,7 @@
     
         <meta property="og:type" content="website" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Reflection &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="http://donw.io/tags/reflection/index.xml">
@@ -79,7 +79,8 @@
     </header>
     
     <section class="post-excerpt">
-        <p>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&rsquo;m going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5). The motivation for the development of the SC5 engine was a clean break from the past. We were working with a very, very large code base that used Unreal 2.5 with many years of modifications and rewrites.</p>
+        <p>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&rsquo;m going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5).
+The motivation for the development of the SC5 engine was a clean break from the past.</p>
     </section>
 
     <footer class="post-footer">
@@ -148,11 +149,11 @@
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

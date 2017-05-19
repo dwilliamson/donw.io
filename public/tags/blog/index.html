@@ -22,7 +22,7 @@
     
         <meta property="og:type" content="website" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Blog &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="http://donw.io/tags/blog/index.xml">
@@ -83,7 +83,8 @@
 trigger much discussion and I didn&rsquo;t like keeping the overhead of <a href="https://disqus.com/">Disqus</a>
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
 on people loading the site (although you really should be using the likes of <a href="https://www.eff.org/privacybadger">Privacy Badger</a> and <a href="https://github.com/gorhill/uBlock">uBlock Origin</a>).</p>
-</p>
+
+<p></p></p>
     </section>
 
     <footer class="post-footer">
@@ -131,11 +132,11 @@ on people loading the site (although you really should be using the likes of <a 
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

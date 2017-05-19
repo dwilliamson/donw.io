@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2015-02-11T12:58:23&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Distant Spherical Area Light Sources &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -81,6 +81,8 @@
     <section class="post-content">
         <p>This is a small test post exercising math notation with <a href="http://www.mathjax.org/">MathJax</a> in <a href="https://gohugo.io/">Hugo</a>.</p>
 
+<p></p>
+
 <p>Epic use the following equation for a spherical light source  [<a href="http://blog.selfshadow.com/publications/s2013-shading-course/" title="Real Shading in Unreal Engine 4">1</a>]:</p>
 
 <p>$$\mathbf{C} = (\mathbf{L} \cdot \mathbf{r})\mathbf{r} - \mathbf{L}$$
@@ -136,7 +138,6 @@ float3 specular_l = normalize(P);
 <li><a href="http://blog.selfshadow.com/publications/s2013-shading-course/" title="Real Shading in Unreal Engine 4">Real Shading in Unreal Engine 4</a></li>
 <li><a href="http://www.frostbite.com/2014/11/moving-frostbite-to-pbr/" title="Moving Frostbite to PBR">Moving Frostbite to PBR</a></li>
 </ul>
-
     </section>
 
     <hr>
@@ -217,11 +218,11 @@ float3 specular_l = normalize(P);
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

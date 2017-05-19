@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2012-12-17T11:38:22&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Very Fast, High-Precision SIMD/GPU Gradient Noise &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -79,13 +79,13 @@
     </header>
 
     <section class="post-content">
-        
+        <p>A recently published article by Inigo Quilez on <a href="http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm">Voronoi Edges</a> highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.</p>
 
-<p>A recently published article by Inigo Quilez on <a href="http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm">Voronoi Edges</a> highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.</p>
+<p></p>
 
 <p>The GPGPU crowd have used similar techniques for a while, dubbed <a href="http://www.mpi-inf.mpg.de/~strzodka/projects/double/">Mixed Precision Methods</a> and the first reference I can find to using relative values for &ldquo;Infinite noise&rdquo; is in Pixar&rsquo;s paper on <a href="http://graphics.pixar.com/library/WaveletNoise/paper.pdf">Wavelet Noise</a>.</p>
 
-<h5 id="perlin-s-gradient-noise:e6e69b71ef866b6d53d10ae9b1d8d2cb">Perlin&rsquo;s Gradient Noise</h5>
+<h5 id="perlin-s-gradient-noise">Perlin&rsquo;s Gradient Noise</h5>
 
 <p>One of the simplest noise implementations involves taking &ldquo;random&rdquo; gradient vectors from points on a lattice nearest your sampling point and interpolating them. I say &ldquo;random&rdquo; because while the result effectively looks random, it&rsquo;s more a hashing process with no state:</p>
 
@@ -177,7 +177,7 @@ float grad_noise(float x, float y, float z)
 
 <p>I&rsquo;ve not found Simplex noise to give any real gains in terms of visuals and performance. Either the branches become a problem or the increased ALU to avoid branches steps in. As I want 100x gains here, not minor &ldquo;potential&rdquo; gains, it&rsquo;s not been worth the complexity increase for me.</p>
 
-<h5 id="single-precision-motivation:e6e69b71ef866b6d53d10ae9b1d8d2cb">Single Precision Motivation</h5>
+<h5 id="single-precision-motivation">Single Precision Motivation</h5>
 
 <p>When you start applying the noise functions on a large scale, single-precision noise breaks down entirely. The easiest way to fix this is by changing all float values in the above source to double. Depending on your use case, this can be quite a sensible solution and it&rsquo;s very easy to find noise examples out there where people brush over the problem entirely and switch to doubles.</p>
 
@@ -210,7 +210,7 @@ float grad_noise(float x, float y, float z)
 
 <p>This demonstrates a couple of things: the lack of real double performance on GPUs and the greatly increased ALU under-performing table lookups vs. the gradient version.</p>
 
-<h5 id="making-single-precision-scale:e6e69b71ef866b6d53d10ae9b1d8d2cb">Making Single Precision Scale</h5>
+<h5 id="making-single-precision-scale">Making Single Precision Scale</h5>
 
 <p>The above noise function is already in a format ready for improvement. The first step is to accept doubles as parameters:</p>
 
@@ -247,7 +247,7 @@ float dz0 = float(z - z0);
 
 <p>The rest of the code does not need to touch a double value, ever; the distance to the far lattice indices has already been adjusted so that it&rsquo;s not in terms of the incoming position.</p>
 
-<h5 id="a-simd-implementation:e6e69b71ef866b6d53d10ae9b1d8d2cb">A SIMD Implementation</h5>
+<h5 id="a-simd-implementation">A SIMD Implementation</h5>
 
 <p>There are two ways to write a complete double SIMD implementation. The first is to use the <a href="http://softpixel.com/~cwright/programming/simd/sse2.php">SSE2</a> instructions, storing 3x double values in two 128-bit registers. This is quite painful and the resulting code has significantly less through-put than its float equivalent. I didn&rsquo;t get a chance to correctly profile my implementation but initial investigations proved there was little benefit, especially for the large increase in complexity.</p>
 
@@ -441,7 +441,7 @@ v128f g1357 = _mm_add_ps(mulx, _mm_add_ps(muly, mulz));
 
 <p>The SIMD approach is valuable. If you have enough free cores, there&rsquo;s nothing stopping you using it at the same time as a GPU implementation. However, better gains in terms of productivity are more likely if you use something like the <a href="http://ispc.github.com/">Intel SPMD Program Compiler</a>. You can also do something like use OpenCL on the CPU but the availability of CPU drivers on the PC may make this very problematic.</p>
 
-<h5 id="an-opencl-implementation:e6e69b71ef866b6d53d10ae9b1d8d2cb">An OpenCL Implementation</h5>
+<h5 id="an-opencl-implementation">An OpenCL Implementation</h5>
 
 <p>Knowing the float/double trick above, an OpenCL implementation is more straight-forward, <em>provided you have your program setup for loading/running OpenCL kernels</em>. The same approach maps to CUDA or whatever favourite compute setup you have and you can even change and reload your noise functions on the fly (seeing the surface of a planet update in real-time as you edit its noise functions is quite funky):</p>
 
@@ -549,7 +549,7 @@ float gradient_noise_d(__global const float3* gradient_table, double3 p)
 
 <p>It&rsquo;s already pretty fast but the most important additions I&rsquo;d suggest are to use multiple noise functions: experiment with value noise, reduce the problem from 3D to 2D, anything. Getting great performance requires domain-specific knowledge of the patterns you&rsquo;re trying to emulate and an appreciation for how much you can cheat.</p>
 
-<h5 id="memorising-mm-shuffle-parameters:e6e69b71ef866b6d53d10ae9b1d8d2cb">Memorising _MM_SHUFFLE parameters</h5>
+<h5 id="memorising-mm-shuffle-parameters">Memorising _MM_SHUFFLE parameters</h5>
 
 <p>The SSE code above contains a few calls to some cute little templates that replace use of the <code>_MM_SHUFFLE</code> macro. It&rsquo;s a particularly nasty macro to remember, especially when multiple calls use it differently. Here&rsquo;s the templates that help make life a little easier:</p>
 
@@ -614,7 +614,6 @@ float gradient_noise_d(__global const float3* gradient_table, double3 p)
 </code></pre>
 
 <p>The static assert should nicely catch any errors you make at compile-time, as well as providing implicit documentation on the valid range of inputs.</p>
-
     </section>
 
     <hr>
@@ -695,11 +694,11 @@ float gradient_noise_d(__global const float3* gradient_table, double3 p)
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

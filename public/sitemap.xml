@@ -2,9 +2,8 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://donw.io/</loc>
-    <lastmod>2017-04-21T20:30:00+01:00</lastmod>
-    <priority>0</priority>
+    <loc>http://donw.io/post/terminal-pacity/</loc>
+    <lastmod>2017-05-19T15:21:27+01:00</lastmod>
   </url>
   
   <url>
@@ -60,6 +59,96 @@
   <url>
     <loc>http://donw.io/post/reflection-cpp-1/</loc>
     <lastmod>2011-09-25T23:34:13+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/animation/</loc>
+    <lastmod>2012-08-20T16:07:23+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/blog/</loc>
+    <lastmod>2017-04-21T20:30:00+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/c&#43;&#43;/</loc>
+    <lastmod>2012-01-03T07:21:58+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/</loc>
+    <lastmod>2017-05-19T15:21:27+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/gpu/</loc>
+    <lastmod>2016-08-25T22:05:56+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/lighting/</loc>
+    <lastmod>2015-02-11T12:58:23+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/math/</loc>
+    <lastmod>2016-10-23T19:14:32+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/noise/</loc>
+    <lastmod>2016-08-25T22:05:56+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/pbr/</loc>
+    <lastmod>2015-02-11T12:58:23+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/post/</loc>
+    <lastmod>2017-05-19T15:21:27+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/quaternions/</loc>
+    <lastmod>2012-07-19T12:52:03+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/reflection/</loc>
+    <lastmod>2012-01-03T07:21:58+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/simd/</loc>
+    <lastmod>2012-12-17T11:38:22+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/</loc>
+    <lastmod>2012-08-20T16:07:23+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://donw.io/tags/website/</loc>
+    <lastmod>2016-06-19T21:48:11+01:00</lastmod>
+    <priority>0</priority>
   </url>
   
 </urlset>

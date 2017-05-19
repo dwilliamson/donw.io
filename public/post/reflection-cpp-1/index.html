@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2011-09-25T23:34:13&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Reflection in C&#43;&#43;, Part 1: Introduction &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -96,7 +96,7 @@
 <li>Finally I&rsquo;ll cover my latest development, <a href="https://github.com/Celtoys/clReflect">clReflect</a>, that uses the <a href="http://clang.llvm.org/">clang C++ frontend</a> to build a reflection database. This to me is as close to ideal as I&rsquo;m going to get for C++ on Windows, however it can be taken to its logical conclusion on other platforms such as MacOS or Linux where the LLVM backend is more stable. Please checkout its webpage because I&rsquo;d really love some help developing it further!</li>
 </ul>
 
-<h4 id="what-is-reflection:17c7cde88a740d3a914f2e8970b0045b">What is Reflection?</h4>
+<h4 id="what-is-reflection">What is Reflection?</h4>
 
 <p>A reflection API is a very basic, powerful tool that every game studio should have at their disposal. It normally contains some or all of the following features:</p>
 
@@ -155,57 +155,57 @@
 
 <p>There are many tradeoffs with each technique and covering each is beyond the scope of these posts. However, the use-cases should be broad enough to show how varied implementations can be.</p>
 
-<h4 id="basic-c-reflection-api:17c7cde88a740d3a914f2e8970b0045b">Basic C++ Reflection API</h4>
+<h4 id="basic-c-reflection-api">Basic C++ Reflection API</h4>
 
 <p>To introduce the above concepts we&rsquo;ll need a quick API we can talk about:</p>
 
 <pre><code class="language-cpp">struct Name
 {
-	int hash;
-	string text;
+    int hash;
+    string text;
 };
 struct Primitive
 {
-	Name name;
+    Name name;
 };
 struct Type : public Primitive
 {
-	int size;
+    int size;
 };
 struct EnumConstant : public Primitive
 {
-	int value;
+    int value;
 }
 struct Enum : public Type
 {
-	EnumConstant constants[];
+    EnumConstant constants[];
 };
 struct Field : public Primitive
 {
-	Type type;
-	int offset;
+    Type type;
+    int offset;
 };
 struct Function : public Primitive
 {
-	Field return_parameter;
-	Field parameters[];
+    Field return_parameter;
+    Field parameters[];
 };
 struct Class : public Type
 {
-	Field fields[];
-	Function functions[];
+    Field fields[];
+    Function functions[];
 };
 struct Namespace : public Primitive
 {
-	Enum enums[];
-	Class classes[];
-	Function functions[];
+    Enum enums[];
+    Class classes[];
+    Function functions[];
 };
 </code></pre>
 
 <p>The base type for any entry in the reflection database is a <strong>Primitive</strong> and will be used below to describe any such entry.</p>
 
-<h4 id="serialisation:17c7cde88a740d3a914f2e8970b0045b">Serialisation</h4>
+<h4 id="serialisation">Serialisation</h4>
 
 <p>The cross-over between serialisation and reflection APIs is quite large and subtle. When you have game objects that you want to load and save from disk, a natural response is to develop a dedicated serialisation API that reads and writes data from within your game types. Reflection can be considered a generalisation of such a serialisation API by presenting a runtime description of all your types and their memory layout. This allows you to write serialisation code separate from your types that can be adapted to suit multiple file formats.</p>
 
@@ -213,19 +213,19 @@ struct Namespace : public Primitive
 
 <pre><code class="language-cpp">struct Vector
 {
-	float x, y, z;
+    float x, y, z;
 };
 
 struct PhysicsComponent
 {
-	Vector position;
-	Vector velocity;
-	Vector acceleration;
+    Vector position;
+    Vector velocity;
+    Vector acceleration;
 };
-	
+    
 struct GameObject : public Object
 {
-	PhysicsComponent physics;
+    PhysicsComponent physics;
 };
 </code></pre>
 
@@ -241,7 +241,7 @@ struct GameObject : public Object
 
 <pre><code class="language-cpp">struct Object
 {
-	Type* type;
+    Type* type;
 };
 </code></pre>
 
@@ -249,49 +249,49 @@ struct GameObject : public Object
 
 <pre><code class="language-cpp">void SaveObject(Object* object)
 {
-	// Types that inherit from Object already know their type so can call
-	// the overloaded SaveObject directly
-	SaveObject(object, object-&gt;type);
+    // Types that inherit from Object already know their type so can call
+    // the overloaded SaveObject directly
+    SaveObject(object, object-&gt;type);
 }
 
 void SaveObject(char* data, Type* type)
 {
-	// Using the description of the type, iterate over all fields in
-	// the object
-	for (Field* field in type-&gt;fields)
-	{
-		// Each field knows its offset so add that to the base address of the
-		// object being saved to get at the individual field data
-		char* field_data = data + field-&gt;offset;
+    // Using the description of the type, iterate over all fields in
+    // the object
+    for (Field* field in type-&gt;fields)
+    {
+        // Each field knows its offset so add that to the base address of the
+        // object being saved to get at the individual field data
+        char* field_data = data + field-&gt;offset;
 
-		// If the field type is a known built-in type then we're at leaf nodes of
-		// our object field hierarchies. These can be saved with explicit save
-		// functions that know their type. If not, then we need to further
-		// recurse until we reach a leaf node.
-		Type* field_type = field-&gt;type;
-		if (field_type is builtin)
-			SaveBuiltin(field_data, field_type);
-		else
-			SaveObject(field_data, field_type);
-	}
+        // If the field type is a known built-in type then we're at leaf nodes of
+        // our object field hierarchies. These can be saved with explicit save
+        // functions that know their type. If not, then we need to further
+        // recurse until we reach a leaf node.
+        Type* field_type = field-&gt;type;
+        if (field_type is builtin)
+            SaveBuiltin(field_data, field_type);
+        else
+            SaveObject(field_data, field_type);
+    }
 }
 
 void SaveBuiltin(char* data, Type* type)
 {
-	switch (type)
-	{
-		case (char): WriteChar(data);
-		case (short): WriteShort(data);
-		case (int): WriteInt(data);
-		case (float): WriteFloat(data);
-		// ... etc ...
-	}
+    switch (type)
+    {
+        case (char): WriteChar(data);
+        case (short): WriteShort(data);
+        case (int): WriteInt(data);
+        case (float): WriteFloat(data);
+        // ... etc ...
+    }
 }
 </code></pre>
 
 <p>Whether your file format is text XML or binary, the algorithm is the same. The difference is in how you write your known built-in types and how you annotate your output data along the way (e.g. text tags for XML). A nice side-effect of writing your serialisation this way is that for a given file format, your serialisation code is written in one place and can handle any object that can be described by your reflection API - you just have different files for each format implementation.</p>
 
-<h4 id="containers:17c7cde88a740d3a914f2e8970b0045b">Containers</h4>
+<h4 id="containers">Containers</h4>
 
 <p>Game objects are more complicated than those specified above and will have containers. This is an umbrella term for any of these:</p>
 
@@ -307,40 +307,40 @@ void SaveBuiltin(char* data, Type* type)
 
 <pre><code class="language-cpp">void SaveObject(char* data, Type* type)
 {
-	// ... start of function ...
-	
-		if (field_type is builtin)
-			SaveBuiltin(field_data, field_type);
-		else if (field_type is container)
-			SaveContainer(field_data, field_type);
-		else
-			SaveObject(field_data, field_type);
-	
-	// ... rest of function ...
+    // ... start of function ...
+    
+        if (field_type is builtin)
+            SaveBuiltin(field_data, field_type);
+        else if (field_type is container)
+            SaveContainer(field_data, field_type);
+        else
+            SaveObject(field_data, field_type);
+    
+    // ... rest of function ...
 }
 
 void SaveContainer(char* data, Type* type)
 {
-	switch (type)
-	{
-		case (vector): WriteVector(data, type);
-		case (list): WriteList(data, type);
-		// ... etc ...
-	}
+    switch (type)
+    {
+        case (vector): WriteVector(data, type);
+        case (list): WriteList(data, type);
+        // ... etc ...
+    }
 }
 
 void SaveVector(char* data, Type* type)
 {
-	// Cast the data to your vector type
-	vector&amp; vec = data cast as vector;
-	
-	Type* stored_type = type-&gt;container_value_type;
-	
-	for (int i in vec.count)
-	{
-		char* value_data = data + i * stored_type-&gt;size;
-		SaveObject(value_data, stored_type);
-	}
+    // Cast the data to your vector type
+    vector&amp; vec = data cast as vector;
+    
+    Type* stored_type = type-&gt;container_value_type;
+    
+    for (int i in vec.count)
+    {
+        char* value_data = data + i * stored_type-&gt;size;
+        SaveObject(value_data, stored_type);
+    }
 }
 </code></pre>
 
@@ -357,30 +357,30 @@ void SaveVector(char* data, Type* type)
 
 <pre><code class="language-cpp">interface IContainer
 {
-	Type* GetKeyType() const;
-	Type* GetValueType() const;
-	
-	ReadIterator GetReadIterator();
-	WriteIterator GetWriteIterator();
+    Type* GetKeyType() const;
+    Type* GetValueType() const;
+    
+    ReadIterator GetReadIterator();
+    WriteIterator GetWriteIterator();
 };
 
 interface IReadIterator
 {
-	char* GetKey() const;
-	char* GetValue() const;
-	int GetCount() const;
-	
-	void MoveNext();
-	bool IsValid();
+    char* GetKey() const;
+    char* GetValue() const;
+    int GetCount() const;
+    
+    void MoveNext();
+    bool IsValid();
 };
 
 interface IWriteIterator
 {
-	void SetKey(char* data);
-	void SetValue(char* data);
-	
-	void MoveNext();
-	bool IsValid();
+    void SetKey(char* data);
+    void SetValue(char* data);
+    
+    void MoveNext();
+    bool IsValid();
 };
 </code></pre>
 
@@ -390,28 +390,28 @@ interface IWriteIterator
 
 <pre><code class="language-cpp">void SaveContainer(char* data, Type* type)
 {
-	ContainerInterface* container = type-&gt;GetContainerInterface(data);
-	Type* key_type = container-&gt;GetKeyType();
-	Type* value_type = container-&gt;GetValueType();
-	
-	Serialise iterator-&gt;GetCount();
-	
-	WriteIterator* iterator = container-&gt;GetWriteIterator();
-	while (iterator-&gt;IsValid())
-	{
-		if (key_type)
-			SaveObject(iterator-&gt;GetKey(), key_type);
-		
-		SaveObject(iterator-&gt;GetValue(), value_type);
-		
-		iterator-&gt;Next();
-	}
+    ContainerInterface* container = type-&gt;GetContainerInterface(data);
+    Type* key_type = container-&gt;GetKeyType();
+    Type* value_type = container-&gt;GetValueType();
+    
+    Serialise iterator-&gt;GetCount();
+    
+    WriteIterator* iterator = container-&gt;GetWriteIterator();
+    while (iterator-&gt;IsValid())
+    {
+        if (key_type)
+            SaveObject(iterator-&gt;GetKey(), key_type);
+        
+        SaveObject(iterator-&gt;GetValue(), value_type);
+        
+        iterator-&gt;Next();
+    }
 }
 </code></pre>
 
 <p>Like the serialisation code that we started with, this algorithm is independent of file format and only differs in how the data is finally written. This also requires you to write only one container save per file format, cleanly solving the implementation explosion.</p>
 
-<h4 id="pointers-and-the-object-database:17c7cde88a740d3a914f2e8970b0045b">Pointers and the Object Database</h4>
+<h4 id="pointers-and-the-object-database">Pointers and the Object Database</h4>
 
 <p>Serialising pointers can be a tricky subject and any grizzled console programmer will tell you that a good way to handle the problem is to not serialise them at all! If you can get away with using indices and handles you may find them more comfortable than pointers. With a reflection API and object database, however, serialising pointers is remarkably easy. Not only that, it opens up a whole host of possibilities for future use.</p>
 
@@ -419,19 +419,19 @@ interface IWriteIterator
 
 <pre><code class="language-cpp">struct Name
 {
-	u32 id;
-	const char* text;
+    u32 id;
+    const char* text;
 };
 
 struct Object
 {
-	Name name;
-	Type* type;
+    Name name;
+    Type* type;
 };
 
 class ObjectDatabase
 {
-	Object* CreateObject(const char* type_name);
+    Object* CreateObject(const char* type_name);
 };
 </code></pre>
 
@@ -441,8 +441,8 @@ class ObjectDatabase
 
 <pre><code class="language-cpp">if (field_type is pointer)
 {
-	Object* object = (Object*)field_data;
-	Serialise object-&gt;hash as u32
+    Object* object = (Object*)field_data;
+    Serialise object-&gt;hash as u32
 }
 else if (field_type is builtin) ...
 </code></pre>
@@ -457,7 +457,7 @@ else if (field_type is builtin) ...
 <li>The package being loaded contains a list of packages it depends upon that need to be loaded first.</li>
 </ul>
 
-<h4 id="custom-loading-functions:17c7cde88a740d3a914f2e8970b0045b">Custom loading functions</h4>
+<h4 id="custom-loading-functions">Custom loading functions</h4>
 
 <p>Game objects can be even more complicated than this - sometimes you have fields which can&rsquo;t directly be serialised to disk. A good example of this is a D3D vertex buffer, which is represented as a D3D resource interface pointer. Other times there are types which may not be reflection-registered due to their complexity that you still want to save - <code>std::string</code> is a nice example of this.</p>
 
@@ -466,7 +466,7 @@ else if (field_type is builtin) ...
 <pre><code class="language-cpp">// Serialisation code for the XML file format
 if (SaveFunc f = field_type-&gt;save_funcs.find(FORMAT_XML))
 {
-	f(field_data, field_type);
+    f(field_data, field_type);
 }
 </code></pre>
 
@@ -476,16 +476,16 @@ if (SaveFunc f = field_type-&gt;save_funcs.find(FORMAT_XML))
 
 <pre><code class="language-cpp">enum Format
 {
-	FORMAT_BINARY,
-	FORMAT_TEXT_XML,
-	FORMAT_BINARY_XML,
-	FORMAT_COUNT
+    FORMAT_BINARY,
+    FORMAT_TEXT_XML,
+    FORMAT_BINARY_XML,
+    FORMAT_COUNT
 };
 
 struct Type
 {
-	SaveFunc save_funcs[FORMAT_COUNT];
-	LoadFunc load_funcs[FORMAT_COUNT];
+    SaveFunc save_funcs[FORMAT_COUNT];
+    LoadFunc load_funcs[FORMAT_COUNT];
 };
 </code></pre>
 
@@ -495,54 +495,54 @@ struct Type
 
 <pre><code class="language-cpp">void SaveObject(char* data, Type* type)
 {
-	// Using the description of the type, iterate over all fields in
-	// the object
-	for (Field* field in type-&gt;fields)
-	{
-		// Each field knows its offset so add that to the base address of the
-		// object being saved to get at the individual field data
-		char* field_data = data + field-&gt;offset;
+    // Using the description of the type, iterate over all fields in
+    // the object
+    for (Field* field in type-&gt;fields)
+    {
+        // Each field knows its offset so add that to the base address of the
+        // object being saved to get at the individual field data
+        char* field_data = data + field-&gt;offset;
 
-		// Branch on field type
-		Type* field_type = field-&gt;type;
-		if (field_type is pointer)
-			Serialise ((Object*)field_data)-&gt;hash as u32
-		else if (SaveFunc f = field_type-&gt;save_funcs[FORMAT_XML])
-			f(field_data, field_type);
-		else if (field_type is builtin)
-			SaveBuiltin(field_data, field_type);
-		else if (field_type is container)
-			SaveContainer(field_data, field_type);
-		else
-			SaveObject(field_data, field_type);
-	}
+        // Branch on field type
+        Type* field_type = field-&gt;type;
+        if (field_type is pointer)
+            Serialise ((Object*)field_data)-&gt;hash as u32
+        else if (SaveFunc f = field_type-&gt;save_funcs[FORMAT_XML])
+            f(field_data, field_type);
+        else if (field_type is builtin)
+            SaveBuiltin(field_data, field_type);
+        else if (field_type is container)
+            SaveContainer(field_data, field_type);
+        else
+            SaveObject(field_data, field_type);
+    }
 }
 </code></pre>
 
 <p>It&rsquo;s worth mentioning that another means of achieving this is to have a single Load/Save function per object that handles the serialisation of all fields that are too complicated to reflect in one place. Unreal Engine (UE) is a good example of this and it&rsquo;s one of the main reasons I prefer the above solution. There are no marked boundaries between serialised fields so it&rsquo;s very easy to damage an entire object by messing up one field - you can&rsquo;t temporarily skip it and keep everybody working while you solve the problem at hand. It gets more unwieldy when you get into versioning, which is covered below.</p>
 
-<h4 id="versioned-file-formats:17c7cde88a740d3a914f2e8970b0045b">Versioned file formats</h4>
+<h4 id="versioned-file-formats">Versioned file formats</h4>
 
 <p>So far we haven&rsquo;t taken a look at any loading code. Some pseudo-code for loading anything saved with the features we&rsquo;ve covered above could look like this:</p>
 
 <pre><code class="language-cpp">void LoadObject(char* data, const Type* type)
 {
-	for (Field* field in type-&gt;fields)
-	{
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		
-		if (field_type is pointer)
-			// Load u32 hash, lookup in Object Database, point to it (or create, or proxy object, impl defined...)
-		else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
-			f(data, field_type);
-		else if (field_type is container)
-			LoadContainer(field_data, field_type);
-		else if (field_type is builtin)
-			LoadBuiltin(field_data, field_type);
-		else
-			LoadObject(field_data, field_type);
-	}
+    for (Field* field in type-&gt;fields)
+    {
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        
+        if (field_type is pointer)
+            // Load u32 hash, lookup in Object Database, point to it (or create, or proxy object, impl defined...)
+        else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
+            f(data, field_type);
+        else if (field_type is container)
+            LoadContainer(field_data, field_type);
+        else if (field_type is builtin)
+            LoadBuiltin(field_data, field_type);
+        else
+            LoadObject(field_data, field_type);
+    }
 }
 </code></pre>
 
@@ -591,30 +591,30 @@ struct Type
 
 <pre><code class="language-cpp">void LoadObject(char* data, const Type* type)
 {
-	for (string tag in xml_nodes)
-	{
-		// Skip any fields that have been removed
-		Field* field = type-&gt;find_field(tag);
-		if (field == 0)
-			continue;
+    for (string tag in xml_nodes)
+    {
+        // Skip any fields that have been removed
+        Field* field = type-&gt;find_field(tag);
+        if (field == 0)
+            continue;
 
-		// Normal loading
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		if (field_type is pointer)
-			// Load u32 hash, lookup in Object Database, point to/create it
-		else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
-			f(data, field_type);
-		else if (field_type is builtin)
-			LoadBuiltin(field_data, field_type);
-		else if (field_type is container)
-			LoadContainer(field_data, field_type);
-		else
-			LoadObject(field_data, field_type);
-	}
-	
-	// Any added fields in the type won't be present in the data so are
-	// naturally handled if you provide them with a default value
+        // Normal loading
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        if (field_type is pointer)
+            // Load u32 hash, lookup in Object Database, point to/create it
+        else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
+            f(data, field_type);
+        else if (field_type is builtin)
+            LoadBuiltin(field_data, field_type);
+        else if (field_type is container)
+            LoadContainer(field_data, field_type);
+        else
+            LoadObject(field_data, field_type);
+    }
+    
+    // Any added fields in the type won't be present in the data so are
+    // naturally handled if you provide them with a default value
 }
 </code></pre>
 
@@ -622,31 +622,31 @@ struct Type
 
 <pre><code class="language-cpp">void LoadObject(char* data, const Type* type)
 {
-	int nb_fields = read from file;
-	
-	for (i in nb_fields)
-	{
-		// Read the chunk header
-		u32 field_hash = read from file;
-		u32 data_size = read from file;
-		
-		// Skip any fields that have been removed
-		Field* field = type-&gt;find_field(field_hash);
-		if (field == 0)
-		{
-			// seek from current position over the data_size
-			continue;
-		}
-		
-		// Normal loading
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		// ...
-		
-		// You can insert an extra check here to verify that the loading code has
-		// consumed the number of bytes equal to data_size. Very useful for tracking
-		// errors in custom loading functions.
-	}
+    int nb_fields = read from file;
+    
+    for (i in nb_fields)
+    {
+        // Read the chunk header
+        u32 field_hash = read from file;
+        u32 data_size = read from file;
+        
+        // Skip any fields that have been removed
+        Field* field = type-&gt;find_field(field_hash);
+        if (field == 0)
+        {
+            // seek from current position over the data_size
+            continue;
+        }
+        
+        // Normal loading
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        // ...
+        
+        // You can insert an extra check here to verify that the loading code has
+        // consumed the number of bytes equal to data_size. Very useful for tracking
+        // errors in custom loading functions.
+    }
 }
 </code></pre>
 
@@ -663,7 +663,7 @@ struct Type
 
 <p>Both methods can suffer from lack of old version pruning. When we started Splinter Cell: Conviction, there was still loading code for the mesh format in the original Splinter Cell. Nobody knew whether this worked as it hadn&rsquo;t been tested in years. Updating the code was fraught with problems and a reboot was required.</p>
 
-<h4 id="enumerations:17c7cde88a740d3a914f2e8970b0045b">Enumerations</h4>
+<h4 id="enumerations">Enumerations</h4>
 
 <p>Enumerations can quite easily be serialised as integers but this is quite brittle. If a programmer changes the order of enumerations, changes their value or adds/removes any, all existing data that uses that enum type will likely be invalidated. I have worked on projects that would require rebuilding the entire asset database if you were ever bold enough to try such a move!</p>
 
@@ -671,30 +671,30 @@ struct Type
 
 <pre><code class="language-cpp">void SaveEnum(char* data, Type* type)
 {
-	// Cast the type to an enum and retrieve the value
-	Enum* enum_type = type-&gt;AsEnum();
-	int enum_value = *(int*)data;
+    // Cast the type to an enum and retrieve the value
+    Enum* enum_type = type-&gt;AsEnum();
+    int enum_value = *(int*)data;
 
-	// Lookup the constant and save its hash
-	EnumConstant* constant = enum_type-&gt;find_constant(enum_value);
-	WriteU32(constant-&gt;name.hash);
+    // Lookup the constant and save its hash
+    EnumConstant* constant = enum_type-&gt;find_constant(enum_value);
+    WriteU32(constant-&gt;name.hash);
 }
 
 void LoadEnum(char* data, Type* type)
 {
-	// Cast the type to an enum and read the constant hash
-	Enum* enum_type = type-&gt;AsEnum();
-	int hash = ReadU32();
-	
-	// Lookup the constant and assign the value
-	EnumConstant* constant = enum_type-&gt;find_constant(hash);
-	*(int*)data = constant-&gt;value;
+    // Cast the type to an enum and read the constant hash
+    Enum* enum_type = type-&gt;AsEnum();
+    int hash = ReadU32();
+    
+    // Lookup the constant and assign the value
+    EnumConstant* constant = enum_type-&gt;find_constant(hash);
+    *(int*)data = constant-&gt;value;
 }
 </code></pre>
 
 <p>You will also have to account for data that stores old enum values, typically handled by leaving the destination untouched and initialised at its default value.</p>
 
-<h4 id="performance-baked-serialisation-functions-pods:17c7cde88a740d3a914f2e8970b0045b">Performance: Baked serialisation functions &amp; PODs</h4>
+<h4 id="performance-baked-serialisation-functions-pods">Performance: Baked serialisation functions &amp; PODs</h4>
 
 <p>This may all seem a little slow but the reality is you are likely to be I/O bound; even on hard-drives none of this code factors negatively in the performance.</p>
 
@@ -702,50 +702,50 @@ void LoadEnum(char* data, Type* type)
 
 <pre><code class="language-cpp">void BakeSerialisationFunctions(Field* field, Format format)
 {
-	// Don't bake anything for transient fields
-	if (&quot;transient&quot; in field-&gt;attributes)
-		return;
+    // Don't bake anything for transient fields
+    if (&quot;transient&quot; in field-&gt;attributes)
+        return;
 
-	// Bake the save function based on the type
-	if (field_type is pointer)
-		field-&gt;save_funcs[FORMAT_XML] = SavePointer;
-	else if (field_type-&gt;save_funcs[FORMAT_XML])
-		field-&gt;save_funcs[FORMAT_XML] = field_type-&gt;save_funcs[FORMAT_XML];
-	else if (field_type is builtin)
-		field-&gt;save_funcs[FORMAT_XML] = SaveBuiltin;		
-	else if (field_type is enum)
-		field-&gt;save_funcs[FORMAT_XML] = SaveEnum
-	else if (field_type is container)
-		field-&gt;save_funcs[FORMAT_XML] = SaveContainer;
-	else
-		field-&gt;save_funcs[FORMAT_XML] = SaveObject;
+    // Bake the save function based on the type
+    if (field_type is pointer)
+        field-&gt;save_funcs[FORMAT_XML] = SavePointer;
+    else if (field_type-&gt;save_funcs[FORMAT_XML])
+        field-&gt;save_funcs[FORMAT_XML] = field_type-&gt;save_funcs[FORMAT_XML];
+    else if (field_type is builtin)
+        field-&gt;save_funcs[FORMAT_XML] = SaveBuiltin;        
+    else if (field_type is enum)
+        field-&gt;save_funcs[FORMAT_XML] = SaveEnum
+    else if (field_type is container)
+        field-&gt;save_funcs[FORMAT_XML] = SaveContainer;
+    else
+        field-&gt;save_funcs[FORMAT_XML] = SaveObject;
 }
 
 void SaveObject(char* data, Type* type)
 {
-	// Call the save for each field
-	for (Field* field in type-&gt;fields)
-	{
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		field-&gt;save_funcs[FORMAT_XML](field_data, field_type);
-	}
+    // Call the save for each field
+    for (Field* field in type-&gt;fields)
+    {
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        field-&gt;save_funcs[FORMAT_XML](field_data, field_type);
+    }
 }
 </code></pre>
 
 <p>Furthermore, if your reflection API deems that an object is of a POD type, you don&rsquo;t have to recurse into the children and can instead write a binary blob for the entire object (un-versioned, binary only).</p>
 
-<h4 id="field-offsets-and-inheritance:17c7cde88a740d3a914f2e8970b0045b">Field offsets and inheritance</h4>
+<h4 id="field-offsets-and-inheritance">Field offsets and inheritance</h4>
 
 <p>The basic implementation of a <code>Class</code> type will store only the fields that were declared within the class. Field layout is ABI-specific and you will need a database per compiler/platform when using field offsets. Access to fields of its base class requires following the base class pointer in <code>Class</code>:</p>
 
 <pre><code class="language-cpp">void SaveObject(char* data, Type* type)
 {
-	// ... end of the function ...
-	
-	// Recurse into base types
-	if (type is class &amp;&amp; type-&gt;base_class)
-		SaveObject(data, type);
+    // ... end of the function ...
+    
+    // Recurse into base types
+    if (type is class &amp;&amp; type-&gt;base_class)
+        SaveObject(data, type);
 }
 </code></pre>
 
@@ -824,7 +824,7 @@ int offset = offsetof(Derived, x);
 
 <p>It&rsquo;s worth reading <a href="http://www.phpcompiler.org/articles/virtualinheritance.html">Memory Layout for Multiple and Virtual Inheritance</a> to get more background information on this problem.</p>
 
-<h4 id="attributes:17c7cde88a740d3a914f2e8970b0045b">Attributes</h4>
+<h4 id="attributes">Attributes</h4>
 
 <p>Attributes are a means of annotating your primitives, adding extra data that can be used to control how your program performs at runtime. <a href="http://en.cppreference.com/w/cpp/language/attributes">C++11 attributes</a> are not what I&rsquo;m referring to here as they don&rsquo;t allow you to define your own attributes/values. <a href="http://msdn.microsoft.com/en-us/library/aa287992.aspx">C# attributes</a> are closer but a little too powerful/complicated.</p>
 
@@ -839,7 +839,7 @@ int offset = offsetof(Derived, x);
 
 <p>Later posts will describe ways in which you can annotate primitives and retrieve them at runtime. There are, as you would guess, many tradeoffs with each approach.</p>
 
-<h4 id="network-serialisation-and-visualisation-of-game-state:17c7cde88a740d3a914f2e8970b0045b">Network Serialisation and Visualisation of Game State</h4>
+<h4 id="network-serialisation-and-visualisation-of-game-state">Network Serialisation and Visualisation of Game State</h4>
 
 <p>It&rsquo;s probably obvious by now how this can be achieved: use serialisation to a byte buffer that is optionally compressed and send that to your endpoint - most likely binary and versionable. With the addition of an attribute that describes network transient fields, this allows you to make some very powerful editing tools.</p>
 
@@ -866,7 +866,7 @@ int offset = offsetof(Derived, x);
 
 <p>You can use a reflection API to describe your packet structures and binary serialise them or generate C++ code from the offline representation. If your packet structures end up being PODs then you can write code which performs a memcpy, exchanging any pointers for the unique hash of the object pointed to. However you choose to do it, the basic description of types and their layout that a reflection API can provide you with can give you a good head start.</p>
 
-<h4 id="walking-the-object-graph-and-the-ui:17c7cde88a740d3a914f2e8970b0045b">Walking the Object Graph and the UI</h4>
+<h4 id="walking-the-object-graph-and-the-ui">Walking the Object Graph and the UI</h4>
 
 <p>With the tools developed above you can visit all data members within an object and perform arbitrary operations, such as printing their value to a console, displaying them in a widget in-game or recording them using some form of programmable logging system.</p>
 
@@ -885,7 +885,7 @@ int offset = offsetof(Derived, x);
 
 <p>Generalising the issue, you can also do controlled <a href="http://www.cs.kent.ac.uk/people/staff/rej/gc.html">Garbage Collection</a> by following the pointer graph and highlighting orphaned objects. UE achieves the <a href="http://wiki.beyondunreal.com/Legacy:Garbage_Collection">same goal</a> by serialising all objects, checking for references in a mark and sweep operation.</p>
 
-<h4 id="calling-functions-script-binding-and-rpc:17c7cde88a740d3a914f2e8970b0045b">Calling Functions, Script Binding and RPC</h4>
+<h4 id="calling-functions-script-binding-and-rpc">Calling Functions, Script Binding and RPC</h4>
 
 <p>You can build a reflection API for your game without needing to worry about adding function call support. By this I mean the ability to do something similar to the following:</p>
 
@@ -906,19 +906,19 @@ int ret = params.GetReturnValue();
 
 <pre><code class="language-cpp">void NativeFunctionExample(BindLanguageContext* ctx)
 {
-	// Pop some parameters off the script language stack
-	int param0 = ctx-&gt;PopInt();
-	string param1 = ctx-&gt;PopString();
+    // Pop some parameters off the script language stack
+    int param0 = ctx-&gt;PopInt();
+    string param1 = ctx-&gt;PopString();
 
-	// ...do some work with the parameters...
-	
-	// Push a return value result of the work done
-	ctx-&gt;PushInt(1);
+    // ...do some work with the parameters...
+    
+    // Push a return value result of the work done
+    ctx-&gt;PushInt(1);
 }
 
 void RegisterFunctions(BindLanguageContext* ctx)
 {
-	ctx-&gt;RegisterFunction(&quot;NativeFunctionExample&quot;, NativeFunctionExample);
+    ctx-&gt;RegisterFunction(&quot;NativeFunctionExample&quot;, NativeFunctionExample);
 }
 </code></pre>
 
@@ -926,15 +926,15 @@ void RegisterFunctions(BindLanguageContext* ctx)
 
 <pre><code class="language-cpp">int NativeFunctionExample(int param0, string param1)
 {
-	// ...do some work with the parameters...
+    // ...do some work with the parameters...
 }
 
 void NativeFunctionExample_Wrapper(BindLanguageContext* ctx)
 {
-	int param0 = ctx-&gt;PopInt();
-	string param1 = ctx-&gt;PopString();
-	int ret = NativeFunctionExample(param0, param1);
-	ctx-&gt;PushInt(ret);
+    int param0 = ctx-&gt;PopInt();
+    string param1 = ctx-&gt;PopString();
+    int ret = NativeFunctionExample(param0, param1);
+    ctx-&gt;PushInt(ret);
 }
 </code></pre>
 
@@ -955,35 +955,35 @@ void NativeFunctionExample_Wrapper(BindLanguageContext* ctx)
 
 <pre><code class="language-cpp">void MakeParameterStack(ParameterStack&amp; params, BindLanguageContext* ctx)
 {
-	// Iterate over every value pushed onto the script stack
-	for (int i = 0; i &lt; ctx-&gt;ParametersOnStack(); i++)
-	{
-		BindLanguageVal* val = ctx-&gt;GetStackRef();
-		
-		switch (val-&gt;type)
-		{
-			// If required, convert the script value to a native equivalent
-			// In the case of ints, floats, etc, nothing may need to be done
-			// In the case of object references, you need a means of preserving
-			//    the reference in the target language
-		}
-		
-		// Add to the intermediate stack
-		params.Add(val);
-	}
+    // Iterate over every value pushed onto the script stack
+    for (int i = 0; i &lt; ctx-&gt;ParametersOnStack(); i++)
+    {
+        BindLanguageVal* val = ctx-&gt;GetStackRef();
+        
+        switch (val-&gt;type)
+        {
+            // If required, convert the script value to a native equivalent
+            // In the case of ints, floats, etc, nothing may need to be done
+            // In the case of object references, you need a means of preserving
+            //    the reference in the target language
+        }
+        
+        // Add to the intermediate stack
+        params.Add(val);
+    }
 }
 
 void CallFunctionFromScript(BindLanguageContext* ctx, string function_name)
 {
-	// Retrieve the function from the reflecton database
-	Function* function = db.GetFunction(function_name);
-	
-	// Build the parameter stack
-	ParameterStack params;
-	MakeParameterStack(params, ctx);
-	
-	// Call the native function
-	function-&gt;Call(params);
+    // Retrieve the function from the reflecton database
+    Function* function = db.GetFunction(function_name);
+    
+    // Build the parameter stack
+    ParameterStack params;
+    MakeParameterStack(params, ctx);
+    
+    // Call the native function
+    function-&gt;Call(params);
 }
 </code></pre>
 
@@ -995,7 +995,7 @@ void CallFunctionFromScript(BindLanguageContext* ctx, string function_name)
 
 <p>The final piece of the puzzle, RPC, should now be evident. All you need to do is serialise the parameter stack to a byte buffer and send that over the network. Any return values are serialised and returned. The details of how you wait/poll/interrupt on results are all you need to worry about.</p>
 
-<h4 id="live-c-code-editing:17c7cde88a740d3a914f2e8970b0045b">Live C++ code editing</h4>
+<h4 id="live-c-code-editing">Live C++ code editing</h4>
 
 <p>Edit-and-continue is OK when it works, but what if you had the ability to edit large sections of your C++ code without having to shutdown the game, reload the compiled executable, load your levels, navigate to your testing location and resume what you were doing? What if you could come to work, load up the game and sit there all day <strong>in the game</strong>, coding away until the day ended. Iteration is essential for creating great games and most studios will already have dynamic reloading of ingame assets such as scripts, textures, meshes, sounds or even entire level layouts. Some may even have a live connection between their editor and the game running on the console. C++ programmers are missing the boat!</p>
 
@@ -1041,7 +1041,7 @@ void CallFunctionFromScript(BindLanguageContext* ctx, string function_name)
 
 <p>I can&rsquo;t stress enough how good this setup felt and how strongly I feel that every game should have it. This setup was literally serialising everything in a level within a few seconds (models, textures, data structures, etc.) without breaking a sweat.</p>
 
-<h4 id="memory-mapping:17c7cde88a740d3a914f2e8970b0045b">Memory Mapping</h4>
+<h4 id="memory-mapping">Memory Mapping</h4>
 
 <p>Memory mapping is an old technique that in its most basic form involves loading a file from whatever storage medium you are using with one single read, not touching the result: it&rsquo;s usable as it is. It naturally evolved from the ROM programming model where both your code and data is defined in your code files, making limited use of slow-access RAM. There are notable cases of old Playstation games, for example, serialising the entire contents of RAM to a memory card for save games!</p>
 
@@ -1067,8 +1067,8 @@ ReadBlob(object, type-&gt;size);
 // Lookup each pointer hash
 for (ptr in type-&gt;pointers)
 {
-	void* ref = object_db.GetObject((u32)ptr);
-	ptr = ref;
+    void* ref = object_db.GetObject((u32)ptr);
+    ptr = ref;
 }
 </code></pre>
 
@@ -1076,26 +1076,26 @@ for (ptr in type-&gt;pointers)
 
 <pre><code class="language-cpp">for (ptr in type-&gt;pointers)
 {
-	// The ptr now represents an index into the link table and a single bit representing
-	// which link table to use
-	u32 ptr_id = (u32)ptr;
-	bool is_import = ptr_id &amp; 0x80000000;
-	
-	// Pointer lookup is a simple array index
-	if (is_import)
-		ptr = import_table[ptr_id &amp; 0x7FFFFFFF];
-	else
-		ptr = export_table[ptr_id &amp; 0x7FFFFFFF];		
+    // The ptr now represents an index into the link table and a single bit representing
+    // which link table to use
+    u32 ptr_id = (u32)ptr;
+    bool is_import = ptr_id &amp; 0x80000000;
+    
+    // Pointer lookup is a simple array index
+    if (is_import)
+        ptr = import_table[ptr_id &amp; 0x7FFFFFFF];
+    else
+        ptr = export_table[ptr_id &amp; 0x7FFFFFFF];        
 }
 </code></pre>
 
-<h4 id="conclusion:17c7cde88a740d3a914f2e8970b0045b">Conclusion</h4>
+<h4 id="conclusion">Conclusion</h4>
 
 <p>I hope nothing in the post above implies that specific techniques are the only options available to you. I&rsquo;ve spent many years researching and implementing alternatives to the above and these are a sampling of the techniques I feel most comfortable with.</p>
 
 <p>To give you an sampling of how diverse the implementations can be, I&rsquo;ve collected some articles/implementations you may find interesting.</p>
 
-<h6 id="implementations:17c7cde88a740d3a914f2e8970b0045b">Implementations</h6>
+<h6 id="implementations">Implementations</h6>
 
 <ul>
 <li><a href="https://github.com/HeliumProject/Reflect">Helium Reflection</a> - Initially part of the Insomniac Games Nocturnal initiative. It&rsquo;s an intrusive, registration-based reflection API.</li>
@@ -1110,7 +1110,7 @@ for (ptr in type-&gt;pointers)
 <li><a href="https://github.com/tegesoft/camp">CAMP</a> - Template-based, manual registration with a minimal DSL-in-C++ approach.</li>
 </ul>
 
-<h6 id="articles:17c7cde88a740d3a914f2e8970b0045b">Articles</h6>
+<h6 id="articles">Articles</h6>
 
 <ul>
 <li><a href="http://www.slideshare.net/naughty_dog/adventures-in-data-compilation">Adventures in Data Compilation</a> - A Scheme DDL is used to generate C++ header files and runtime data files for Naughty Dog&rsquo;s games.</li>
@@ -1120,7 +1120,7 @@ for (ptr in type-&gt;pointers)
 <li><a href="http://www.gamasutra.com/view/feature/6379/sponsored_feature_behind_the_.php">Behind the Mirror - Adding Reflection to C++</a> - Discussion of the Nocturnal reflection API.</li>
 </ul>
 
-<h6 id="blog-posts:17c7cde88a740d3a914f2e8970b0045b">Blog posts</h6>
+<h6 id="blog-posts">Blog posts</h6>
 
 <ul>
 <li><a href="http://www.enchantedage.com/cpp-reflection">Static reflection in C++ using minimal repetition</a> - Tries to reduce the inherent instability in registration-based reflection systems by embedding registration with declaration.</li>
@@ -1210,11 +1210,11 @@ for (ptr in type-&gt;pointers)
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

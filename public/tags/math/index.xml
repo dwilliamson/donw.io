@@ -7,7 +7,9 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 23 Oct 2016 19:14:32 +0100</lastBuildDate>
-    <atom:link href="http://donw.io/tags/math/index.xml" rel="self" type="application/rss+xml" />
+    
+	<atom:link href="http://donw.io/tags/math/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>Three Methods to Extract Frustum Points</title>
@@ -15,148 +17,9 @@
       <pubDate>Sun, 23 Oct 2016 19:14:32 +0100</pubDate>
       
       <guid>http://donw.io/post/frustum-point-extraction/</guid>
-      <description>
+      <description>&lt;p&gt;Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.&lt;/p&gt;
 
-&lt;p&gt;Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.&lt;/p&gt;
-
-&lt;h5 id=&#34;reverse-projection:fd36dbbb65d24a21fc8a65073d1aa07e&#34;&gt;Reverse Projection&lt;/h5&gt;
-
-&lt;p&gt;If you have access to the world to clip-space matrix you can invert it and transform the clip-space frustum cube back into world-space:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cpp&#34;&gt;// Full 4x4 inverse, can&#39;t use an affine inverse optimisation
-float4x4 clip_to_world = inverse(world_to_clip);
-
-// Homogenous points for source cube in clip-space
-// With -1 to 1 in x/y and 0 to 1 in z (D3D)
-float4 v[8] =
-{
-    {-1, -1, 0, 1},
-    {-1,  1, 0, 1},
-    { 1,  1, 0, 1},
-    { 1, -1, 0, 1},
-    {-1, -1, 1, 1},
-    {-1,  1, 1, 1},
-    { 1,  1, 1, 1},
-    { 1, -1, 1, 1}
-};
-
-for (int i = 0; i &amp;lt; 8; i++)
-{
-    // 4x4 * 4x1 matrix/vector multiplication 
-    v[i] = transform(clip_to_world, v[i]);
-
-    // Homogenous to cartesian conversion
-    v[i] /= v[i].w;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This is an incredibly useful little snippet that can be used at any part of the pipeline without needing to know specifics of the projection.&lt;/p&gt;
-
-&lt;h5 id=&#34;plane-intersection:fd36dbbb65d24a21fc8a65073d1aa07e&#34;&gt;Plane Intersection&lt;/h5&gt;
-
-&lt;p&gt;If you have 6 planes which define the frustum in world-space, 3 planes at a time can be intersected to find each point in the frustum. In the general case, 3 intersecting planes either intersect at a point or a line. Given the 3 planes defined by their normal and distance from origin:&lt;/p&gt;
-
-&lt;p&gt;$$P_0 = \langle N_0, d_0 \rangle$$
-$$P_1 = \langle N_1, d_1 \rangle$$
-$$P_2 = \langle N_2, d_2 \rangle$$&lt;/p&gt;
-
-&lt;p&gt;Finding the intersection point is a case of solving the linear system:&lt;/p&gt;
-
-&lt;p&gt;$$P_0 \cdot I = 0$$
-$$P_1 \cdot I = 0$$
-$$P_2 \cdot I = 0$$&lt;/p&gt;
-
-&lt;p&gt;This can be written in matrix form:&lt;/p&gt;
-
-&lt;p&gt;$$\begin{bmatrix} N_0 &amp;amp; N_1 &amp;amp; N_2 \end{bmatrix} \cdot I = \begin{bmatrix} -d_0 \\ -d_1 \\ -d_2 \end{bmatrix}$$&lt;/p&gt;
-
-&lt;p&gt;Which then allows the intersection point to be found with a matrix inverse:&lt;/p&gt;
-
-&lt;p&gt;$$I = \begin{bmatrix} N_0 &amp;amp; N_1 &amp;amp; N_2 \end{bmatrix} ^{-1} \cdot \begin{bmatrix} -d_0 \\ -d_1 \\ -d_2 \end{bmatrix}$$&lt;/p&gt;
-
-&lt;p&gt;In code:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cpp&#34;&gt;bool IntersectPlanes(float4 P0, float4 P1, float4 P2, out float3 I)
-{
-    // Form the normal matrix
-    float3x3 M;
-    M[0][0] = P0.x; M[1][0] = P0.y; M[2][0] = P0.z;
-    M[0][1] = P1.x; M[1][1] = P1.y; M[2][1] = P1.z;
-    M[0][2] = P2.x; M[1][2] = P2.y; M[2][2] = P2.z;
-
-    // Solve the linear system
-    // If M is singular the three planes intersect with a line, not a point
-    if (!invert(M))
-        return false;
-
-    // Transform the distance vector by the inverse to get the intersection point
-    I.x = M[0][0] * -P0.w + M[1][0] * -P1.w + M[2][0] * -P2.w;
-    I.y = M[0][1] * -P0.w + M[1][1] * -P1.w + M[2][1] * -P2.w;
-    I.z = M[0][2] * -P0.w + M[1][2] * -P1.w + M[2][2] * -P2.w;
-
-    return true;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The frustum points can then be found:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cpp&#34;&gt;v[0] = IntersectPlanes(planes[Near], planes[Left],  planes[Bottom]);
-v[1] = IntersectPlanes(planes[Near], planes[Left],  planes[Top]);
-v[2] = IntersectPlanes(planes[Near], planes[Right], planes[Top]);
-v[3] = IntersectPlanes(planes[Near], planes[Right], planes[Bottom]);
-v[4] = IntersectPlanes(planes[Far],  planes[Left],  planes[Bottom]);
-v[5] = IntersectPlanes(planes[Far],  planes[Left],  planes[Top]);
-v[6] = IntersectPlanes(planes[Far],  planes[Right], planes[Top]);
-v[7] = IntersectPlanes(planes[Far],  planes[Right], planes[Bottom]);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;It&amp;rsquo;s safe to ignore the singular case of planes intersecting at a line if your frustum is a well defined convex hull. While this is useful if you only have access to the planes, a 3x3 inverse for each point is a bit excessive. It can be improved slightly when not considering degenerate cases:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cpp&#34;&gt;float3 IntersectPlanes(float4 P0, float4 P1, float4 P2)
-{
-    float3 bxc = cross(P1.xyz, P2.xyz);
-    float3 cxa = cross(P2.xyz, P0.xyz);
-    float3 axb = cross(P0.xyz, P1.xyz);
-    float3 r = -P0.w * bxc - P1.w * cxa - P2.w * axb;
-    return r * (1 / dot(P0.xyz, bxc));
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;h5 id=&#34;near-far-plane-interpolation:fd36dbbb65d24a21fc8a65073d1aa07e&#34;&gt;Near/Far Plane Interpolation&lt;/h5&gt;
-
-&lt;p&gt;This method is by far the fastest and tailored to a perspective projection. If you have access to the field of view and aspect ratio early in the pipeline, it&amp;rsquo;s also the most accurate. Beyond that, all you need is the camera&amp;rsquo;s world rotation:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cpp&#34;&gt;// Pull camera basis
-float3 axis_x = camera_to_world[0];
-float3 axis_y = camera_to_world[1];
-float3 axis_z = camera_to_world[2];
-
-// Near/far plane center points
-float3 near_center = axis_z * zn;
-float3 far_center = axis_z * zf;
-
-// Get projected viewport extents on near/far planes
-float e = tanf(fov_y * 0.5f);
-float near_ext_y = e * zn;
-float near_ext_x = near_ext_y * aspect_ratio;
-float far_ext_y = e * zf;
-float far_ext_x = far_ext_y * aspect_ratio;
-
-// Points are just offset from the center points along camera basis
-v[0] = near_center - axis_x * near_ext_x - axis_y * near_ext_y;
-v[1] = near_center - axis_x * near_ext_x + axis_y * near_ext_y;
-v[2] = near_center + axis_x * near_ext_x + axis_y * near_ext_y;
-v[3] = near_center + axis_x * near_ext_x - axis_y * near_ext_y;
-v[4] = far_center  - axis_x * far_ext_x  - axis_y * far_ext_y;
-v[5] = far_center  - axis_x * far_ext_x  + axis_y * far_ext_y;
-v[6] = far_center  + axis_x * far_ext_x  + axis_y * far_ext_y;
-v[7] = far_center  + axis_x * far_ext_x  - axis_y * far_ext_y;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;It&amp;rsquo;s always helpful to keep each of these around and pick and choose based on situation. Add the clear case first and use a combination of experience and profiling to determine when stages need to be more tightly bound and generation needs to be optimised.&lt;/p&gt;
-</description>
+&lt;p&gt;&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -167,48 +30,7 @@ v[7] = far_center  + axis_x * far_ext_x  - axis_y * far_ext_y;
       <guid>http://donw.io/post/packed-circle-radius/</guid>
       <description>&lt;p&gt;When you develop a solver for the Tammes problem you&amp;rsquo;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;
 
-&lt;p&gt;&lt;center&gt;&lt;img src=&#34;http://donw.io/img/CirclePacking/snapshot2.png&#34; alt=&#34;d&#34; /&gt;&lt;/center&gt;&lt;/p&gt;
-
-&lt;p&gt;There are known solutions for a &lt;a href=&#34;https://arxiv.org/abs/1509.01768&#34;&gt;given number of circles&lt;/a&gt; but there is no known solution for any number of points. Relaxation can be used in the general case.&lt;/p&gt;
-
-&lt;p&gt;Once the unit sphere is packed with circles, finding the radius can start with two circles and the planes they lie within:&lt;/p&gt;
-
-&lt;p&gt;&lt;center&gt;&lt;img src=&#34;http://donw.io/img/CirclePacking/planes.png&#34; alt=&#34;d&#34; /&gt;&lt;/center&gt;&lt;/p&gt;
-
-&lt;p&gt;If the circle center points $p_0$ and $p_1$ are on the unit sphere, they can also be considered the normals of the planes they lie within. The acute angle $\theta$ between these two planes is called the &lt;em&gt;dihedral angle&lt;/em&gt; and is easily calculated as:&lt;/p&gt;
-
-&lt;p&gt;$$\theta = acos(p_0 \cdot p_1)$$&lt;/p&gt;
-
-&lt;p&gt;The obtuse angle, $\alpha$, is called the &lt;em&gt;anhedral angle&lt;/em&gt; and is thus:&lt;/p&gt;
-
-&lt;p&gt;$$\alpha = \pi - \theta$$&lt;/p&gt;
-
-&lt;p&gt;The adjacent/opposite sides of the triangle formed by the two planes and the line joining $p_0$ and $p_1$ will be the same size and can be considered the desired circle radius:&lt;/p&gt;
-
-&lt;p&gt;&lt;center&gt;&lt;img src=&#34;http://donw.io/img/CirclePacking/triangle.png&#34; alt=&#34;d&#34; /&gt;&lt;/center&gt;&lt;/p&gt;
-
-&lt;p&gt;Using the &lt;a href=&#34;http://mathworld.wolfram.com/LawofCosines.html&#34;&gt;Law of Cosines&lt;/a&gt; an expression for $d$ and then $r$, can quickly be attained:&lt;/p&gt;
-
-&lt;p&gt;$$d^2 = r^2 + r^2 - 2r^2cos(\alpha)$$
-$$d^2 = 2r^2(1 - cos(\alpha))$$
-$$r = \sqrt{\frac{d^2}{2(1 - cos(\alpha))}}$$&lt;/p&gt;
-
-&lt;p&gt;This works well enough to get the radius you want but the overuse of transcendentals feels like it can be squeezed some more. Following the &lt;a href=&#34;http://mathworld.wolfram.com/LawofSines.html&#34;&gt;Law of Sines&lt;/a&gt; makes things even worse but there&amp;rsquo;s a clue in the $cos(\alpha)$ term which expands to:&lt;/p&gt;
-
-&lt;p&gt;$$cos(\pi - \theta)$$&lt;/p&gt;
-
-&lt;p&gt;This can be reduced using a common trigonometric identity:&lt;/p&gt;
-
-&lt;p&gt;$$cos(\pi - \theta) = cos(\pi)cos(\theta) + sin(\pi)sin(\theta)$$&lt;/p&gt;
-
-&lt;p&gt;Given that $cos(\pi)=-1$, $sin(\pi)=0$ and $\theta=acos(p_0 \cdot p_1)$, this immediately reduces to:&lt;/p&gt;
-
-&lt;p&gt;$$cos(\pi - \theta) = -(p_0 \cdot p_1)$$&lt;/p&gt;
-
-&lt;p&gt;Leaving the final substitution:&lt;/p&gt;
-
-&lt;p&gt;$$r = \sqrt{\frac{d^2}{2(p_0 \cdot p_1 + 1)}}$$&lt;/p&gt;
-</description>
+&lt;p&gt;&lt;/p&gt;</description>
     </item>
     
   </channel>

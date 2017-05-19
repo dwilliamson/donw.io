@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2012-01-03T07:21:58&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Reflection in C&#43;&#43;, Part2: The Simple Implementation of Splinter Cell &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -93,7 +93,7 @@
 
 <p>An example of this system is <a href="https://bitbucket.org/dwilliamson/reflectabit/overview">Reflectabit</a>, written a few years ago in my spare time. It&rsquo;s unfinished but contains enough to serve as a tutorial of sorts. This post is from memory as I don&rsquo;t have the code to hand anymore.</p>
 
-<h5 id="the-type-id:34d857f412ffe3c047d6213141bf474b">The Type ID</h5>
+<h5 id="the-type-id">The Type ID</h5>
 
 <p>The first task in any reflection API is defining what a type ID is: how can you reference types in code? For SC5 we needed a type ID that:</p>
 
@@ -224,7 +224,7 @@ const char* GetTypeName()
 
 <p>An important realisation is that this string is unique if your type name is unique so you don&rsquo;t really need to change it. If that bothers you, however, you can do a quick parse of the string and cache it locally in a static char buffer, or similar.</p>
 
-<h5 id="types-in-memory:34d857f412ffe3c047d6213141bf474b">Types in Memory</h5>
+<h5 id="types-in-memory">Types in Memory</h5>
 
 <p>The next step is in defining how types are represented in memory, their dynamic retrieval and how they can be used to create objects of that type. This involved a few structures:</p>
 
@@ -344,7 +344,7 @@ Type* CreateType(NAME name)
 }
 </code></pre>
 
-<h5 id="fields:34d857f412ffe3c047d6213141bf474b">Fields</h5>
+<h5 id="fields">Fields</h5>
 
 <p>Each type contains an array of fields that describe it - called a <code>PropertyInfo</code> in SC5. We needed the field descriptions to be able to serialise and inspect any object, requiring the following structure:</p>
 
@@ -476,7 +476,7 @@ struct StripPointer&lt;TYPE*&gt;
 };
 </code></pre>
 
-<h5 id="inheritance:34d857f412ffe3c047d6213141bf474b">Inheritance</h5>
+<h5 id="inheritance">Inheritance</h5>
 
 <p>All registered types could only have one base class and fields declared within that type only existed in the fields array of that type (i.e. the fields within an inheritance hierarchy weren&rsquo;t merged). Registering a base class was done with another method in <code>Type</code>:</p>
 
@@ -496,7 +496,7 @@ TypeDB db;
 db.CreateType&lt;SomeType&gt;().Base&lt;ItsBaseType&gt;();
 </code></pre>
 
-<h5 id="enumerations:34d857f412ffe3c047d6213141bf474b">Enumerations</h5>
+<h5 id="enumerations">Enumerations</h5>
 
 <p>Similar to what was described in part 1 of this series, enumeration constants were simply a name/value pair:</p>
 
@@ -546,7 +546,7 @@ db.CreateType&lt;TestEnumType&gt;().EnumConstants(enum_consts);
 
 <p>Again, this relies upon manual registration of any enumeration constants you have and can be error-prone if you forget to add a constant or incorrectly name it. I can&rsquo;t recall this causing us any issues but the potential for making mistakes was there. We were careful and determined that going any further would not be a good investment of our time.</p>
 
-<h5 id="attributes:34d857f412ffe3c047d6213141bf474b">Attributes</h5>
+<h5 id="attributes">Attributes</h5>
 
 <p>Attribute systems can get pretty complicated but we wanted something quick and simple that could be improved at a later date if necessary. We pretty much knew from the outset what attributes we would require so each field was extended to contain:</p>
 
@@ -615,7 +615,7 @@ db.CreateType&lt;TestEnumType&gt;().EnumConstants(enum_consts);
 
 <p>As evident, you could only add new boolean attributes if there were flag bits left and adding attributes with more complexity required extending <code>Field</code>. Perfect for our use-case but not ideal for a more general system.</p>
 
-<h5 id="containers:34d857f412ffe3c047d6213141bf474b">Containers</h5>
+<h5 id="containers">Containers</h5>
 
 <p>Our container support was very primitive, similar to the <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/inc/rflb/Container.h">container support in Reflectabit</a> but lacking its completeness. The basic premise was to use an interface pointer to an underlying container wrapper, like so:</p>
 
@@ -664,7 +664,7 @@ struct Field
 
 <p>There is more information on the technique in part 1 of this series. Again, we didn&rsquo;t use any STL code, opting for our own custom containers, so the above is just an example to highlight how it was achieved. For each field container type, the compiler will generate all of the necessary code to access/mutate the containers which are controlled through the container interface. It&rsquo;s not ideal in terms of generated code size but it&rsquo;s simple and it works well enough.</p>
 
-<h5 id="working-with-objects:34d857f412ffe3c047d6213141bf474b">Working with objects</h5>
+<h5 id="working-with-objects">Working with objects</h5>
 
 <p>We had the luxury of not having to create a controlling object model as Unreal&rsquo;s package system was already doing a good enough job. As a result, all of our objects were anonymously contained by an equivalent <code>UObject</code> and we merely had a resource database that mapped object names to their instances:</p>
 
@@ -773,7 +773,7 @@ int* x_ptr = (int*)x-&gt;GetPtr(mt);
 
 <p>That covers the fundamentals, from which the rest of the code was built upon.</p>
 
-<h5 id="serialisation:34d857f412ffe3c047d6213141bf474b">Serialisation</h5>
+<h5 id="serialisation">Serialisation</h5>
 
 <p>We only supported one form of a serialisation and that was a versionable, binary IFF variant. Serialisation was only ever applied to a memory buffer that grew as more data was added to it. The chunk header was similar to:</p>
 
@@ -900,7 +900,7 @@ void SaveTextureData(Buffer&amp; outbuf, unsigned int flags, void* object)
 
 <p>After adding support for stream writing containers of PODs as an optimisation, bitfields and automatic endianness swapping, the serialisation didn&rsquo;t change much and was a pretty straight-forward piece of code.</p>
 
-<h5 id="the-network-server:34d857f412ffe3c047d6213141bf474b">The Network Server</h5>
+<h5 id="the-network-server">The Network Server</h5>
 
 <p>The engine had the ability to accept arbitrary TCP/IP connections while running on Windows or console, using Winsock. Again, the code was pretty minimal, just a bunch of socket, <code>bind</code>, <code>accept</code>, <code>send</code>, <code>recv</code> calls for dealing with anonymous chunks of data.</p>
 
@@ -967,7 +967,7 @@ void SaveTextureData(Buffer&amp; outbuf, unsigned int flags, void* object)
 
 <p>The network server could similarly send events and replication requests to remote machines if it needed to.</p>
 
-<h5 id="c-tools-development:34d857f412ffe3c047d6213141bf474b">C# Tools Development</h5>
+<h5 id="c-tools-development">C# Tools Development</h5>
 
 <p>Regardless of your wrapper of choice, developing tools in C/C++ can be quite painful. Microsoft managed to hit a sweet spot with with C#, .NET and Forms development that was very easy to use and not interminably slow and bloated. However, it did require the use of 3rd party libraries to get some truly useful/fast user interfaces to replace stuff like the woeful grid control. We used it to good effect, developing a few tools in C# that would communicate directly with the running game on either Windows or the console, such as:</p>
 
@@ -1098,7 +1098,7 @@ public ClassValue : Value
 
 <p>This method of tools development was really quite natural: you could iterate amazingly quickly on the C# tools code while the game was still running, edit your C# code, build (a couple of seconds), and have it running and connected another couple of seconds later without any expensive level/data reloads!</p>
 
-<h5 id="conclusion:34d857f412ffe3c047d6213141bf474b">Conclusion</h5>
+<h5 id="conclusion">Conclusion</h5>
 
 <p>The methods contained within are among those that you should keep in your bag of tricks and bring out when you need good, scalable solutions quickly. If you&rsquo;re into the new-fangled idea of developing your tools in a web browser, these techniques will get you most of the way there and even allow you to write native browser games without having to write plugins!</p>
 
@@ -1184,11 +1184,11 @@ public ClassValue : Value
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });

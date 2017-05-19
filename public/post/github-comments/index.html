@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2017-04-21T20:30:00&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.20.7" />
         <title>Replacing Disqus with Github Comments &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -79,16 +79,16 @@
     </header>
 
     <section class="post-content">
-        
-
-<p>I&rsquo;ve been considering removing comments from this blog for a while; mainly because the site doesn&rsquo;t
+        <p>I&rsquo;ve been considering removing comments from this blog for a while; mainly because the site doesn&rsquo;t
 trigger much discussion and I didn&rsquo;t like keeping the overhead of <a href="https://disqus.com/">Disqus</a>
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
 on people loading the site (although you really should be using the likes of <a href="https://www.eff.org/privacybadger">Privacy Badger</a> and <a href="https://github.com/gorhill/uBlock">uBlock Origin</a>).</p>
 
+<p></p>
+
 <p>This post is Hugo-specific but the very little code required can be adapted to any website.</p>
 
-<h5 id="what-s-wrong-with-disqus:af117f676af06886470c26b129325aaa">What&rsquo;s Wrong with Disqus?</h5>
+<h5 id="what-s-wrong-with-disqus">What&rsquo;s Wrong with Disqus?</h5>
 
 <p>This is a typical request log with Disqus <em>enabled</em>:</p>
 
@@ -142,7 +142,7 @@ what their purposes are for tracking your movements.</p>
 
 <p>Anyway. Delete it. I&rsquo;m sorry for poisoning this site with these networks. Foward to better things&hellip;</p>
 
-<h5 id="using-github-for-comments:af117f676af06886470c26b129325aaa">Using Github for Comments</h5>
+<h5 id="using-github-for-comments">Using Github for Comments</h5>
 
 <p>I was discussing removing Disqus with others and <a href="https://twitter.com/HarryDenholm">@HarryDenholm</a>
 mentioned that a friend managed to get comments on their Github-hosted static blog using Pull Requests. I thought this was pretty genius and wanted to figure out if I could do something
@@ -240,7 +240,7 @@ $(document).ready(function () {
 <p>The variables it references need to be added to the header of your html page. In this case it&rsquo;s
 the single variable <code>ghcommentid</code> which is set to the number of the Issue used for comments.</p>
 
-<h5 id="summary:af117f676af06886470c26b129325aaa">Summary</h5>
+<h5 id="summary">Summary</h5>
 
 <p>There&rsquo;s nothing more beyond that. Technically, you could actually write your blog posts as Github
 Issues themselves and forgo the need for a blog engine. But that seems too much like using a system
@@ -248,7 +248,6 @@ in ways it was never intended to be used.</p>
 
 <p>This website is managed on Github as <a href="https://github.com/dwilliamson/donw.io">dwilliamson/donw.io</a>.
 It contains the complete code for using Github for your comments.</p>
-
     </section>
 
     <hr>
@@ -329,11 +328,11 @@ It contains the complete code for using Github for your comments.</p>
 
     <script type="text/x-mathjax-config">
       MathJax.Hub.Queue(function() {
-        
-        
-        
+        // Fix <code> tags after MathJax finishes running. This is a
+        // hack to overcome a shortcoming of Markdown. Discussion at
+        // https://github.com/mojombo/jekyll/issues/199
         var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
+        for(i = 0; i &lt; all.length; i += 1) {
             all[i].SourceElement().parentNode.className += ' has-jax';
         }
     });
