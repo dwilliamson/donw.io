@@ -1,0 +1,10 @@
+
+<textarea id="{{.Get 0}}">
+{{.Get 1}}
+</textarea>
+
+<script type="text/javascript">
+    new WebGLSandbox(
+        document.getElementById("{{.Get 0}}"),
+        "{{.Get 0}}LS");
+</script>
