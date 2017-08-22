@@ -1134,7 +1134,7 @@ SandboxHTML = (function()
 					<label><input type="radio" name="select3" /><span>Fly</span></label>
 					<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
 				</div>
-				<pre class="wglsbx-Status">Status: OK</pre>
+				<div class="wglsbx-Status">Status: OK</div>
 			</div>
 
 			<div class="wglsbx-CodeEditor">
