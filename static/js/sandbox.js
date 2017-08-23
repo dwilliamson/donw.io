@@ -1128,16 +1128,18 @@ SandboxHTML = (function()
 		// Create host HTML
 		var div = document.createElement("div");
 		var html = `
-			<div class="wglsbx-CanvasHost">
-				<canvas height="600" tabindex="1"></canvas>
-				<div class="wglsbx-Buttons">Control Mode
-					<label><input type="radio" name="select3" /><span>Fly</span></label>
-					<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
+			<div class="wglsbx-Root">
+				<div class="wglsbx-CanvasHost">
+					<canvas height="500" tabindex="1"></canvas>
+					<div class="wglsbx-Buttons">Control Mode
+						<label><input type="radio" name="select3" /><span>Fly</span></label>
+						<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
+					</div>
+					<div class="wglsbx-Status">Status: OK</div>
 				</div>
-				<div class="wglsbx-Status">Status: OK</div>
-			</div>
 
-			<div class="wglsbx-CodeEditor">
+				<div class="wglsbx-CodeEditor">
+				</div>
 			</div>
 		`;
 
@@ -1152,8 +1154,9 @@ SandboxHTML = (function()
 		textarea.parentNode.removeChild(textarea);
 
 		// Record for future use
-		this.Host = div.children[0];
-		this.Editor = div.children[1];
+		var root = div.children[0];
+		this.Host = root.children[0];
+		this.Editor = root.children[1];
 		this.Canvas = this.Host.children[0];
 		var buttons = this.Host.children[1];
 		this.FlyButton = buttons.children[0].children[0];
@@ -1182,7 +1185,7 @@ SandboxHTML = (function()
 })();
 
 
-function SetupLiveEditEnvironment(textarea, lsname)
+function SetupLiveEditEnvironment(textarea, lsname, loadls)
 {
 	var html = new SandboxHTML(textarea, lsname);
 
@@ -1191,11 +1194,15 @@ function SetupLiveEditEnvironment(textarea, lsname)
 	var cm = InitCodeMirror(html.Editor, html.Host);
 
 	// Load existing code from user's local store
-	if (typeof(Storage) !== "undefined")
+	if (loadls && typeof(Storage) !== "undefined")
 	{
 		var store = localStorage[lsname + "_Code"];
 		if (store)
 			cm.setValue(store);
+	}
+	else
+	{
+		cm.setValue(textarea.value);
 	}
 
 	// Oh, GOD... wait for the browser layout engine to complete after dynamic creation

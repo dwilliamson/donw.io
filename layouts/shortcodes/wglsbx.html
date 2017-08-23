@@ -1,10 +1,7 @@
 
-<textarea id="{{.Get 0}}">
-{{.Get 1}}
-</textarea>
-
 <script type="text/javascript">
-    new WebGLSandbox(
-        document.getElementById("{{.Get 0}}"),
-        "{{.Get 0}}LS");
+
+    var textarea = document.getElementById("{{.Get 0}}");
+    new WebGLSandbox(textarea, "{{.Get 0}}LS", {{.Get 1}} == "true");
+
 </script>
