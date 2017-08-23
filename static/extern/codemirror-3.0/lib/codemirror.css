@@ -31,8 +31,8 @@
 }
 .CodeMirror-linenumbers {}
 .CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
+  padding: 0 5px 0px 5px;
+  min-width: 39px;
   text-align: right;
   color: #999;
 }
@@ -137,8 +137,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 }
 .CodeMirror-hscrollbar {
   bottom: 0; left: 0;
-  overflow-y: hidden;
-  overflow-x: scroll;
+  overflow: hidden;
 }
 .CodeMirror-scrollbar-filler {
   right: 0; bottom: 0;
