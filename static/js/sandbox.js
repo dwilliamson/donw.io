@@ -860,6 +860,12 @@ Scene = (function()
 	}
 
 
+	Scene.prototype.SetCameraPosition = function(x, y, z)
+	{
+		vec3.set(this.CameraPosition, x, y, z);
+	}
+
+
 	Scene.prototype.AddMesh = function(draw_type, geometry, vshader_source, fshader_source)
 	{
 		var gl = this.gl;
@@ -894,6 +900,7 @@ Scene = (function()
 
 		var mesh = new Mesh(gl, draw_type, geometry, program);
 		this.Meshes.push(mesh);
+		return mesh;
 	}
 
 
