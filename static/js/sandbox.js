@@ -771,6 +771,19 @@ Mesh = (function()
 		}
 
 		this.Program = program;
+		
+		// Set initial position on the origin
+		this.Position = vec3.create();
+		this.ModelMatrix = mat4.create();
+		this.SetPosition(0, 0, 0);
+	}
+
+
+	Mesh.prototype.SetPosition = function(x, y ,z)
+	{
+		vec3.set(this.Position, x, y, z);
+		mat4.identity(this.ModelMatrix);
+		mat4.translate(this.ModelMatrix, this.ModelMatrix, this.Position);
 	}
 
 	return Mesh;
@@ -902,7 +915,7 @@ Scene = (function()
 
 		// Concatenate with identity to get model view for now
 		var model_view = mat4.create();
-		mat4.mul(model_view, model_view, self.glViewMatrix);
+		mat4.mul(model_view, mesh.ModelMatrix, self.glViewMatrix);
 
 		// Apply program and set shader constants
 		gl.useProgram(mesh.Program);
