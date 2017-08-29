@@ -382,7 +382,7 @@ function QuadrifyWireframeIndices(indices)
 }
 
 
-function SubdivideTriangleList(positions, indices)
+function SubdivideTriangleList(positions, indices, do_slerp)
 {
 	var out_indices = new Array();
 
@@ -445,8 +445,10 @@ function SubdivideTriangleList(positions, indices)
 
 		// Generate a midpoint
 		var p01 = vec3.create();
-		vec3.lerp(p01, p0, p1, 0.5);
-		//slerp(p01, p0, p1, 0.5);
+		if (do_slerp)
+			slerp(p01, p0, p1, 0.5);
+		else
+			vec3.lerp(p01, p0, p1, 0.5);
 
 		// Add the new vertex position and index to the edge split table
 		positions.push(p01);
@@ -483,10 +485,10 @@ function SubdivideTriangleList(positions, indices)
 }
 
 
-function SubdivideGeometryTriangleList(geometry)
+function SubdivideGeometryTriangleList(geometry, do_slerp)
 {
 	if (geometry.IndexType == IndexType.TRIANGLE_LIST)
-		geometry.Indices = SubdivideTriangleList(geometry.Vertices, geometry.Indices);
+		geometry.Indices = SubdivideTriangleList(geometry.Vertices, geometry.Indices, do_slerp);
 }
 
 
