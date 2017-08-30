@@ -15,14 +15,14 @@ function FatalError(error)
 
 function ClearError(status_bar)
 {
-	status_bar.innerHTML = "Status: OK";
+	status_bar.innerHTML = "<span style='color: #555'>Status:</span> OK";
 	status_bar.style.color = "FFF";
 }
 
 
 function SetError(status_bar, error)
 {
-	status_bar.innerHTML = "Status: <span style='color:#f44'>Errors</span><br/>" + error;
+	status_bar.innerHTML = "<span style='color: #555'>Status:</span> <span style='color:#f44'>Errors</span><br/>" + error;
 }
 
 
@@ -1156,6 +1156,8 @@ SandboxHTML = (function()
 					<div class="wglsbx-Buttons">Control Mode
 						<label><input type="radio" name="select3" /><span>Fly</span></label>
 						<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
+						<br/>
+						<span style='color: #555'>LMB to rotate view, WSAD to move</span>
 					</div>
 					<div class="wglsbx-Status">Status: OK</div>
 				</div>
