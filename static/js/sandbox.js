@@ -15,14 +15,14 @@ function FatalError(error)
 
 function ClearError(status_bar)
 {
-	status_bar.innerHTML = "<span style='color: #555'>Status:</span> OK";
+	status_bar.innerHTML = "Status: OK";
 	status_bar.style.color = "FFF";
 }
 
 
 function SetError(status_bar, error)
 {
-	status_bar.innerHTML = "<span style='color: #555'>Status:</span> <span style='color:#f44'>Errors</span><br/>" + error;
+	status_bar.innerHTML = "Status: <span style='color:#f44'>Errors</span><br/>" + error;
 }
 
 
@@ -978,7 +978,7 @@ Scene = (function()
 
 function DrawScene(gl, scene, input)
 {
-	gl.clearColor(0, 0, 0, 1);
+	gl.clearColor(0, 0, 0, 0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// Update camera rotation and reset mouse delta
@@ -1092,9 +1092,9 @@ function InitCodeMirror(code_editor, height_matcher)
 			mode: "javascript",
 			indentUnit: 4,
 			indentWithTabs: true,
-			lineNumbers: true,
+			lineNumbers: false,
 			matchBrackets: true,
-			gutter: true,
+			gutter: false,
 		});
 
 	cm.setSize(null, height_matcher.offsetHeight);
@@ -1156,10 +1156,9 @@ SandboxHTML = (function()
 					<div class="wglsbx-Buttons">Control Mode
 						<label><input type="radio" name="select3" /><span>Fly</span></label>
 						<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
-						<br/>
-						<span style='color: #555'>LMB to rotate view, WSAD to move</span>
 					</div>
 					<div class="wglsbx-Status">Status: OK</div>
+					<span class="wglsbx-Controls">Rotate: LMB, Move: WSAD</span>
 				</div>
 
 				<div class="wglsbx-CodeEditor">

@@ -15,13 +15,13 @@
     font-size: 10pt;
 }
 
-
 .wglsbx-Buttons
 {
     /* Position at top-left of the canvas */
     position: absolute;
     top: 10px;
     left: 10px;
+    color: #222;
 }
 .wglsbx-Buttons label input
 {
@@ -39,10 +39,16 @@
 {
     /* Button style when checked */
     color: #000;
-    background: #ccf;
-    border-color: #ccf;
+    background: #aaa;
 }
 
+.wglsbx-Controls
+{
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    color: #222;
+}
 
 .wglsbx-Status
 {
@@ -50,13 +56,42 @@
     position: absolute;
     bottom: 0px;
     left: 10px;
-    font-family: monospace;    
+    font-family: monospace;
+    color: #222;
 }
-
 
 .wglsbx-CodeEditor
 {
     /* Join with the canvas on the left */
     float: left;
     width: 48%;
+}
+
+/* Overrides for CodeMirror */
+.CodeMirror
+{
+    border: 1px solid #b3b3b3;
+    font-family: Menlo, Monaco, "Courier New", monospace;
+    font-size: 12px;
+    line-height: 18px;
+    padding: 6px;  
+}
+.CodeMirror-scroll {
+  /* Set scrolling behaviour here */
+  overflow: auto;
+  overflow-x: hidden;
+}
+
+/* Overrides for CodeMirror Monokai theme to match blog code highlighting */
+.cm-s-monokai.CodeMirror {
+    background-color: #272822;
+}
+.cm-s-monokai .CodeMirror-gutters {
+    background-color: #272822;
+}
+.cm-s-monokai span.cm-keyword {
+    color: #5cd9ef;
+}
+.cm-s-monokai span.cm-property, .cm-s-monokai span.cm-attribute {
+    color: #a6e22e;
 }
