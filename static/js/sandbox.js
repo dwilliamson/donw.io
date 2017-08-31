@@ -740,8 +740,9 @@ for (var i in Colours)
 
 var DrawType = {
 	SOLID : 0,
-	WIREFRAME_TRIS : 1,
-	WIREFRAME_QUADS : 2,
+	WIREFRAME : 1,
+	WIREFRAME_TRIS : 3,
+	WIREFRAME_QUADS : 5,
 };
 
 
@@ -762,7 +763,7 @@ Mesh = (function()
 		this.IndexBuffer = CreateIndexBuffer(gl, geometry.Indices);
 
 		// Create wireframe index buffers if needed
-		if (draw_type == DrawType.WIREFRAME_TRIS || draw_type == DrawType.WIREFRAME_QUADS)
+		if (draw_type & DrawType.WIREFRAME)
 		{
 			var wireframe_indices = CreateWireframeIndices(geometry.IndexType, geometry.Indices);
 			if (draw_type == DrawType.WIREFRAME_QUADS)
@@ -959,14 +960,17 @@ Scene = (function()
 				DrawMeshPass(this, mesh, gl.TRIANGLES, Colours.WHITE);
 		}
 
-		else if (mesh.DrawType == DrawType.WIREFRAME_QUADS || mesh.DrawType == DrawType.WIREFRAME_TRIS)
+		else if (mesh.DrawType & DrawType.WIREFRAME)
 		{
-			gl.depthRange(0.01, 1);
-			if (mesh.IndexType == IndexType.TRIANGLE_STRIP)
-				DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, Colours.BLACK);
-			else
-				DrawMeshPass(this, mesh, gl.TRIANGLES, Colours.BLACK);
-			gl.depthRange(0, 1);
+			if (mesh.DrawType != DrawType.WIREFRAME)
+			{
+				gl.depthRange(0.01, 1);
+				if (mesh.IndexType == IndexType.TRIANGLE_STRIP)
+					DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, Colours.BLACK);
+				else
+					DrawMeshPass(this, mesh, gl.TRIANGLES, Colours.BLACK);
+				gl.depthRange(0, 1);
+			}
 			DrawMeshPass(this, mesh, gl.LINES, Colours.WHITE);
 		}
 	}
