@@ -1234,6 +1234,9 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 		cm.getWrapperElement().style.display = "none";
 		html.Host.style.float = "none";
 		html.Host.style.margin = "0 auto";
+
+		// Also no need for error messages, assuming the code is good
+		html.Status.style.display = "none";
 	}
 
 	// Oh, GOD... wait for the browser layout engine to complete after dynamic creation
