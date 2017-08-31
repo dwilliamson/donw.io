@@ -1179,12 +1179,12 @@ SandboxHTML = (function()
 		// Record for future use
 		var root = div.children[0];
 		this.Host = root.children[0];
-		this.Editor = root.children[1];
 		this.Canvas = this.Host.children[0];
 		var buttons = this.Host.children[1];
 		this.FlyButton = buttons.children[0].children[0];
 		this.RotateButton = buttons.children[1].children[0];
 		this.Status = this.Host.children[2];
+		this.Editor = root.children[1];
 
 		// Put textarea in the editor div
 		this.Editor.appendChild(textarea);
@@ -1208,7 +1208,7 @@ SandboxHTML = (function()
 })();
 
 
-function SetupLiveEditEnvironment(textarea, lsname, loadls)
+function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 {
 	var html = new SandboxHTML(textarea, lsname);
 
@@ -1226,6 +1226,14 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls)
 	else
 	{
 		cm.setValue(textarea.value);
+	}
+
+	if (hidecode)
+	{
+		// Remove editor from layout and center the canvas
+		cm.getWrapperElement().style.display = "none";
+		html.Host.style.float = "none";
+		html.Host.style.margin = "0 auto";
 	}
 
 	// Oh, GOD... wait for the browser layout engine to complete after dynamic creation
