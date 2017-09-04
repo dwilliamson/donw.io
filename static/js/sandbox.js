@@ -645,6 +645,8 @@ var Keys = {
 	S: 83,
 	A: 65,
 	D: 68,
+	Q: 81,
+	E: 69,
 
 	SPACE:32,
 	SHIFT:16,
@@ -1016,9 +1018,9 @@ function DrawScene(gl, scene, input)
 		vec3.sub(scene.CameraPosition, scene.CameraPosition, right);
 	if (input.KeyState[Keys.D])
 		vec3.add(scene.CameraPosition, scene.CameraPosition, right);
-	if (input.KeyState[Keys.SPACE])
+	if (input.KeyState[Keys.E])
 		vec3.add(scene.CameraPosition, scene.CameraPosition, up);
-	if (input.KeyState[Keys.SHIFT])
+	if (input.KeyState[Keys.Q])
 		vec3.sub(scene.CameraPosition, scene.CameraPosition, up);
 
 	scene.DrawMeshes();
