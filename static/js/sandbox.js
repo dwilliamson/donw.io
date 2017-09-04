@@ -492,12 +492,13 @@ function SubdivideGeometryTriangleList(geometry, do_slerp)
 }
 
 
-function ProjectVerticesToSphere(vertices)
+function ProjectVerticesToSphere(vertices, radius)
 {
 	for (var i in vertices)
 	{
 		var vertex = vertices[i];
 		vec3.normalize(vertex, vertex);
+		vec3.scale(vertex, vertex, radius);
 	}
 }
 
