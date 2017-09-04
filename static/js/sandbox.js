@@ -617,7 +617,8 @@ function InitWebGL(canvas, status_bar)
 	var gl = null;
 	try
 	{
-		gl = canvas.getContext("webgl", { antialias: true }) || canvas.getContext("experimental-webgl", { antialias: true });
+		var flags = { antialias: true, stencil: true };
+		gl = canvas.getContext("webgl", flags) || canvas.getContext("experimental-webgl", flags);
 	}
 	catch (e)
 	{
@@ -758,6 +759,9 @@ Mesh = (function()
 {
 	function Mesh(gl, draw_type, geometry, program)
 	{
+		// Cache for property access
+		this.gl = gl;
+
 		this.DrawType = draw_type;
 
 		// Create the data buffers
@@ -780,6 +784,15 @@ Mesh = (function()
 		this.Position = vec3.create();
 		this.ModelMatrix = mat4.create();
 		this.SetPosition(0, 0, 0);
+
+		// Any gl state
+		this.CullingEnabled = false;
+		this.CullMode = gl.BACK;
+		this.StencilOpFail = gl.KEEP;
+		this.StencilOpZFail = gl.KEEP;
+		this.StencilOpZPass = gl.KEEP;
+		this.StencilFunc = gl.ALWAYS;
+		this.StencilRef = 0;
 	}
 
 
@@ -934,6 +947,16 @@ Scene = (function()
 		SetShaderUniformMatrix4(gl, mesh.Program, "glModelViewMatrix", model_view);
 		SetShaderUniformVector3(gl, mesh.Program, "glColour", colour);
 
+		// Apply mesh-specific gl state
+		if (mesh.CullingEnabled)
+			gl.enable(gl.CULL_FACE);
+		else
+			gl.disable(gl.CULL_FACE);
+		gl.cullFace(mesh.CullMode);
+		gl.stencilOp(mesh.StencilOpFail, mesh.StencilOpZFail, mesh.StencilOpZPass);
+		gl.stencilFunc(mesh.StencilFunc, mesh.StencilRef, 0xFF);
+		gl.stencilMask(0xFF);
+
 		// Setup the program attributes
 		gl.bindBuffer(gl.ARRAY_BUFFER, mesh.VertexBuffer);
 		var a_vpos = gl.getAttribLocation(mesh.Program, "glVertex");
@@ -1041,9 +1064,12 @@ function main(canvas, status_bar)
 	// Initialise the window with red backdrop
 	gl.clearColor(1, 0, 0, 1);
 	gl.clearDepth(1.0);
+	gl.clearStencil(0);
 	gl.enable(gl.DEPTH_TEST);
+	gl.enable(gl.STENCIL_TEST);
 	gl.depthFunc(gl.LEQUAL);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	gl.stencilMask(0xFF);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 
 	// Create default shaders
 
