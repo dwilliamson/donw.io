@@ -793,6 +793,9 @@ Mesh = (function()
 		this.StencilOpZPass = gl.KEEP;
 		this.StencilFunc = gl.ALWAYS;
 		this.StencilRef = 0;
+
+		this.Colour = Colours.WHITE;
+		this.FillColour = Colours.BLACK;
 	}
 
 
@@ -992,12 +995,12 @@ Scene = (function()
 			{
 				gl.depthRange(0.01, 1);
 				if (mesh.IndexType == IndexType.TRIANGLE_STRIP)
-					DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, Colours.BLACK);
+					DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, mesh.FillColour);
 				else
-					DrawMeshPass(this, mesh, gl.TRIANGLES, Colours.BLACK);
+					DrawMeshPass(this, mesh, gl.TRIANGLES, mesh.FillColour);
 				gl.depthRange(0, 1);
 			}
-			DrawMeshPass(this, mesh, gl.LINES, Colours.WHITE);
+			DrawMeshPass(this, mesh, gl.LINES, mesh.Colour);
 		}
 	}
 
