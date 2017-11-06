@@ -3,6 +3,7 @@ date = "2012-08-20T16:07:23+01:00"
 draft = false
 title = "Skeletal Animation Looping with Autocorrelation"
 tags = [ "animation" ]
+hasMath = true
 +++
 
 
@@ -30,6 +31,7 @@ Statistics aren't my strong point so I would really appreciate any corrections t
 Given two discrete real data sets:
 
 $$x = [ x_0, x_1, x_2, ..., x_n ]$$
+
 $$y = [ y_0, y_1, y_2, ..., y_n ]$$
 
 [Correlation](http://en.wikipedia.org/wiki/Correlation_and_dependence) can give you a single number that tells you how similar these two data sets are. This number is generally called the correlation coefficient and can be calculated in a number of different ways, depending on what particular features of the data set you're interested in highlighting.
@@ -38,15 +40,15 @@ The most common coefficient appears to be the [Pearson product-moment correlatio
 
 $$R(x,y) = \frac{1}{n} \sum\limits_{i=1}^n \frac{x(i) - m(x)}{s(x)} * \frac{y(i) - m(y)}{s(y)}$$
 
-where $m$ is the median and $s$ is the standard deviation of the population.
+where $$m$$ is the median and $$s$$ is the standard deviation of the population.
 
-Interestingly, this coefficient is independent of the unit of measurement: it can report 100% correlation between data sets that differ in scale or offset. For example, if set $x$ recorded your age in months and set $y$ recorded your height in inches at that age, it will be able to report any linear relationship (e.g. you get taller as you get older) with a correlation coefficient close to 1. This nice result is achieved by first of all centering each data set on its median and then transforming the set into units of its standard deviation.
+Interestingly, this coefficient is independent of the unit of measurement: it can report 100% correlation between data sets that differ in scale or offset. For example, if set $$x$$ recorded your age in months and set $$y$$ recorded your height in inches at that age, it will be able to report any linear relationship (e.g. you get taller as you get older) with a correlation coefficient close to 1. This nice result is achieved by first of all centering each data set on its median and then transforming the set into units of its standard deviation.
 
-[Cross Correlation](http://en.wikipedia.org/wiki/Cross-correlation) uses this basic tool to evaluate how similar two input data sets are when one of them is offset (or, time-lagged in the case of audio samples). Assuming the data sets are equal in length, for every sample in $x$, the correlation coefficient is calculated with an offset version of $y$:
+[Cross Correlation](http://en.wikipedia.org/wiki/Cross-correlation) uses this basic tool to evaluate how similar two input data sets are when one of them is offset (or, time-lagged in the case of audio samples). Assuming the data sets are equal in length, for every sample in $$x$$, the correlation coefficient is calculated with an offset version of $$y$$:
 
 $$xcorr(x, y)[n] = sum(x' [m] * y[m + n])$$
 
-Here, $'$ is the complex conjugate. As we'll be dealing with real numbers, this can safely be ignored. You can use this for many things, like detecting the presence of one signal (or similar) somewhere within another, measuring tempo or even auto-tuning (yes, Mathematicians helped create our current generation of [talentless musicians](http://www.time.com/time/magazine/article/0,9171,1877372,00.html)).
+Here, $$'$$ is the complex conjugate. As we'll be dealing with real numbers, this can safely be ignored. You can use this for many things, like detecting the presence of one signal (or similar) somewhere within another, measuring tempo or even auto-tuning (yes, Mathematicians helped create our current generation of [talentless musicians](http://www.time.com/time/magazine/article/0,9171,1877372,00.html)).
 
 This leads to the following code:
 
@@ -86,7 +88,7 @@ double CrossCorrelate(const std::vector<double>& x, const std::vector<double>& y
 }
 ~~~
 
-Assuming the input data sets are the same size is not very useful in reality, however we don't need to do full cross correlation. With animation, we want to be able to detect loops within one dataset; essentially making $x$ and $y$ the same.
+Assuming the input data sets are the same size is not very useful in reality, however we don't need to do full cross correlation. With animation, we want to be able to detect loops within one dataset; essentially making $$x$$ and $$y$$ the same.
 
 This is called [Autocorrelation](http://en.wikipedia.org/wiki/Autocorrelation) and it gets even better. Given that we're not interested in the unit-independent properties of cross correlation (we're comparing the same data set values), we can set the median to zero and standard deviation to one, leaving:
 

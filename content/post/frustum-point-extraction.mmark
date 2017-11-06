@@ -3,6 +3,7 @@ date = "2016-10-23T19:14:32+01:00"
 draft = false
 title = "Three Methods to Extract Frustum Points"
 tags = [ "math" ]
+hasMath = true
 +++
 
 Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.
@@ -48,13 +49,17 @@ This is an incredibly useful little snippet that can be used at any part of the 
 If you have 6 planes which define the frustum in world-space, 3 planes at a time can be intersected to find each point in the frustum. In the general case, 3 intersecting planes either intersect at a point or a line. Given the 3 planes defined by their normal and distance from origin:
 
 $$P_0 = \langle N_0, d_0 \rangle$$
+
 $$P_1 = \langle N_1, d_1 \rangle$$
+
 $$P_2 = \langle N_2, d_2 \rangle$$
 
 Finding the intersection point is a case of solving the linear system:
 
 $$P_0 \cdot I = 0$$
+
 $$P_1 \cdot I = 0$$
+
 $$P_2 \cdot I = 0$$
 
 This can be written in matrix form:
