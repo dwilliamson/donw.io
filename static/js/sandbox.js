@@ -849,7 +849,7 @@ Scene = (function()
 		this.CameraPosition = vec3.create();
 		this.CameraRotation = vec3.create();
 		vec3.set(this.CameraPosition, 0, 0, 3);
-		vec3.set(this.CameraRotation, 0, 0, 0);
+		vec3.set(this.CameraRotation, -0.2, -0.25, 0);
 		this.CameraType = CameraType.ROTATE;
 
 		this.UpdateMatrices();
