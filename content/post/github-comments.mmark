@@ -156,7 +156,7 @@ $(document).ready(function () {
 This can then be invoked from your blog post html:
 
 ```
-{{ partial "comments.html" . }}
+ {{ partial "comments.html" . }}
 ```
 
 The variables it references need to be added to the header of your html page. In this case it's
