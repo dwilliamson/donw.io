@@ -5,7 +5,7 @@ title = "Mixed Precision GPU Noise with HLSL"
 tags = [ "noise", "gpu" ]
 +++
 
-I posted an article a while back, entitled [Very Fast, High-Precision SIMD/GPU Gradient Noise]({{< relref	"high-prec-gradient-noise.md" >}}), where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that `floor` could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.
+I posted an article a while back, entitled [Very Fast, High-Precision SIMD/GPU Gradient Noise]({{< relref	"high-prec-gradient-noise.mmark" >}}), where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that `floor` could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.
 
 <!--more-->
 
