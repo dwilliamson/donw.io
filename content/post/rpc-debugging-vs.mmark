@@ -1,0 +1,264 @@
++++
+date = "2012-02-07T00:27:21+01:00"
+draft = false
+title = "An RPC Debugging Framework with Visual Studio"
++++
+
+I used to love [Sublime Text 2](http://www.sublimetext.com/2) (UPDATE: I'm now a [Visual Studio Code](https://code.visualstudio.com/) convert). For me, it does nearly everything a modern C++ code editing platform should do and is constantly moving in a direction that is pleasing to the soul. I've worked with Visual Studio since 1998 for editing my C++ code, and I don't like it. It gets slower year on year, adds many features which are not helpful to your average game developer and consistently ignores our needs as a community.
+
+[This](https://blogs.msdn.microsoft.com/zainnab/2012/02/28/visual-studio-achievements/). This is nonsense. I can't say any more on the issue because I despair just thinking about it.
+
+##### My Setup
+
+Depsite all that, the Visual Studio debugger is still pretty damned good and very hard to beat. [WinDbg](http://msdn.microsoft.com/en-us/windows/hardware/gg463009) is much more powerful and, at times, more stable, but its interface and learning curve is a little too obtuse for me. I use it mainly as a crash dump inspection tool for post-mortem debugging.
+
+I use Sublime Text 2 to edit all my code in the many different languages my game uses, with Visual Studio to debug. On top of that, the game's user interface communicates with the game executable via a network RPC layer. The non-dev version will use a custom, more tightly controlled transport layer for security and accessibility reasons. Why I'm doing this is not important now and will become apparent at a later date (but I promise to document it).
+
+So I have a typical client/server setup:
+
+* Client launches, issues a server launch request and waits.
+* Server launches and waits for a connection.
+* Client wakes up after server launch and opens a connection to the server.
+* Server accepts connection and enters the main loop.
+
+The client is a thin client with no real logic or state attached to it. It is directly responsible for launching the server executable and, as such, I needed a means of attaching to the server as soon as it's launched.
+
+#### A Macro for Attaching to any Process
+
+The simplest of solutions is to select `Debug|Attach to Process...` in Visual Studio, find your process and click `Attach`:
+
+![](/img/AttachToProcess.png)
+
+I'm sure many of you know this dialogue box intimately - a required tool when a certain, unnamed console stubbornly refuses to launch with the debugger attached.
+
+This easily isn't good enough: it's too slow and there's too much to find/remember. To address the problem, I wrote a Visual Studio Macro that automates the process of finding the game process and attaching to it:
+
+```
+Sub AttachToGame()
+
+	Dim output_window As OutputWindow = DTE.ToolWindows.OutputWindow
+	Dim output_window_pane As OutputWindowPane = output_window.OutputWindowPanes.Item("Debug")
+	output_window_pane.Activate()
+
+	' Figure out the computer name
+	Dim computer_name As String = WindowsIdentity.GetCurrent().Name
+	computer_name = computer_name.Substring(0, computer_name.IndexOf("\"))
+	output_window_pane.OutputString("Computer name: " & computer_name & vbCrLf)
+
+	' Get the debugger
+	Dim debugger As EnvDTE80.Debugger2 = DTE.Debugger
+	Dim transport As EnvDTE80.Transport = debugger.Transports.Item("Default")
+
+	' Setup a half-second timeout, checking every 10ms
+	Dim attempts = 0
+	Dim sleep_ms = 10
+	Dim max_attempts = 500 / sleep_ms
+
+	' Loop waiting for Game.exe to launch
+	Dim game_process As EnvDTE80.Process2
+	output_window_pane.OutputString("Trying to locate Game.exe..." & vbCrLf)
+	While game_process Is Nothing And attempts < max_attempts
+
+		' Snapshot the running process list and search for the game
+		Dim processes As EnvDTE.Processes = debugger.GetProcesses(transport, computer_name)
+		Try
+		    game_process = processes.Item("game.exe")
+		Catch ex As Exception
+		End Try
+
+		Threading.Thread.Sleep(sleep_ms)
+		attempts += 1
+
+	End While
+
+	' Give up if game.exe can't be found
+	If game_process Is Nothing Then
+		output_window_pane.OutputString("   not found" & vbCrLf)
+		Return
+	End If
+
+	' Attach the debugger!
+	game_process.Attach2()
+
+End Sub
+```
+
+Double-clicking on this through the macro explorer will quickly locate the game (or give up if it's not there) and put you in the debugger.
+
+#### What about Game Startup?
+
+After launching the game, it takes a few seconds to focus Visual Studio and double-click on the macro. By this point, all your game initialisation code has happened which probably skips some of the most important code you've written.
+
+This is solved pretty simply by adding a sync-point with command-lines. I have a check-box in the client that gets sent to the server on launch, instructing it to wait for a debugger to attach. Launching the game is done with the Win32 API:
+
+```cpp
+void RunProcess(const char* filename, bool wait_for_debugger)
+{
+	// Arguments must be constructed with the EXE filename first
+	core::String arguments(filename);
+	if (wait_for_debugger)
+		arguments += " -wait_for_debugger";
+
+	// Launch the process and release any handles
+	STARTUPINFOA si;
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	PROCESS_INFORMATION pi;
+	memset(&pi, 0, sizeof(pi));
+	CreateProcessA(filename, arguments.data(), 0, 0, FALSE, 0, 0, 0, &si, &pi);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+}
+```
+
+Meanwhile, in WinMain on the server side, the first thing it does is check the command-line for the instruction to wait:
+
+```cpp
+int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	// Wait for the debugger to attach, if requested
+	if (strstr(lpCmdLine, "-wait_for_debugger"))
+	{
+		core::LogText("Waiting for debugger to attach...\n");
+		while (!IsDebuggerPresent())
+			Sleep(1);
+	}
+}
+```
+
+This nicely syncs everything up so that I don't miss any breakpoints in my initialisation code.
+
+#### A Slice of COM Automation to Complete the Puzzle
+
+I worked like this for a few months. With the debugger, my iteration was:
+
+* If I don't need to debug, uncheck "Wait for Debugger" and iterate.
+* Otherwise, check "Wait for Debugger" and restart the client.
+* Switch to Visual Studio window and double-click "AttachToGame".
+
+It works quite well but I was losing seconds between steps 2 and 3 each time that would break my flow and mostly irritate me. If I could find some way of remotely instructing Visual Studio to attach after I'd launched the game, life would be good.
+
+The entire Visual Studio automation object model is implemented with COM and you can get access to many live (registered) COM objects through the use of [GetActiveObject](http://msdn.microsoft.com/en-us/library/windows/desktop/ms221467(v=vs.85).aspx). Languages such as VBScript and C# hide an awful lot of boiler-plate COM nastiness for you and you can write some VBScript using the [Windows Scripting Host](http://technet.microsoft.com/en-us/library/ee156607.aspx) that can remotely play with anything in Visual Studio:
+
+```
+' VBScript crazy exception-style handling
+On Error Resume Next
+
+' Get any live Visual Studio object
+Set DTE = GetObject(,"VisualStudio.DTE")
+If Err.Number = 0 Then
+
+	' Locate the macro
+	Set cmds = DTE.Commands
+	Set attach_cmd = cmds.Item("Macros.MyVSMacros.Debug.AttachToGame")
+
+	' Run it!
+	Dim customin, customout
+	cmds.Raise attach_cmd.Guid, attach_cmd.ID, customin, customout
+
+End If
+```
+
+Saving this to a .vbs file in Windows and double-clicking from outside the IDE will run the attach macro for you. You could run the game process then run a shell to execute this, or you could embed some C++ code in your client that does just that after you've launched the game:
+
+```cpp
+#include <windows.h>
+
+#pragma warning(disable : 4278)
+#pragma warning(disable : 4146)
+
+// The following #import imports EnvDTE based on its LIBID.
+#import "libid:80cc9f66-e7d8-4ddd-85b6-d9e6cd0e93e2" version("8.0") lcid("0") raw_interfaces_only named_guids
+//The following #import imports EnvDTE80 based on its LIBID.
+#import "libid:1A31287A-4D7D-413e-8E32-3B374931BD89" version("8.0") lcid("0") raw_interfaces_only named_guids
+
+#pragma warning(default : 4146)
+#pragma warning(default : 4278)
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	CoInitialize(0);
+
+	CLSID clsid;
+	CLSIDFromProgID("VisualStudio.DTE.8.0", &clsid);
+
+	// Get any running instance of Visual Studio
+	IUnknown* dte_unknown = 0;
+	HRESULT hr = GetActiveObject(clsid, 0, &dte_unknown);
+	if (dte_unknown)
+	{
+		EnvDTE80::DTE2Ptr dte = dte_unknown;
+
+		// Get a list of commands from Visual Studio
+		EnvDTE::CommandsPtr commands;
+		hr = dte->get_Commands(&commands);
+
+		// Get a pointer to the macro
+		EnvDTE::CommandPtr command;
+		variant_t key = "Macros.MyVSMacros.Debug.AttachToGame";
+		hr = commands->Item(key, 0, &command);
+
+		// Get the macro GUID and ID
+		bstr_t cmd_guid;
+		hr = command->get_Guid(cmd_guid.GetAddress());
+		long cmd_id;
+		hr = command->get_ID(&cmd_id);
+
+		// Execute the macro
+		variant_t custom_in, custom_out;
+		commands->Raise(cmd_guid, cmd_id, custom_in.GetAddress(), custom_out.GetAddress());
+	}
+
+	CoUninitialize();
+
+	return 0;
+}
+```
+
+Note I'm referencing `VisualStudio.DTE.8.0`, which is the object for VS2005. If you use later versions, you'll need to replace them. There are no special dependencies you have to setup here, just create an empty Windows project in Visual Studio and create a C++ file you can put that code in and it compiles and links just fine.
+
+Now I just keep Visual Studio running in the background and my `Wait for Debugger` checkbox is now an `Attach Debugger` checkbox. If set, my iteration is:
+
+* Run client. Visual Studio instantly attaches to Server.
+
+Brilliant!
+
+#### A Little Easier
+
+Of course after writing all this, it soon became obvious that there were better ways. Here's the C# equivalent:
+
+```cpp
+using EnvDTE;
+
+namespace AttachDebugger
+{
+	class Program
+	{
+		static void Main(string[] args)
+		{
+			try
+			{
+				DTE dte = (DTE)System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE.10.0");
+				dte.ExecuteCommand("Macros.StarVSMacros.Debug.AttachToGame");
+			}
+
+			catch (System.Exception e)
+			{
+				System.Windows.Forms.MessageBox.Show("EXCEPTION - Debugger not available: " + e.Message);
+			}
+		}
+	}
+}
+```
+
+This is the version I ended up using. All it needs is a reference to EnvDTE added to your C# project to compile.
+
+Some references:
+
+* [Remote Debugging for VS2017 Open Folder feature](https://github.com/Celtoys/RemoteDebug) - Many examples of using automation model from C#.
+* [Visual Studio extensibility](http://www.mztools.com/resources_vsnet_addins.aspx)
+* [How to: Add References to the EnvDTE and EnvDTE80 Namespaces](http://msdn.microsoft.com/en-us/library/yf86a8ts(v=vs.80).aspx)
+* [How to: Get References to the DTE and DTE2 Objects](http://msdn.microsoft.com/en-us/library/68shb4dw(v=vs.80).aspx)
+* [Visual Studio Automation Reference](http://msdn.microsoft.com/en-US/library/ms228691(v=vs.80).aspx)
+* [VBScript Primer](http://technet.microsoft.com/en-us/library/ee198896.aspx)
+* [VBScript Error Handling](http://technet.microsoft.com/en-us/library/ee692852.aspx)

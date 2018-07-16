@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/rpc-debugging-vs/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2012-02-07T00:27:21&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.26" />
+        <title>An RPC Debugging Framework with Visual Studio &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">An RPC Debugging Framework with Visual Studio</h3>
+    </header>
+
+    <section class="post-content">
+        <p>I used to love <a href="http://www.sublimetext.com/2">Sublime Text 2</a> (UPDATE: I'm now a <a href="https://code.visualstudio.com/">Visual Studio Code</a> convert). For me, it does nearly everything a modern C++ code editing platform should do and is constantly moving in a direction that is pleasing to the soul. I've worked with Visual Studio since 1998 for editing my C++ code, and I don't like it. It gets slower year on year, adds many features which are not helpful to your average game developer and consistently ignores our needs as a community.</p>
+
+<p><a href="https://blogs.msdn.microsoft.com/zainnab/2012/02/28/visual-studio-achievements/">This</a>. This is nonsense. I can't say any more on the issue because I despair just thinking about it.</p>
+
+<h5 id="my-setup">My Setup</h5>
+
+<p>Depsite all that, the Visual Studio debugger is still pretty damned good and very hard to beat. <a href="http://msdn.microsoft.com/en-us/windows/hardware/gg463009">WinDbg</a> is much more powerful and, at times, more stable, but its interface and learning curve is a little too obtuse for me. I use it mainly as a crash dump inspection tool for post-mortem debugging.</p>
+
+<p>I use Sublime Text 2 to edit all my code in the many different languages my game uses, with Visual Studio to debug. On top of that, the game's user interface communicates with the game executable via a network RPC layer. The non-dev version will use a custom, more tightly controlled transport layer for security and accessibility reasons. Why I'm doing this is not important now and will become apparent at a later date (but I promise to document it).</p>
+
+<p>So I have a typical client/server setup:</p>
+
+<ul>
+<li>Client launches, issues a server launch request and waits.</li>
+<li>Server launches and waits for a connection.</li>
+<li>Client wakes up after server launch and opens a connection to the server.</li>
+<li>Server accepts connection and enters the main loop.</li>
+</ul>
+
+<p>The client is a thin client with no real logic or state attached to it. It is directly responsible for launching the server executable and, as such, I needed a means of attaching to the server as soon as it's launched.</p>
+
+<h4 id="a-macro-for-attaching-to-any-process">A Macro for Attaching to any Process</h4>
+
+<p>The simplest of solutions is to select <code>Debug|Attach to Process...</code> in Visual Studio, find your process and click <code>Attach</code>:</p>
+
+<p><figure><img src="/img/AttachToProcess.png" alt=""></figure></p>
+
+<p>I'm sure many of you know this dialogue box intimately - a required tool when a certain, unnamed console stubbornly refuses to launch with the debugger attached.</p>
+
+<p>This easily isn't good enough: it's too slow and there's too much to find/remember. To address the problem, I wrote a Visual Studio Macro that automates the process of finding the game process and attaching to it:</p>
+
+<pre><code>Sub AttachToGame()
+
+    Dim output_window As OutputWindow = DTE.ToolWindows.OutputWindow
+    Dim output_window_pane As OutputWindowPane = output_window.OutputWindowPanes.Item(&quot;Debug&quot;)
+    output_window_pane.Activate()
+
+    ' Figure out the computer name
+    Dim computer_name As String = WindowsIdentity.GetCurrent().Name
+    computer_name = computer_name.Substring(0, computer_name.IndexOf(&quot;\&quot;))
+    output_window_pane.OutputString(&quot;Computer name: &quot; &amp; computer_name &amp; vbCrLf)
+
+    ' Get the debugger
+    Dim debugger As EnvDTE80.Debugger2 = DTE.Debugger
+    Dim transport As EnvDTE80.Transport = debugger.Transports.Item(&quot;Default&quot;)
+
+    ' Setup a half-second timeout, checking every 10ms
+    Dim attempts = 0
+    Dim sleep_ms = 10
+    Dim max_attempts = 500 / sleep_ms
+
+    ' Loop waiting for Game.exe to launch
+    Dim game_process As EnvDTE80.Process2
+    output_window_pane.OutputString(&quot;Trying to locate Game.exe...&quot; &amp; vbCrLf)
+    While game_process Is Nothing And attempts &lt; max_attempts
+
+        ' Snapshot the running process list and search for the game
+        Dim processes As EnvDTE.Processes = debugger.GetProcesses(transport, computer_name)
+        Try
+            game_process = processes.Item(&quot;game.exe&quot;)
+        Catch ex As Exception
+        End Try
+
+        Threading.Thread.Sleep(sleep_ms)
+        attempts += 1
+
+    End While
+
+    ' Give up if game.exe can't be found
+    If game_process Is Nothing Then
+        output_window_pane.OutputString(&quot;   not found&quot; &amp; vbCrLf)
+        Return
+    End If
+
+    ' Attach the debugger!
+    game_process.Attach2()
+
+End Sub
+</code></pre>
+
+<p>Double-clicking on this through the macro explorer will quickly locate the game (or give up if it's not there) and put you in the debugger.</p>
+
+<h4 id="what-about-game-startup">What about Game Startup?</h4>
+
+<p>After launching the game, it takes a few seconds to focus Visual Studio and double-click on the macro. By this point, all your game initialisation code has happened which probably skips some of the most important code you've written.</p>
+
+<p>This is solved pretty simply by adding a sync-point with command-lines. I have a check-box in the client that gets sent to the server on launch, instructing it to wait for a debugger to attach. Launching the game is done with the Win32 API:</p>
+
+<pre><code class="language-cpp">void RunProcess(const char* filename, bool wait_for_debugger)
+{
+    // Arguments must be constructed with the EXE filename first
+    core::String arguments(filename);
+    if (wait_for_debugger)
+        arguments += &quot; -wait_for_debugger&quot;;
+
+    // Launch the process and release any handles
+    STARTUPINFOA si;
+    memset(&amp;si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    PROCESS_INFORMATION pi;
+    memset(&amp;pi, 0, sizeof(pi));
+    CreateProcessA(filename, arguments.data(), 0, 0, FALSE, 0, 0, 0, &amp;si, &amp;pi);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+}
+</code></pre>
+
+<p>Meanwhile, in WinMain on the server side, the first thing it does is check the command-line for the instruction to wait:</p>
+
+<pre><code class="language-cpp">int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+    // Wait for the debugger to attach, if requested
+    if (strstr(lpCmdLine, &quot;-wait_for_debugger&quot;))
+    {
+        core::LogText(&quot;Waiting for debugger to attach...\n&quot;);
+        while (!IsDebuggerPresent())
+            Sleep(1);
+    }
+}
+</code></pre>
+
+<p>This nicely syncs everything up so that I don't miss any breakpoints in my initialisation code.</p>
+
+<h4 id="a-slice-of-com-automation-to-complete-the-puzzle">A Slice of COM Automation to Complete the Puzzle</h4>
+
+<p>I worked like this for a few months. With the debugger, my iteration was:</p>
+
+<ul>
+<li>If I don't need to debug, uncheck &quot;Wait for Debugger&quot; and iterate.</li>
+<li>Otherwise, check &quot;Wait for Debugger&quot; and restart the client.</li>
+<li>Switch to Visual Studio window and double-click &quot;AttachToGame&quot;.</li>
+</ul>
+
+<p>It works quite well but I was losing seconds between steps 2 and 3 each time that would break my flow and mostly irritate me. If I could find some way of remotely instructing Visual Studio to attach after I'd launched the game, life would be good.</p>
+
+<p>The entire Visual Studio automation object model is implemented with COM and you can get access to many live (registered) COM objects through the use of <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms221467(v=vs.85).aspx">GetActiveObject</a>. Languages such as VBScript and C# hide an awful lot of boiler-plate COM nastiness for you and you can write some VBScript using the <a href="http://technet.microsoft.com/en-us/library/ee156607.aspx">Windows Scripting Host</a> that can remotely play with anything in Visual Studio:</p>
+
+<pre><code>' VBScript crazy exception-style handling
+On Error Resume Next
+
+' Get any live Visual Studio object
+Set DTE = GetObject(,&quot;VisualStudio.DTE&quot;)
+If Err.Number = 0 Then
+
+    ' Locate the macro
+    Set cmds = DTE.Commands
+    Set attach_cmd = cmds.Item(&quot;Macros.MyVSMacros.Debug.AttachToGame&quot;)
+
+    ' Run it!
+    Dim customin, customout
+    cmds.Raise attach_cmd.Guid, attach_cmd.ID, customin, customout
+
+End If
+</code></pre>
+
+<p>Saving this to a .vbs file in Windows and double-clicking from outside the IDE will run the attach macro for you. You could run the game process then run a shell to execute this, or you could embed some C++ code in your client that does just that after you've launched the game:</p>
+
+<pre><code class="language-cpp">#include &lt;windows.h&gt;
+
+#pragma warning(disable : 4278)
+#pragma warning(disable : 4146)
+
+// The following #import imports EnvDTE based on its LIBID.
+#import &quot;libid:80cc9f66-e7d8-4ddd-85b6-d9e6cd0e93e2&quot; version(&quot;8.0&quot;) lcid(&quot;0&quot;) raw_interfaces_only named_guids
+//The following #import imports EnvDTE80 based on its LIBID.
+#import &quot;libid:1A31287A-4D7D-413e-8E32-3B374931BD89&quot; version(&quot;8.0&quot;) lcid(&quot;0&quot;) raw_interfaces_only named_guids
+
+#pragma warning(default : 4146)
+#pragma warning(default : 4278)
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+    CoInitialize(0);
+
+    CLSID clsid;
+    CLSIDFromProgID(&quot;VisualStudio.DTE.8.0&quot;, &amp;clsid);
+
+    // Get any running instance of Visual Studio
+    IUnknown* dte_unknown = 0;
+    HRESULT hr = GetActiveObject(clsid, 0, &amp;dte_unknown);
+    if (dte_unknown)
+    {
+        EnvDTE80::DTE2Ptr dte = dte_unknown;
+
+        // Get a list of commands from Visual Studio
+        EnvDTE::CommandsPtr commands;
+        hr = dte-&gt;get_Commands(&amp;commands);
+
+        // Get a pointer to the macro
+        EnvDTE::CommandPtr command;
+        variant_t key = &quot;Macros.MyVSMacros.Debug.AttachToGame&quot;;
+        hr = commands-&gt;Item(key, 0, &amp;command);
+
+        // Get the macro GUID and ID
+        bstr_t cmd_guid;
+        hr = command-&gt;get_Guid(cmd_guid.GetAddress());
+        long cmd_id;
+        hr = command-&gt;get_ID(&amp;cmd_id);
+
+        // Execute the macro
+        variant_t custom_in, custom_out;
+        commands-&gt;Raise(cmd_guid, cmd_id, custom_in.GetAddress(), custom_out.GetAddress());
+    }
+
+    CoUninitialize();
+
+    return 0;
+}
+</code></pre>
+
+<p>Note I'm referencing <code>VisualStudio.DTE.8.0</code>, which is the object for VS2005. If you use later versions, you'll need to replace them. There are no special dependencies you have to setup here, just create an empty Windows project in Visual Studio and create a C++ file you can put that code in and it compiles and links just fine.</p>
+
+<p>Now I just keep Visual Studio running in the background and my <code>Wait for Debugger</code> checkbox is now an <code>Attach Debugger</code> checkbox. If set, my iteration is:</p>
+
+<ul>
+<li>Run client. Visual Studio instantly attaches to Server.</li>
+</ul>
+
+<p>Brilliant!</p>
+
+<h4 id="a-little-easier">A Little Easier</h4>
+
+<p>Of course after writing all this, it soon became obvious that there were better ways. Here's the C# equivalent:</p>
+
+<pre><code class="language-cpp">using EnvDTE;
+
+namespace AttachDebugger
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            try
+            {
+                DTE dte = (DTE)System.Runtime.InteropServices.Marshal.GetActiveObject(&quot;VisualStudio.DTE.10.0&quot;);
+                dte.ExecuteCommand(&quot;Macros.StarVSMacros.Debug.AttachToGame&quot;);
+            }
+
+            catch (System.Exception e)
+            {
+                System.Windows.Forms.MessageBox.Show(&quot;EXCEPTION - Debugger not available: &quot; + e.Message);
+            }
+        }
+    }
+}
+</code></pre>
+
+<p>This is the version I ended up using. All it needs is a reference to EnvDTE added to your C# project to compile.</p>
+
+<p>Some references:</p>
+
+<ul>
+<li><a href="https://github.com/Celtoys/RemoteDebug">Remote Debugging for VS2017 Open Folder feature</a> - Many examples of using automation model from C#.</li>
+<li><a href="http://www.mztools.com/resources_vsnet_addins.aspx">Visual Studio extensibility</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/yf86a8ts(v=vs.80).aspx">How to: Add References to the EnvDTE and EnvDTE80 Namespaces</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/68shb4dw(v=vs.80).aspx">How to: Get References to the DTE and DTE2 Objects</a></li>
+<li><a href="http://msdn.microsoft.com/en-US/library/ms228691(v=vs.80).aspx">Visual Studio Automation Reference</a></li>
+<li><a href="http://technet.microsoft.com/en-us/library/ee198896.aspx">VBScript Primer</a></li>
+<li><a href="http://technet.microsoft.com/en-us/library/ee692852.aspx">VBScript Error Handling</a></li>
+</ul>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+            <p class="f-post-time"><time datetime="2012-02-07T00:27:21&#43;01:00">February 7, 2012</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=An%20RPC%20Debugging%20Framework%20with%20Visual%20Studio&url=http%3a%2f%2fdonw.io%2fpost%2frpc-debugging-vs%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2frpc-debugging-vs%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2frpc-debugging-vs%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+    </footer>
+    
+<div id="gh-comments">
+    <br/><br/>
+    <h6>COMMENTS</h6>
+    <div id="gh-comments-list"></div>
+    <a href="javascript:void(0)" id="gh-load-comments" class="btn" style="display:none">Load more comments</a>
+</div>
+
+<script type="text/javascript" src="http://donw.io/js/github-comments.js"></script>
+<script type="text/javascript">
+    DoGithubComments("");
+</script>
+
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    
+
+
+
+</body>
+</html>
