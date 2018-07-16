@@ -84,6 +84,44 @@ function HashString(str)
 // ====================================================================================== //
 
 
+
+function vec3_create(x, y, z)
+{
+	// Could update to latest gl-matrix but this will do for now
+	var v = vec3.create();
+	v[0] = x;
+	v[1] = y;
+	v[2] = z;
+	return v;
+}
+
+
+Basis = (function()
+{
+	function Basis(vector)
+	{
+		this.vector = vector;
+
+		// Axis is normal
+		this.z = vec3_create(vector[0], vector[1], vector[2]);
+		vec3.normalize(this.z, this.z);
+
+		// Perpendicular to fixed up (TODO: fix)s
+		var up = vec3_create(0, 1, 0);
+		this.x = vec3.create();
+		vec3.cross(this.x, this.z, up);
+		vec3.normalize(this.x, this.x);
+
+		// Perpendicular to prior vectors
+		this.y = vec3.create();
+		vec3.cross(this.y, this.x, this.z);
+		vec3.normalize(this.y, this.y);
+	}
+
+	return Basis;
+})();
+
+
 var IndexType = {
 	TRIANGLE_STRIP : 0,
 	TRIANGLE_LIST : 1,
@@ -101,7 +139,6 @@ Geometry = (function()
 
 	return Geometry;
 })();
-
 
 
 function CreatePlaneGeometry(scale, nb_vertices_x)
@@ -202,6 +239,17 @@ function CreateCubeGeometry(scale_x, nb_vertices_x)
 	}
 
 	return new Geometry(IndexType.TRIANGLE_STRIP, vertices, indices);
+}
+
+
+function CreateOctahedronFaceGeometry()
+{
+	// Just interested in the initial triangle
+	var position_array = new Array();
+	position_array.push(vec3_create(0, 1, 0));
+	position_array.push(vec3_create(1, 0, 0));
+	position_array.push(vec3_create(0, 0, 1));
+	return new Geometry(IndexType.TRIANGLE_LIST, position_array, [ 0, 1, 2 ]);
 }
 
 
@@ -323,6 +371,193 @@ function CreateIcosahedronGeometry()
 	for (var i in indices)
 		index_array.push(indices[i]);
 
+	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
+}
+
+
+function AddLinePrimitives(a, b, axis, position_array, index_array)
+{
+	// Extrude endpoints of a
+	var a_paxis = vec3.create();
+	var a_naxis = vec3.create();
+	vec3.add(a_paxis, a, axis);
+	vec3.sub(a_naxis, a, axis);
+
+	// Extrude endpoints of b
+	var b_paxis = vec3.create();
+	var b_naxis = vec3.create();
+	vec3.add(b_paxis, b, axis);
+	vec3.sub(b_naxis, b, axis);
+
+	// Add triangle positions
+	var start_index = position_array.length;
+	position_array.push(a_naxis);
+	position_array.push(a_paxis);
+	position_array.push(b_paxis);
+	position_array.push(b_paxis);
+	position_array.push(b_naxis);
+	position_array.push(a_naxis);
+
+	// Add triangle list indices
+	for (var i = 0; i < 6; i++)
+		index_array.push(start_index + i);
+}
+
+
+function AddCirclePrimitive(center, basis, radius, position_array, index_array)
+{
+	var center_index = position_array.length;
+	var index = position_array.length;
+
+	var o = vec3.create();
+	var end = 3.1412 * 2;
+	var step = end / 16.0;
+	var t = 0;
+	for (var i = 0; i < 17; i++)
+	{
+		var u = Math.sin(t) * radius;
+		var v = Math.cos(t) * radius;
+
+		var p = vec3.create();
+		vec3.scale(o, basis.x, u);
+		vec3.add(p, center, o);
+		vec3.scale(o, basis.y, v);
+		vec3.add(p, p, o);
+
+		if (t > 0)
+		{
+			position_array.push(p);
+
+			index_array.push(index - 1);
+			index_array.push(index);
+			index_array.push(center_index);
+			index++;
+		}
+
+		t += step;
+	}
+}
+
+
+function AddCylinderPrimitive(a, b, basis, radius, position_array, index_array)
+{
+	// Center point vertices of cylinder caps
+	var a_center_index = position_array.length;
+	position_array.push(a);
+	var b_center_index = position_array.length;
+	position_array.push(b);
+
+	var o = vec3.create();
+	var end = 3.1412 * 2;
+	var step = end / 16.0;
+	var t = 0;
+	for (var i = 0; i < 17; i++)
+	{
+		var u = Math.sin(t) * radius;
+		var v = Math.cos(t) * radius;
+
+		// Bottom vertex
+		var p0 = vec3.create();
+		vec3.scale(o, basis.x, u);
+		vec3.add(p0, a, o);
+		vec3.scale(o, basis.y, v);
+		vec3.add(p0, p0, o);
+		position_array.push(p0);
+
+		// Top vertex
+		var p1 = vec3.create();
+		vec3.add(p1, p0, basis.vector);
+		position_array.push(p1);
+
+		if (t > 0)
+		{
+			// Bottom triangle
+			var index = position_array.length;
+			index_array.push(index - 4);
+			index_array.push(index - 2);
+			index_array.push(a_center_index);
+
+			// Top triangle
+			index_array.push(index - 3);
+			index_array.push(index - 1);
+			index_array.push(a_center_index);
+
+			// Side quad
+			index_array.push(index - 4);
+			index_array.push(index - 2);
+			index_array.push(index - 1);
+			index_array.push(index - 1);
+			index_array.push(index - 3);
+			index_array.push(index - 4);
+		}
+
+		t += step;
+	}
+}
+
+
+function AddConePrimitive(a, b, basis, radius, position_array, index_array)
+{
+	// Center point vertexs of cone
+	var a_center_index = position_array.length;
+	position_array.push(a);
+	var b_center_index = position_array.length;
+	position_array.push(b);
+
+	var o = vec3.create();
+	var end = 3.1412 * 2;
+	var step = end / 16.0;
+	var t = 0;
+	for (var i = 0; i < 17; i++)
+	{
+		var u = Math.sin(t) * radius;
+		var v = Math.cos(t) * radius;
+
+		// Base vertex
+		var p0 = vec3.create();
+		vec3.scale(o, basis.x, u);
+		vec3.add(p0, a, o);
+		vec3.scale(o, basis.y, v);
+		vec3.add(p0, p0, o);
+		position_array.push(p0);
+
+		if (t > 0)
+		{
+			// Bottom triangle
+			var index = position_array.length;
+			index_array.push(index - 2);
+			index_array.push(index - 1);
+			index_array.push(a_center_index);
+
+			// Side triangle
+			index_array.push(index - 1);
+			index_array.push(index - 2);
+			index_array.push(b_center_index);
+		}
+
+		t += step;
+	}
+}
+
+
+function CreateLineGeometry(a, b, size)
+{
+	// Line basis
+	var axis = vec3.create();
+	vec3.sub(axis, b, a);
+	var basis = new Basis(axis);
+
+	// Create cone endpoint
+	var cone_size = size * 3;
+	var c = vec3.create();
+	vec3.scale(c, basis.z, cone_size * 2);
+	vec3.add(c, c, b);
+
+	// Add a cylinder and cone at the tip
+	var position_array = new Array();
+	var index_array = new Array();
+	AddCylinderPrimitive(a, b, basis, size, position_array, index_array);
+	AddConePrimitive(b, c, basis, cone_size, position_array, index_array);
 	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
 }
 
@@ -849,7 +1084,7 @@ Scene = (function()
 		this.CameraPosition = vec3.create();
 		this.CameraRotation = vec3.create();
 		vec3.set(this.CameraPosition, 0, 0, 3);
-		vec3.set(this.CameraRotation, -0.2, -0.25, 0);
+		vec3.set(this.CameraRotation, 0, 0, 0);
 		this.CameraType = CameraType.ROTATE;
 
 		this.UpdateMatrices();
@@ -883,6 +1118,12 @@ Scene = (function()
 	Scene.prototype.SetCameraPosition = function(x, y, z)
 	{
 		vec3.set(this.CameraPosition, x, y, z);
+	}
+
+
+	Scene.prototype.SetCameraRotation = function(x, y, z)
+	{
+		vec3.set(this.CameraRotation, x, y, z);
 	}
 
 
@@ -921,6 +1162,16 @@ Scene = (function()
 		var mesh = new Mesh(gl, draw_type, geometry, program);
 		this.Meshes.push(mesh);
 		return mesh;
+	}
+
+
+	Scene.prototype.AddLineMesh = function(a, b, size, colour)
+	{
+		var g = CreateLineGeometry(a, b, size);
+		var m = this.AddMesh(DrawType.WIREFRAME_TRIS, g);
+		m.Colour = colour;
+		m.FillColour = colour;
+		return m;			
 	}
 
 
