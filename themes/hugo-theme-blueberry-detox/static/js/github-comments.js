@@ -75,8 +75,8 @@ function DoGithubComments(comment_id, page_id)
                     $("#gh-load-comments").hide();
                 }
             },
-            error: function() {
-                $("#gh-comments-list").append("Comments are not open for this post yet.");
+            error: function(xhr) {
+                $("#gh-comments-list").append("Comments are not open for this post yet." + xhr.status);
             }
         });
     });
