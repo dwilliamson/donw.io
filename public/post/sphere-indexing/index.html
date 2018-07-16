@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="http://donw.io/post/sphere-indexing/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2017-07-28T00:27:21&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.26" />
+        <title>Fast, Constant Time Sphere Indexing &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="http://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
+          <link rel="stylesheet" href="/extern/katex/0.6.0/katex.min.css">
+          <script src="/extern/katex/0.6.0/katex.min.js"></script>
+          <script src="/extern/katex/0.6.0/auto-render.min.js"></script>
+        
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">Fast, Constant Time Sphere Indexing</h3>
+    </header>
+
+    <section class="post-content">
+        <p>The problem statement is simple: Assuming a triangle-subdivided sphere, map any 3D point to a triangle on that sphere in constant-time, without using recursion or table lookups. Even better; make it so simple you can use it in a pixel shader. This is useful for when your playing field is a sphere and you have some lookup tables you want to reference based on player/camera position.</p>
+
+<p>This is typically an offline problem considered in map projections of planets and their skies. It allows you to map the sphere surface to a 2D domain and perform all manner of simulations on it. As such, there are a lot of complicated solutions that give great results with expensive requirements. One example is <a href="http://healpix.sourceforge.net/">HEALPix</a> but we need something far simpler.</p>
+
+<p>A more recent development in the realtime world is <a href="http://lgdv.cs.fau.de/publications/publication/Pub.2015.tech.IMMD.IMMD9.spheri/">Spherical Fibonacci Mapping</a>. This will map any point on the sphere to its closest Spherical Fibonacci point in constant-time but may not be fast enough.</p>
+
+<h5 id="subdividing-the-sphere">Subdividing the Sphere</h5>
+
+<p>Each patch/triangle on the sphere should be as close to equal area as possible, with minimal angular distortion for a balanced distribution. A good approximation is to start with an <a href="http://en.wikipedia.org/wiki/Octahedron">Octahedron</a> and subdivide its edges, creating 4 new triangles for each triangle, until the required density is met.</p>
+
+<p>Three ways of the many ways of performing this subdivision are:</p>
+
+<ol>
+<li>Each subdivision pass splits edges at the midpoint. Project the split onto the sphere after each pass.</li>
+<li>Split edges at the midpoint but project onto the sphere only once after all passes complete.</li>
+<li>Split edges using a <a href="https://keithmaggio.wordpress.com/2011/02/15/math-magician-lerp-slerp-and-nlerp/">Vector Slerp</a> with no sphere projection required.</li>
+</ol>
+
+<p>The three techniques are implemented below (<em>the viewport is interactive and code can be edited live</em>):</p>
+
+
+<link rel="stylesheet" type="text/css" href="/extern/codemirror-3.0/lib/codemirror.css">
+<link rel="stylesheet" type="text/css" href="/extern/codemirror-3.0/theme/monokai.css">
+<link rel="stylesheet" type="text/css" href="/css/sandbox.css">
+
+<script type="text/javascript" src="/extern/codemirror-3.0/lib/codemirror.js"></script>
+<script type="text/javascript" src="/extern/codemirror-3.0/mode/javascript/javascript.js"></script>
+<script type="text/javascript" src="/extern/gl-matrix-min.js"></script>
+<script type="text/javascript" src="/js/sandbox.js"></script>
+
+
+
+<textarea id='PolarIcosahedron'>
+// -----------------------------------------------
+// Configuration parameters
+// -----------------------------------------------
+
+
+// How many subdivision passes
+var OCTAHEDRON_SUBDIVISION_DEPTH = 3;
+
+// Toggle to see the source Octahedron
+var PROJECT_ONTO_SPHERE = true;
+
+
+// -----------------------------------------------
+// Create initial Octahedron Geometry
+// -----------------------------------------------
+
+
+function CreateOctahedronGeometry()
+{
+	// http://en.wikipedia.org/wiki/Octahedron
+	// http://en.wikipedia.org/wiki/Octahedron#mediaviewer/File:Dual_Cube-Octahedron.svg
+	// Octahedron is dual to the cube with a point in the centre of each of its faces
+
+	// Create vertex positions on the 6 cube faces
+	var positions = [
+		[  0,  1,  0 ],
+		[  0,  0, -1 ],
+		[  1,  0,  0 ],
+		[  0,  0,  1 ],
+		[ -1,  0,  0 ],
+		[  0, -1,  0 ],
+	];
+	var position_array = new Array();
+	for (var i in positions)
+	{
+		var p = vec3.create();
+		p[0] = positions[i][0];
+		p[1] = positions[i][1];
+		p[2] = positions[i][2];
+		position_array.push(p);
+	}
+
+	// Link octahedron triangles
+	var indices = [
+		0, 1, 2,
+		0, 2, 3,
+		0, 3, 4,
+		0, 4, 1,
+		5, 1, 2,
+		5, 2, 3,
+		5, 3, 4,
+		5, 4, 1
+	];
+	var index_array = new Array();
+	for (var i in indices)
+		index_array.push(indices[i]);
+
+	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
+}
+
+
+// -----------------------------------------------
+// Sphere Subdivision
+// -----------------------------------------------
+
+
+function SubdivideTriangleList(positions, indices, do_slerp)
+{
+	var out_indices = new Array();
+
+	// Use an object as an associative map of edge pairs
+	// Not ideal as JS will convert the integer keys to strings, but, it&#39;s quick and dirty...
+	var MAX_NB_INDICES = 32768;
+	var edge_splits = new Object();
+
+	function make_edge_key(i0, i1)
+	{
+		// Ensure lowest edge index is first to ensure consistent key between different edge directions
+		if (i1 &lt; i0)
+		{
+			var temp = i0;
+			i0 = i1;
+			i1 = temp;
+		}
+
+		// Check for overflow
+		if (i1 &gt;= MAX_NB_INDICES)
+			throw new Error(&#34;Edge split table not big enough to handle index: &#34; &#43; i1);
+
+		return i0 * MAX_NB_INDICES &#43; i1;
+	}
+
+	function slerp(out, a, b, t)
+	{
+		// Cosine of angle between two vectors
+		var cos_theta = vec3.dot(a, b);
+		cos_theta = Math.min(Math.max(cos_theta, -1), 1);
+
+		// Calculate interpolated angle
+		var theta = Math.acos(cos_theta) * t;
+
+		var relative = vec3.create();
+		vec3.scale(relative, a, cos_theta);
+		vec3.sub(relative, b, relative);
+		vec3.normalize(relative, relative);
+
+		vec3.scale(relative, relative, Math.sin(theta));
+		vec3.scale(out, a, Math.cos(theta));
+		vec3.add(out, out, relative);
+	}
+
+	function split_edge(positions, i0, i1)
+	{
+		// Check first to see if the edge has been split before
+		var edge_key = make_edge_key(i0, i1);
+		var edge_split = edge_splits[edge_key];
+		if (edge_split !== undefined)
+			return edge_split;
+
+		// Lookup edge vertex positions
+		var p0 = positions[i0];
+		var p1 = positions[i1];
+
+		// Generate a midpoint
+		var p01 = vec3.create();
+		if (do_slerp)
+			slerp(p01, p0, p1, 0.5);
+		else
+			vec3.lerp(p01, p0, p1, 0.5);
+
+		// Add the new vertex position and index to the edge split table
+		positions.push(p01);
+		edge_split = positions.length - 1;
+		edge_splits[edge_key] = edge_split;
+
+		return edge_split;
+	}
+
+	for (var i = 0; i &lt; indices.length; i &#43;= 3)
+	{
+		// Get vertex indices of the triangle
+		var i0 = indices[i &#43; 0];
+		var i1 = indices[i &#43; 1];
+		var i2 = indices[i &#43; 2];
+
+		// Split the edges of the triangle
+		var i01 = split_edge(positions, i0, i1);
+		var i12 = split_edge(positions, i1, i2);
+		var i20 = split_edge(positions, i2, i0);
+
+		// Add indices for the 4 new triangles
+		var new_indices = [
+			i0,  i01, i20,
+			i01, i1,  i12,
+			i20, i01, i12,
+			i20, i12, i2 
+		];
+		for (var j in new_indices)
+			out_indices.push(new_indices[j]);
+	}
+
+	return out_indices;
+}
+
+
+// -----------------------------------------------
+// Scene Setup
+// -----------------------------------------------
+
+
+// Create initial geometries for each of the 3 subdivision methods
+var octahedron_geometry_prj = CreateOctahedronGeometry();
+var octahedron_geometry = CreateOctahedronGeometry();
+var octahedron_geometry_slerp = CreateOctahedronGeometry();
+
+for (var i = 0; i &lt; OCTAHEDRON_SUBDIVISION_DEPTH; i&#43;&#43;)
+{
+    // This geometry projects onto the sphere after each subdivision step
+    SubdivideGeometryTriangleList(octahedron_geometry_prj, false);
+    if (PROJECT_ONTO_SPHERE)
+        ProjectVerticesToSphere(octahedron_geometry_prj.Vertices, 1);
+
+    // This geometry waits until all subdivision is complete before projecting onto the sphere
+    SubdivideGeometryTriangleList(octahedron_geometry, false);
+
+    // This geometry does no sphere projection, relying on slerp to subdivide instead
+    SubdivideGeometryTriangleList(octahedron_geometry_slerp, true);
+}
+
+// Sphere-project the geometry that only requires it once
+if (PROJECT_ONTO_SPHERE)
+    ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
+
+var mesh_prj = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry_prj);
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry);
+var mesh_slerp = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry_slerp);
+mesh_prj.SetPosition(-2, 0, 0);
+mesh_slerp.SetPosition(2, 0, 0);
+
+scene.SetCameraPosition(0, 0, 7);
+
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('PolarIcosahedron');
+    new WebGLSandbox(textarea, 'PolarIcosahedronLS', "false" == "true", "false" == "true");
+
+</script>
+
+<p><br/>
+Notable is that methods 1 and 3 result in the same subdivision, however it's the second that we'll be using. It suffers from slight contraction at the poles but this is an acceptable trade-off for the simplicity of the final implementation.</p>
+
+<h5 id="initial-mapping-method">Initial Mapping Method</h5>
+
+<p>Assuming a point floating any point above the unit sphere, the basic method is:</p>
+
+<ol>
+<li>Identify which octant of the Octahedron the point is on.</li>
+<li>Cast a ray from the query point to the Octahedron origin and find an intersection point with the Octahedron face.</li>
+<li>Construct a basis in the plane of the face and project the intersection point point into 2D, relative to bottom-left face point.</li>
+<li>Calculate triangle column and row indices the point lies within ((ONLY WORKS DUE TO TESSELLATION METHOD).</li>
+<li>Combine these indices with octant index to give unique index for the final triangle.</li>
+</ol>
+
+<p>The Octahedron looks like this with colour-coded octant indices from 0 to 8:</p>
+
+
+<textarea id='Octants'>
+
+var octahedron_geometry = CreateOctahedronGeometry();
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
+scene.SetCameraRotation(-0.2, -0.25, 0);
+
+//===================================================================
+//@buffer(OctahedronShader)
+//===================================================================
+
+precision highp float;
+
+uniform vec3 glColour;
+
+varying vec3 ls_Position;
+
+int GetTriangleIndex(vec3 P)
+{
+	// Get octant index
+	int x_side = P.x &gt;= 0.0 ? 1 : 0;
+	int y_side = P.y &gt;= 0.0 ? 1 : 0;
+	int z_side = P.z &gt;= 0.0 ? 1 : 0;
+	return x_side &#43; y_side * 2 &#43; z_side * 4;
+}
+
+void main(void)
+{
+	int tri_index = GetTriangleIndex(ls_Position);
+	tri_index = int(mod(float(tri_index), 7.0));
+
+	vec3 debug_colour;
+	if (tri_index == 0) debug_colour = vec3(1, 0, 0);
+	if (tri_index == 1) debug_colour = vec3(1, 0.5, 0);
+	if (tri_index == 2) debug_colour = vec3(1, 1, 0);
+	if (tri_index == 3) debug_colour = vec3(0, 1, 0);
+	if (tri_index == 4) debug_colour = vec3(0, 1, 1);
+	if (tri_index == 5) debug_colour = vec3(0, 0, 1);
+	if (tri_index == 6) debug_colour = vec3(1, 0, 1);
+
+	gl_FragColor = vec4(glColour &#43; debug_colour, 1);
+}
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('Octants');
+    new WebGLSandbox(textarea, 'OctantsLS', "false" == "true", "true" == "true");
+
+</script>
+
+<p>Finding the octant index from a unit sphere point is a simple case of inspecting the signs of its individual elements, as this point is also a direction from the octahedron:</p>
+
+<pre><code class="language-cpp">int x_side = P.x &gt;= 0.0 ? 1 : 0;
+int y_side = P.y &gt;= 0.0 ? 1 : 0;
+int z_side = P.z &gt;= 0.0 ? 1 : 0;
+int octant_index = x_side + y_side * 2 + z_side * 4;
+</code></pre>
+
+<p>Given that the backward raycast inverts the final projection of any subdivided points on the sphere, we end up back on a uniformly subdivided plane of the octahedron face. This can be visualised:</p>
+
+
+<textarea id='RayCast'>
+
+function CutGeometry(geom, start_index, end_index)
+{
+	// Create geometry which references the original
+	var cut_geom = new Geometry(geom.IndexType, geom.Vertices, geom.Indices);
+
+	// Cut out the requested triangles
+	cut_geom.Indices = cut_geom.Indices.slice(start_index, end_index);
+
+	// Reduce the vertex list to only those used
+	var new_vertices = [ ];
+	for (var i = 0; i &lt; cut_geom.Indices.length; i&#43;&#43;)
+	{
+		var index = cut_geom.Indices[i];
+		new_vertices.push(cut_geom.Vertices[index]);
+		cut_geom.Indices[i] = i;
+	}
+	cut_geom.Vertices = new_vertices;
+
+	return cut_geom;
+}
+
+function GetDocumentBackgroundColour()
+{
+	var background_colour = getComputedStyle(document.body).backgroundColor; 
+	var m = background_colour.match(/^rgb\s*\(\s*(\d&#43;)\s*,\s*(\d&#43;)\s*,\s*(\d&#43;)\s*\)$/i);
+	return [ m[1] / 255.0, m[2] / 255.0, m[3] / 255.0 ];	
+}
+
+function TriangleCenter(geom, triangle)
+{
+	var a = geom.Vertices[triangle * 3 &#43; 0];
+	var b = geom.Vertices[triangle * 3 &#43; 1];
+	var c = geom.Vertices[triangle * 3 &#43; 2];
+
+	var m = vec3.create();
+	vec3.add(m, a, b);
+	vec3.add(m, m, c);
+	vec3.scale(m, m, 1.0 / 3.0);
+
+	return m;
+}
+
+// Subdivided octahedron face corner lays down no-overwrite stencil
+var geom_face = CreateOctahedronFaceGeometry();
+for (var i = 0; i &lt; 3; i&#43;&#43;)
+    SubdivideGeometryTriangleList(geom_face, false);
+var mesh_face = scene.AddMesh(DrawType.WIREFRAME, geom_face);
+var gl = mesh_face.gl;
+mesh_face.SetPosition(-0.25, -0.25, 0);
+mesh_face.Colour = [ 0.8, 0.8, 0.8 ];
+mesh_face.StencilRef = 1;
+mesh_face.StencilOpZPass = gl.REPLACE;
+
+var geom_tri_a = CutGeometry(geom_face, 123, 126)
+var geom_tri_b = CutGeometry(geom_face, 171, 174);
+var mesh_tri_a = scene.AddMesh(DrawType.WIREFRAME_TRIS, geom_tri_a);
+var mesh_tri_b = scene.AddMesh(DrawType.WIREFRAME_TRIS, geom_tri_b);
+mesh_tri_a.SetPosition(-0.25, -0.25, 0);
+mesh_tri_b.SetPosition(-0.25, -0.25, 0);
+mesh_tri_a.FillColour = [ 0.0, 0.8, 0.4 ];
+mesh_tri_b.FillColour = [ 0.0, 0.4, 0.8 ];
+mesh_tri_a.StencilRef = 1;
+mesh_tri_a.StencilOpZPass = gl.REPLACE;
+mesh_tri_b.StencilRef = 1;
+mesh_tri_b.StencilOpZPass = gl.REPLACE;
+
+var a = TriangleCenter(geom_tri_a, 0);
+var b = vec3.create();
+vec3.copy(b, a);
+vec3.normalize(b, b);
+var m = scene.AddLineMesh(a, b, 0, [ 0.8, 0.2, 0.4 ]);
+m.SetPosition(-0.25, -0.25, 0);
+m.StencilRef = 1;
+m.StencilOpZPass = gl.REPLACE;
+
+var a = TriangleCenter(geom_tri_b, 0);
+var b = vec3.create();
+vec3.copy(b, a);
+vec3.normalize(b, b);
+var m = scene.AddLineMesh(a, b, 0, [ 0.8, 0.2, 0.4 ]);
+m.SetPosition(-0.25, -0.25, 0);m.Colour = [ 0.8, 0.2, 0.4 ];
+m.StencilRef = 1;
+m.StencilOpZPass = gl.REPLACE;
+
+// Subdivided sphere corner
+var geom_sphere = CreateOctahedronFaceGeometry();
+for (var i = 0; i &lt; 3; i&#43;&#43;)
+    SubdivideGeometryTriangleList(geom_sphere, false);
+ProjectVerticesToSphere(geom_sphere.Vertices, 1);
+var mesh1 = scene.AddMesh(DrawType.WIREFRAME_TRIS, geom_sphere);
+mesh1.SetPosition(-0.25, -0.25, 0);
+mesh1.FillColour = GetDocumentBackgroundColour();
+mesh1.Colour = [ 0.5, 0.5, 0.5 ];
+mesh1.StencilRef = 1;
+mesh1.StencilFunc = gl.NOTEQUAL;
+
+var geom2 = CutGeometry(geom_sphere, 123, 126)
+var geom3 = CutGeometry(geom_sphere, 171, 174);
+var mesh2 = scene.AddMesh(DrawType.WIREFRAME_TRIS, geom2)
+var mesh3 = scene.AddMesh(DrawType.WIREFRAME_TRIS, geom3)
+mesh2.SetPosition(-0.25, -0.25, 0);
+mesh3.SetPosition(-0.25, -0.25, 0);
+mesh2.FillColour = [ 0.0, 0.8, 0.4 ];
+mesh3.FillColour = [ 0.0, 0.4, 0.8 ];
+
+scene.SetCameraPosition(0, 0, 2);
+scene.SetCameraRotation(-0.2, -0.25, 0);
+
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('RayCast');
+    new WebGLSandbox(textarea, 'RayCastLS', "false" == "true", "true" == "true");
+
+</script>
+
+<p>In order to intersect the ray with the face plane, the normal and a point on the plane need to be determined. The face normal is derived easily from face sidedness:</p>
+
+<pre><code class="language-cpp">vec3 face_dir;
+face_dir.x = float(x_side) * 2.0 - 1.0;
+face_dir.y = float(y_side) * 2.0 - 1.0;
+face_dir.z = float(z_side) * 2.0 - 1.0;
+vec3 plane_normal = normalize(face_dir);
+</code></pre>
+
+<p>TODO: DO the constant divvide here? There's a hole bunch of other optimisations upcoming so leave it?</p>
+
+<p>A point in the plane can be taken from one of the 3 triangle vertices in this octant. We're going to need all 3 vertices later in the function so we might as well calcuate them up front here. As we're on the unit octahedron, these points come simply from the face direction as they're already in the range [1, 1]:</p>
+
+<pre><code class="language-cpp">// Winding order relative to other faces is irrelevant so we're free to assume all meridian
+// edges start at one of the two points on the z-axis and point toward one of the two
+// points on the x-axis...
+vec3 x0 = vec3(0, 0, face_dir.z);
+vec3 x1 = vec3(face_dir.x, 0, 0);
+
+// ...the last vertex is one of the two poles on the y-axis
+vec3 x2 = vec3(0, face_dir.y, 0);
+</code></pre>
+
+<p>The intersection point on the octahedron face then follows from the intersection of a ray with a plane:</p>
+
+<p><span  class="math">\[R = P + Dt\]</span></p>
+
+<p><span  class="math">\[(X - R).N = 0\]</span></p>
+
+<p><span  class="math">\[t =\frac{(X - P).N}{D.N}\]</span></p>
+
+<p><span  class="math">\[I = P - Dt\]</span></p>
+
+<p>Where <span  class="math">\(P\)</span> is the ray origin, <span  class="math">\(D\)</span> is the ray direction, <span  class="math">\(X\)</span> is a point on the plane and <span  class="math">\(N\)</span> is the plane normal. As the ray direction is toward the octahedron origin, it's equal to the normalised <span  class="math">\(-P\)</span>, so:</p>
+
+<p><span  class="math">\[\hat{P} = \frac{P}{|P|}\]</span></p>
+
+<p><span  class="math">\[t =\frac{(X - P).N}{-\hat{P}.N}\]</span></p>
+
+<p><span  class="math">\[I = P - \hat{P}t\]</span></p>
+
+<p>It can then be seen that the scale by <span  class="math">\(\frac{1}{|P|}\)</span> cancels and so normalisation of the input position can be avoided in this equation, leading to:</p>
+
+<pre><code class="language-cpp">float d = dot(x0 - P, plane_normal) / dot(-P, plane_normal);
+vec3 point_on_plane = P - P * d;
+</code></pre>
+
+<p>This point then needs to be projected to 2D on the plane, requring a completed basis. The red and green vectors below are the vectors required, located at one of the tetrahedron vertices:</p>
+
+
+<textarea id='Basis'>
+
+var geom_face = CreateOctahedronFaceGeometry();
+var mesh_face = scene.AddMesh(DrawType.WIREFRAME, geom_face);
+mesh_face.Colour = [ 0.8, 0.8, 0.8 ];
+
+// Octahedron face points
+var x0 = vec3_create(0, 0, 1);
+var x1 = vec3_create(1, 0, 0);
+var x2 = vec3_create(0, 1, 0);
+
+// Meridian edge center point
+var O = vec3.create();
+vec3.add(O, O, x0);
+vec3.add(O, O, x1);
+vec3.scale(O, O, 0.5);
+
+// Construct basis
+var X = vec3.create();
+vec3.sub(X, x1, x0);
+vec3.normalize(X, X);
+var Y = vec3.create();
+vec3.sub(Y, x2, O);
+vec3.normalize(Y, Y);
+var Z = vec3.create();
+vec3.cross(Z, X, Y);
+
+// Place the basis on the origin point
+vec3.add(X, X, x0);
+vec3.add(Y, Y, x0);
+vec3.add(Z, Z, x0);
+
+scene.AddLineMesh(x0, X, 0.015, [ 0.8, 0.2, 0.4 ]);
+scene.AddLineMesh(x0, Y, 0.015, [ 0.2, 0.8, 0.4 ]);
+scene.AddLineMesh(x0, Z, 0.015, [ 0.2, 0.4, 0.8 ]);
+
+scene.SetCameraPosition(0.25, 0.25, 3);
+scene.SetCameraRotation(-0.2, 0.2, 0);
+
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('Basis');
+    new WebGLSandbox(textarea, 'BasisLS', "false" == "true", "true" == "true");
+
+</script>
+
+<p>Getting these vectors and the 2D projection is simple:</p>
+
+<p>TODO: Discuss optimisation of this bit later</p>
+
+<pre><code class="language-cpp">// Make 2D basis in the face plane using the meridian edge midpoint as the origin:
+vec3 O = (x0 + x1) * 0.5;
+vec3 X = normalize(x1 - O);
+vec3 Y = normalize(x2 - O);
+
+// Project the intersection point onto this plane
+vec2 uv;
+uv.x = dot(point_on_plane - x0, X);
+uv.y = dot(point_on_plane - x0, Y);
+</code></pre>
+
+<p><code>uv</code> gives us an effective distance of the point along each axis.</p>
+
+
+<textarea id='InitialMap'>
+//
+// Given a 3D point on the sphere, map to a unique, sub-divided triangle
+// index in O(1) with no recursive searching or table lookups.
+// Gist here https://gist.github.com/dwilliamson/65a81bf6fcd0e2000039
+// Thanks to @rompa for a couple of optimisations.
+//
+
+// Generate initial octahedron and subdivide it
+var octahedron_geometry = CreateOctahedronGeometry();
+var depth = 3;
+for (var i = 0; i &lt; depth; i&#43;&#43;)
+	SubdivideGeometryTriangleList(octahedron_geometry, false);
+
+// Use nlerp to project onto sphere. Would be better to slerp to get less
+// distortion but that breaks the indexing scheme. UNCOMMENT to see source
+// octahedron.
+ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
+
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
+
+
+//===================================================================
+//@buffer(OctahedronShader)
+//===================================================================
+
+
+precision highp float;
+
+uniform vec3 glColour;
+
+varying vec3 ls_Position;
+
+
+// Some shitty boolean logic code because WebGL...
+bool and(int x, int y)
+{
+	return mod(float(x), exp2(float(y))) != 0.0;
+}
+
+
+int GetTriangleIndex(vec3 P)
+{
+	// TODO: Add integer arithmetic to simplify the boolean logic.
+	// TODO: Move to HLSL... it&#39;s just more concise.
+
+	// Get octant index
+	int x_side = P.x &gt;= 0.0 ? 1 : 0;
+	int y_side = P.y &gt;= 0.0 ? 1 : 0;
+	int z_side = P.z &gt;= 0.0 ? 1 : 0;
+	int octant_index = x_side &#43; y_side * 2 &#43; z_side * 4;
+
+	// Generate face normal from sidedness
+	vec3 face_dir;
+	face_dir.x = float(x_side) * 2.0 - 1.0;
+	face_dir.y = float(y_side) * 2.0 - 1.0;
+	face_dir.z = float(z_side) * 2.0 - 1.0;
+	vec3 plane_normal = normalize(face_dir);
+
+	// Get triangle vertices for the current face
+	// Winding order relative to other faces is irrelevant so we&#39;re free to assume all meridian
+	// edges start at one of the two points on the z-axis and point toward one of the two
+	// points on the x-axis...
+	vec3 x0 = vec3(0, 0, face_dir.z);
+	vec3 x1 = vec3(face_dir.x, 0, 0);
+
+	// ...the last vertex is one of the two poles on the y-axis
+	vec3 x2 = vec3(0, face_dir.y, 0);
+
+	// Find a point on the octahedron face that maps to the current point on the sphere surface
+	// As edge subdivisions were generated using normalized midpoints, tracing a ray back from the
+	// sphere to the origin and finding where it intersects the face will yield the original position.
+	// There is less distortion generating midpoints with a slerp, but that then makes this back-trace
+	// technique a lot trickier to use.
+	float d = dot(x0 - P, plane_normal) / dot(-P, plane_normal);
+	vec3 point_on_plane = P - P * d;
+
+	// Assume octahedron is circumscribed by the unit sphere, length of its meridian edges is known
+	float oct_side_len = 2.0 * sqrt(0.5);
+
+	//
+	// Make 2D basis in the face plane using the meridian edge midpoint as the origin:
+	//
+	//    O = (x0 &#43; x1) * 0.5
+	//
+	// The 2D basis vectors are then:
+	//
+	//    X = normalize(x1 - O)
+	//    Y = normalize(x2 - O)
+	//
+	vec3 O = (x0 &#43; x1) * 0.5;
+	vec3 X = normalize(x1 - O);
+	vec3 Y = normalize(x2 - O);
+
+	//
+	// What remains is normalisation of Y, which has a length equal to the octahedron triangle&#39;s
+	// height. Each component of Y is composed of face_dir and has a fixed magnitude, only differing
+	// in sign. This leads to:
+	//
+	//    oct_tri_height = sqrt(0.5 * 0.5 &#43; 1 * 1 &#43; 0.5 * 0.5);
+	//
+	float oct_tri_height = sqrt(1.5);
+	//Y /= oct_tri_height;
+
+	// Project the intersection point onto this plane
+	vec2 uv;
+	uv.x = dot(point_on_plane - x0, X);
+	uv.y = dot(point_on_plane - x0, Y);
+
+	// Normalise plane x position to units of sub triangle half-edges
+	float sub_tri_edge_len = oct_side_len / 8.0;
+	uv.x = uv.x / (sub_tri_edge_len * 0.5);
+
+	// Normalise plane y position to units of sub triangle heights (the easy bit)
+	uv.y = (uv.y / oct_tri_height) * 8.0;
+
+	// Get integer indices, y is already in its final form
+	int x = int(uv.x);
+	int y = int(uv.y);
+
+	// Get fractionals
+	float u = uv.x - float(x);
+	float v = uv.y - float(y);
+
+	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
+	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
+	// direction based on parity of y index.
+	if (and(x, 1) != and(y, 1))
+	{
+		if (u &#43; v &lt; 1.0)
+			x--;
+	}
+	else
+	{
+		if (v - u &gt; 0.0)
+			x--;
+	}
+
+	// This is a nice way of making sure that triangles on each row start off at index 0
+	// x -= y;
+	// However, can&#39;t easily turn that into a linear index as row starting indices form
+	// the following sequence
+	// 0, 15, 28, 39, 48, 55, 60, 63
+	// Instead, juse assume a square grid and only store data for those triangles within the
+	// octahedron face bounds.
+	return octant_index * 15 * 15 &#43; y * 15 &#43; x;
+}
+
+
+void main(void)
+{
+	int tri_index = GetTriangleIndex(ls_Position);
+	tri_index = int(mod(float(tri_index), 7.0));
+
+	vec3 debug_colour;
+	if (tri_index == 0) debug_colour = vec3(1, 0, 0);
+	if (tri_index == 1) debug_colour = vec3(1, 0.5, 0);
+	if (tri_index == 2) debug_colour = vec3(1, 1, 0);
+	if (tri_index == 3) debug_colour = vec3(0, 1, 0);
+	if (tri_index == 4) debug_colour = vec3(0, 1, 1);
+	if (tri_index == 5) debug_colour = vec3(0, 0, 1);
+	if (tri_index == 6) debug_colour = vec3(1, 0, 1);
+
+	gl_FragColor = vec4(glColour &#43; debug_colour, 1);
+}
+
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('InitialMap');
+    new WebGLSandbox(textarea, 'InitialMapLS', "false" == "true", "false" == "true");
+
+</script>
+
+<pre><code class="language-javascript">// -----------------------------------------------
+// Configuration parameters
+// -----------------------------------------------
+
+
+// How many subdivision passes
+var OCTAHEDRON_SUBDIVISION_DEPTH = 3;
+
+// Toggle to see the source Octahedron
+var PROJECT_ONTO_SPHERE = true;
+
+
+// -----------------------------------------------
+// Create initial Octahedron Geometry
+// -----------------------------------------------
+
+
+function CreateOctahedronGeometry()
+{
+	// http://en.wikipedia.org/wiki/Octahedron
+	// http://en.wikipedia.org/wiki/Octahedron#mediaviewer/File:Dual_Cube-Octahedron.svg
+	// Octahedron is dual to the cube with a point in the centre of each of its faces
+
+	// Create vertex positions on the 6 cube faces
+	var positions = [
+		[  0,  1,  0 ],
+		[  0,  0, -1 ],
+		[  1,  0,  0 ],
+		[  0,  0,  1 ],
+		[ -1,  0,  0 ],
+		[  0, -1,  0 ],
+	];
+	var position_array = new Array();
+	for (var i in positions)
+	{
+		var p = vec3.create();
+		p[0] = positions[i][0];
+		p[1] = positions[i][1];
+		p[2] = positions[i][2];
+		position_array.push(p);
+	}
+
+	// Link octahedron triangles
+	var indices = [
+		0, 1, 2,
+		0, 2, 3,
+		0, 3, 4,
+		0, 4, 1,
+		5, 1, 2,
+		5, 2, 3,
+		5, 3, 4,
+		5, 4, 1
+	];
+	var index_array = new Array();
+	for (var i in indices)
+		index_array.push(indices[i]);
+
+	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
+}
+
+
+// -----------------------------------------------
+// Sphere Subdivision
+// -----------------------------------------------
+
+
+function SubdivideTriangleList(positions, indices, do_slerp)
+{
+	var out_indices = new Array();
+
+	// Use an object as an associative map of edge pairs
+	// Not ideal as JS will convert the integer keys to strings, but, it's quick and dirty...
+	var MAX_NB_INDICES = 32768;
+	var edge_splits = new Object();
+
+	function make_edge_key(i0, i1)
+	{
+		// Ensure lowest edge index is first to ensure consistent key between different edge directions
+		if (i1 &lt; i0)
+		{
+			var temp = i0;
+			i0 = i1;
+			i1 = temp;
+		}
+
+		// Check for overflow
+		if (i1 &gt;= MAX_NB_INDICES)
+			throw new Error(&quot;Edge split table not big enough to handle index: &quot; + i1);
+
+		return i0 * MAX_NB_INDICES + i1;
+	}
+
+	function slerp(out, a, b, t)
+	{
+		// Cosine of angle between two vectors
+		var cos_theta = vec3.dot(a, b);
+		cos_theta = Math.min(Math.max(cos_theta, -1), 1);
+
+		// Calculate interpolated angle
+		var theta = Math.acos(cos_theta) * t;
+
+		var relative = vec3.create();
+		vec3.scale(relative, a, cos_theta);
+		vec3.sub(relative, b, relative);
+		vec3.normalize(relative, relative);
+
+		vec3.scale(relative, relative, Math.sin(theta));
+		vec3.scale(out, a, Math.cos(theta));
+		vec3.add(out, out, relative);
+	}
+
+	function split_edge(positions, i0, i1)
+	{
+		// Check first to see if the edge has been split before
+		var edge_key = make_edge_key(i0, i1);
+		var edge_split = edge_splits[edge_key];
+		if (edge_split !== undefined)
+			return edge_split;
+
+		// Lookup edge vertex positions
+		var p0 = positions[i0];
+		var p1 = positions[i1];
+
+		// Generate a midpoint
+		var p01 = vec3.create();
+		if (do_slerp)
+			slerp(p01, p0, p1, 0.5);
+		else
+			vec3.lerp(p01, p0, p1, 0.5);
+
+		// Add the new vertex position and index to the edge split table
+		positions.push(p01);
+		edge_split = positions.length - 1;
+		edge_splits[edge_key] = edge_split;
+
+		return edge_split;
+	}
+
+	for (var i = 0; i &lt; indices.length; i += 3)
+	{
+		// Get vertex indices of the triangle
+		var i0 = indices[i + 0];
+		var i1 = indices[i + 1];
+		var i2 = indices[i + 2];
+
+		// Split the edges of the triangle
+		var i01 = split_edge(positions, i0, i1);
+		var i12 = split_edge(positions, i1, i2);
+		var i20 = split_edge(positions, i2, i0);
+
+		// Add indices for the 4 new triangles
+		var new_indices = [
+			i0,  i01, i20,
+			i01, i1,  i12,
+			i20, i01, i12,
+			i20, i12, i2 
+		];
+		for (var j in new_indices)
+			out_indices.push(new_indices[j]);
+	}
+
+	return out_indices;
+}
+
+
+// -----------------------------------------------
+// Scene Setup
+// -----------------------------------------------
+
+
+// Create initial geometries for each of the 3 subdivision methods
+var octahedron_geometry_prj = CreateOctahedronGeometry();
+var octahedron_geometry = CreateOctahedronGeometry();
+var octahedron_geometry_slerp = CreateOctahedronGeometry();
+
+for (var i = 0; i &lt; OCTAHEDRON_SUBDIVISION_DEPTH; i++)
+{
+    // This geometry projects onto the sphere after each subdivision step
+    SubdivideGeometryTriangleList(octahedron_geometry_prj, false);
+    if (PROJECT_ONTO_SPHERE)
+        ProjectVerticesToSphere(octahedron_geometry_prj.Vertices, 1);
+
+    // This geometry waits until all subdivision is complete before projecting onto the sphere
+    SubdivideGeometryTriangleList(octahedron_geometry, false);
+
+    // This geometry does no sphere projection, relying on slerp to subdivide instead
+    SubdivideGeometryTriangleList(octahedron_geometry_slerp, true);
+}
+
+// Sphere-project the geometry that only requires it once
+if (PROJECT_ONTO_SPHERE)
+    ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
+
+var mesh_prj = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry_prj);
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry);
+var mesh_slerp = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry_slerp);
+mesh_prj.SetPosition(-2, 0, 0);
+mesh_slerp.SetPosition(2, 0, 0);
+
+scene.SetCameraPosition(0, 0, 7);
+</code></pre>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+            <p class="f-post-time"><time datetime="2017-07-28T00:27:21&#43;01:00">July 28, 2017</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=Fast%2c%20Constant%20Time%20Sphere%20Indexing&url=http%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+    </footer>
+    
+<div id="gh-comments">
+    <br/><br/>
+    <h6>COMMENTS</h6>
+    <div id="gh-comments-list"></div>
+    <a href="javascript:void(0)" id="gh-load-comments" class="btn" style="display:none">Load more comments</a>
+</div>
+
+<script type="text/javascript" src="http://donw.io/js/github-comments.js"></script>
+<script type="text/javascript">
+    DoGithubComments("");
+</script>
+
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    
+        <script>renderMathInElement(document.body);</script>
+    
+
+
+
+</body>
+</html>

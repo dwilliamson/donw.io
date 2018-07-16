@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2012-07-19T12:52:03&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.20.7" />
+        <meta name="generator" content="Hugo 0.26" />
         <title>Quaternions and Dual Quaternion Skinning &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -36,6 +36,12 @@
         <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
+          <link rel="stylesheet" href="/extern/katex/0.6.0/katex.min.css">
+          <script src="/extern/katex/0.6.0/katex.min.js"></script>
+          <script src="/extern/katex/0.6.0/auto-render.min.js"></script>
+        
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -79,15 +85,13 @@
     </header>
 
     <section class="post-content">
-        
+        <p>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they <a href="http://en.wikipedia.org/wiki/Algebraically_closed_field#Examples">made more sense than real numbers</a>. While it <a href="http://www.geometricalgebra.net/quaternions.html">might not exactly be helpful</a> to visualise quaternions as an extension of complex numbers, there's something in there that just grabs at me. Unlike previous posts, I've managed to update to D3D11 so I'll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</p>
 
-<p>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they <a href="http://en.wikipedia.org/wiki/Algebraically_closed_field#Examples">made more sense than real numbers</a>. While it <a href="http://www.geometricalgebra.net/quaternions.html">might not exactly be helpful</a> to visualise quaternions as an extension of complex numbers, there&rsquo;s something in there that just grabs at me. Unlike previous posts, I&rsquo;ve managed to update to D3D11 so I&rsquo;ll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</p>
-
-<p>I&rsquo;m no mathematician so hopefully this information in this post should be pretty accessible.</p>
+<p>I'm no mathematician so hopefully this information in this post should be pretty accessible.</p>
 
 <h5 id="dual-quaternion-skinning">Dual Quaternion Skinning</h5>
 
-<p>I spent a couple of hours last week converting my skinning pipeline to use dual quaternions. My animation pipeline works with quaternions; the source animation data, skeleton pose and inverse base pose are quaternion-based. Right at the very end, the composited result is converted to matrix and sent to the GPU. In effect, I&rsquo;m doing this:</p>
+<p>I spent a couple of hours last week converting my skinning pipeline to use dual quaternions. My animation pipeline works with quaternions; the source animation data, skeleton pose and inverse base pose are quaternion-based. Right at the very end, the composited result is converted to matrix and sent to the GPU. In effect, I'm doing this:</p>
 
 <pre><code class="language-cpp">for (int i = 0; i &lt; nb_bones; i++)
 {
@@ -113,7 +117,7 @@
 <p>In reality, I precalculate the inverse base pose, keeping the inner loop tight and low on ALU operations. My goals were:</p>
 
 <ul>
-<li>Capitalise on the quaternion input and remove the conversion to matrix step. On all past games I&rsquo;ve worked on, the matrix multiply with base pose has had a destructive influence on CPU performance; if I could remove this step, I&rsquo;d have a solution that would be faster than my past implementations.</li>
+<li>Capitalise on the quaternion input and remove the conversion to matrix step. On all past games I've worked on, the matrix multiply with base pose has had a destructive influence on CPU performance; if I could remove this step, I'd have a solution that would be faster than my past implementations.</li>
 <li>Reduce the amount of data being mapped/sent to the GPU. While my existing solution was sending 4x4 matrices, one of the columns was redundant - I could be sending 4x3. However, dual quaternions would allow me to halve the amount of data sent.</li>
 <li>Get volume-preserving skinning on joints under extreme rotation.</li>
 <li>Have a bit of fun and exercise some neglected quaternion/vector math muscles.</li>
@@ -137,13 +141,17 @@
 <li>Transform the vertex position and normal by this dual quaternion.</li>
 </ul>
 
-<h5 id="quaternion-vector-multiplication">Quaternion/Vector Multiplication</h5>
+<h5 id="quaternionvector-multiplication">Quaternion/Vector Multiplication</h5>
 
 <p>To cut a long story short, the reason none of this was working for me was that I was looking at Cg code, as opposed to HLSL code. Having never really used Cg, it never occurred to me that the order of cross product parameters should be swapped to account for handedness. Cross products are used to define the quaternion multiplication:</p>
 
-<p>$$ Q = (w, V) \\ Q_r = Q_0 Q_1  \\ Q_r = (w_0 w_1 - V_0 \cdot V_1, w_0 V_1 + w_1 V_0 + V_0 \times V_1)$$</p>
+<p><span  class="math">\[Q = (w, V)\]</span></p>
 
-<p><center> ($\cdot$ is the vector dot product and $\times$ is the vector cross product) </center></p>
+<p><span  class="math">\[Q_r = Q_0 Q_1\]</span></p>
+
+<p><span  class="math">\[Q_r = (w_0 w_1 - V_0 \cdot V_1, w_0 V_1 + w_1 V_0 + V_0 \times V_1)\]</span></p>
+
+<p><center> (<span  class="math">\(\cdot\)</span> is the vector dot product and <span  class="math">\(\times\)</span> is the vector cross product) </center></p>
 
 <p>Naturally, this is then a non-commutative operation, giving the order in which you pass arguments into your multiply functions importance, too. A basic C++ implementation of the multiplication looks like:</p>
 
@@ -160,23 +168,23 @@
 }
 </code></pre>
 
-<p>Assuming we&rsquo;re using unit quaternions, you can rotate a vector by a quaternion using multiplication:</p>
+<p>Assuming we're using unit quaternions, you can rotate a vector by a quaternion using multiplication:</p>
 
-<p>$$P_r = Q*(0, P)*Q&rsquo;$$</p>
+<p><span  class="math">\[P_r = Q*(0, P)*Q'\]</span></p>
 
-<p>Here, $*$ is the quaternion multiplication, $&lsquo;$ is the quaternion conjugate and $(0,P)$ is construction of a pure quaternion using the vector, setting the quaternion real component to zero. This equation is used to convert to and from dual quaternions, so it&rsquo;s important you keep order of multiplications in mind.</p>
+<p>Here, <span  class="math">\(*\)</span> is the quaternion multiplication, <span  class="math">\('\)</span> is the quaternion conjugate and <span  class="math">\((0,P)\)</span> is construction of a pure quaternion using the vector, setting the quaternion real component to zero. This equation is used to convert to and from dual quaternions, so it's important you keep order of multiplications in mind.</p>
 
 <p>If you work with Cg, make sure you have your cross products round the other way to my shader examples below!</p>
 
 <h5 id="converting-to-dual-quaternion">Converting to Dual Quaternion</h5>
 
-<p>I&rsquo;d suggest reading the second paper linked above to get a good introduction to what dual quaternions are and what the various components mean. For our means here it&rsquo;s enough to say that dual quaternions are just a pair of quaternions - the &ldquo;real&rdquo; quaternion and the &ldquo;dual&rdquo; quaternion:</p>
+<p>I'd suggest reading the second paper linked above to get a good introduction to what dual quaternions are and what the various components mean. For our means here it's enough to say that dual quaternions are just a pair of quaternions - the &quot;real&quot; quaternion and the &quot;dual&quot; quaternion:</p>
 
-<p>$$DQ = (Q_r, Q_d)$$</p>
+<p><span  class="math">\[DQ = (Q_r, Q_d)\]</span></p>
 
-<p>Converting a quaternion rotation and position vector to this representation is simple. The $Q_r$ term is a simple copy of your quaternion rotation and $Q_d$ is:</p>
+<p>Converting a quaternion rotation and position vector to this representation is simple. The <span  class="math">\(Q_r\)</span> term is a simple copy of your quaternion rotation and <span  class="math">\(Q_d\)</span> is:</p>
 
-<p>$$Q_d = 0.5(0, V)*Q_r$$</p>
+<p><span  class="math">\[Q_d = 0.5(0, V)*Q_r\]</span></p>
 
 <p>This allows the matrix conversion code on the CPU to become:</p>
 
@@ -217,9 +225,9 @@ float2x4 GetBoneDualQuat(uint bone_index)
 }
 </code></pre>
 
-<p>As with quaternions, weighting dual quaternions can be achieved using a normalised lerp of its components. As explained in the paper <a href="http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/">Understanding Slerp, Then Not Using It</a>, it&rsquo;s not as good as a SLERP in that it&rsquo;s not constant velocity. However, it has minimal torque, rotating along the sphere and unlike SLERP, is commutative; meaning, if you combine multiple quaternions in a different order, the result will always be the same.</p>
+<p>As with quaternions, weighting dual quaternions can be achieved using a normalised lerp of its components. As explained in the paper <a href="http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/">Understanding Slerp, Then Not Using It</a>, it's not as good as a SLERP in that it's not constant velocity. However, it has minimal torque, rotating along the sphere and unlike SLERP, is commutative; meaning, if you combine multiple quaternions in a different order, the result will always be the same.</p>
 
-<p>Besides, when you&rsquo;re regenerating bone rotations each frame, interpolation velocity won&rsquo;t really factor into the solution. The weighting code thus becomes:</p>
+<p>Besides, when you're regenerating bone rotations each frame, interpolation velocity won't really factor into the solution. The weighting code thus becomes:</p>
 
 <pre><code class="language-cpp">// Blend
 float2x4 result =
@@ -233,29 +241,33 @@ float norm = length(result[0]);
 return result / norm;
 </code></pre>
 
-<p>Simples! In the original paper, Kavan goes into great detail on why this works so well over previous solutions and why a SLERP isn&rsquo;t the ideal solution. Well worth a read.</p>
+<p>Simples! In the original paper, Kavan goes into great detail on why this works so well over previous solutions and why a SLERP isn't the ideal solution. Well worth a read.</p>
 
-<h5 id="antipodality-or-quaternion-double-cover">Antipodality or, Quaternion Double-Cover</h5>
+<h5 id="antipodality-or-quaternion-doublecover">Antipodality or, Quaternion Double-Cover</h5>
 
 <p>Take a look at one of the classic release bugs of this generation:</p>
 
 <p><center> <iframe width="420" height="315" src="http://www.youtube.com/embed/ToKIkw3LIoQ" frameborder="0" allowfullscreen></iframe></center></p>
 
-<p>There&rsquo;s a pretty awesome reason for why the head can spin the long way around to get to its target rotation (no doubt the bug will be more complicated than that). Casey Muratori goes into <a href="https://mollyrocket.com/837">great detail on this</a> and I&rsquo;ll attempt to summarise.</p>
+<p>There's a pretty awesome reason for why the head can spin the long way around to get to its target rotation (no doubt the bug will be more complicated than that). Casey Muratori goes into <a href="https://mollyrocket.com/837">great detail on this</a> and I'll attempt to summarise.</p>
 
 <p>The axis-angle definition of a quaternion is:</p>
 
-<p>$$Q = (cos(\frac{\theta}{2}), Vsin(\frac{\theta}{2}))$$</p>
+<p><span  class="math">\[Q = (cos(\frac{\theta}{2}), Vsin(\frac{\theta}{2}))\]</span></p>
 
 <p>Inherent in this definition is the ability for quaternions to represent up to 720 degrees of rotation. Assuming we use the x-axis as our example vector, this leads to these quantities:</p>
 
-<p>$$Q(0) = (1, 0, 0, 0) \\ Q(360) = (-1, 0, 0, 0) \\ Q(720) = (1, 0, 0, 0)$$</p>
+<p><span  class="math">\[Q(0) = (1, 0, 0, 0)\]</span></p>
+
+<p><span  class="math">\[Q(360) = (-1, 0, 0, 0)\]</span></p>
+
+<p><span  class="math">\[Q(720) = (1, 0, 0, 0)\]</span></p>
 
 <p>While sine and cosine are periodic every 360 degrees, the division by two of the input angle leads the quaternion representation to be periodic every 720 degrees.</p>
 
 <p>Clearly, 360 degrees and 720 degrees represent the same geometrical rotation. However, when you interpolate between rotations, you may find yourself interpolating the long way round. Your source/target rotation range may geometrically be only 30 to 35 degrees but your quaternion may represent that as 30 to 395 degrees!</p>
 
-<p>If you&rsquo;ve glimpsed at the inner workings of a SLERP, this is the case they are trying to avoid when trying to solve for the &ldquo;shortest path&rdquo;. Given that $Q$ and $-Q$ represent the same rotation, you can ensure interpolation between two quaternions follows this shortest path by negating one of the quaternions if the dot product between them is negative.</p>
+<p>If you've glimpsed at the inner workings of a SLERP, this is the case they are trying to avoid when trying to solve for the &quot;shortest path&quot;. Given that <span  class="math">\(Q\)</span> and <span  class="math">\(-Q\)</span> represent the same rotation, you can ensure interpolation between two quaternions follows this shortest path by negating one of the quaternions if the dot product between them is negative.</p>
 
 <p>When blending dual quaternions, you have to watch for the same case. Not only that, you have to ensure that all of your bone transforms are in the same neighbourhood. While there are <a href="http://pages.cs.wisc.edu/~joony/RESEARCH/online_locomotion.pdf">complicated ways of achieving that</a>, most of the time it can be guaranteed by comparing all bone rotations to the first one and adjusting the sign of the blend weight.</p>
 
@@ -287,7 +299,7 @@ return result / norm;
 }
 </code></pre>
 
-<p>There are cases which can still fail these checks but they are very rare for the general use-case of skinning - I can&rsquo;t imagine this working well for severe joint twists, for example (beyond the range of human constraints, that is).</p>
+<p>There are cases which can still fail these checks but they are very rare for the general use-case of skinning - I can't imagine this working well for severe joint twists, for example (beyond the range of human constraints, that is).</p>
 
 <h5 id="transforming-the-vertex-with-dual-quaternions">Transforming the Vertex with Dual Quaternions</h5>
 
@@ -298,9 +310,9 @@ return result / norm;
 <li>Convert to quaternion/vector and transform the vertex using that.</li>
 </ul>
 
-<p>The fastest and by far cleanest way is the second so I will concentrate on that. Given that you already have the rotation in the $Q_r$ component of the dual quaternion, extraction of the translation vector is achieved using the following:</p>
+<p>The fastest and by far cleanest way is the second so I will concentrate on that. Given that you already have the rotation in the <span  class="math">\(Q_r\)</span> component of the dual quaternion, extraction of the translation vector is achieved using the following:</p>
 
-<p>$$V = 2Q_d*Q_r&rsquo;$$</p>
+<p><span  class="math">\[V = 2Q_d*Q_r'\]</span></p>
 
 <p>This can be implemented directly as:</p>
 
@@ -329,7 +341,7 @@ float3 ReconstructTranslation(float4 Qr, float4 Qd)
 }
 </code></pre>
 
-<p>Using the Conjugate and Multiply functions, it&rsquo;s then easy to transform a position and vector by the quaternion rotation and reconstructed position:</p>
+<p>Using the Conjugate and Multiply functions, it's then easy to transform a position and vector by the quaternion rotation and reconstructed position:</p>
 
 <pre><code class="language-cpp">float3 QuatRotateVector(float4 Qr, float3 v)
 {
@@ -356,9 +368,9 @@ float3 normal = QuatRotateVector(skin_transform[0], input.normal);
 
 <h5 id="optimising-the-vertex-transformation">Optimising the Vertex Transformation</h5>
 
-<p>There&rsquo;s a bit of redundancy in the transformation code above; results being thrown away and inputs being used when they could be discarded. There are also some identities we can apply to the rotation equation that can simplify it. As it stands, reconstruction of the translation is good enough.</p>
+<p>There's a bit of redundancy in the transformation code above; results being thrown away and inputs being used when they could be discarded. There are also some identities we can apply to the rotation equation that can simplify it. As it stands, reconstruction of the translation is good enough.</p>
 
-<p>Starting with <code>QuatRotateVector</code>, we can already see that the first multiplication uses $w=0$, allowing us to construct a function which removes the necessary terms in its calculation:</p>
+<p>Starting with <code>QuatRotateVector</code>, we can already see that the first multiplication uses <span  class="math">\(w=0\)</span>, allowing us to construct a function which removes the necessary terms in its calculation:</p>
 
 <pre><code class="language-cpp">float4 MultiplyPure(float4 a, float3 b)
 {
@@ -371,7 +383,7 @@ float3 QuatRotateVector(float4 Qr, float3 v)
 }
 </code></pre>
 
-<p>The final redundancy is that we&rsquo;re calculating w and throwing it away, leading to:</p>
+<p>The final redundancy is that we're calculating w and throwing it away, leading to:</p>
 
 <pre><code class="language-cpp">float3 MultiplyConjugate3(float4 a, float4 b)
 {
@@ -387,87 +399,93 @@ float3 QuatRotateVector(float4 Qr, float3 v)
 
 <h5 id="we-can-do-better-than-that">We can do better than that</h5>
 
-<p>Let&rsquo;s try to explode the transformation and bring it back to something far simpler. I&rsquo;ll work through the steps I took in simplifying this explicitly - it serves as a nice record for me and will hopefully help if you&rsquo;re trying to understand where the final result came from (I was always losing signs during my school days - I&rsquo;m no better 15 years on!)</p>
+<p>Let's try to explode the transformation and bring it back to something far simpler. I'll work through the steps I took in simplifying this explicitly - it serves as a nice record for me and will hopefully help if you're trying to understand where the final result came from (I was always losing signs during my school days - I'm no better 15 years on!)</p>
 
-<p>We&rsquo;re trying to simplify:</p>
+<p>We're trying to simplify:</p>
 
-<p>$$P_r = Q*(0,V)*Q&rsquo;$$</p>
+<p><span  class="math">\[P_r = Q*(0,V)*Q'\]</span></p>
 
 <p>This is a sequence of two quaternion multiplies. Again, quaternion multiplication is defined as:</p>
 
-<p>$$Q_0 Q_1 = (w_0 w_1 - V_0 \cdot V_1, w_0 V_1 + w_1 V_0 + V_0 \times V_1)$$</p>
+<p><span  class="math">\[Q_0 Q_1 = (w_0 w_1 - V_0 \cdot V_1, w_0 V_1 + w_1 V_0 + V_0 \times V_1)\]</span></p>
 
-<p>Let&rsquo;s make a few quick substitutions:</p>
+<p>Let's make a few quick substitutions:</p>
 
-<p>$$R = Q.xyz \\ w = Q.w$$</p>
+<p><span  class="math">\[R = Q.xyz\]</span></p>
 
-<p>Expand $Q*(0,V)$ first:</p>
+<p><span  class="math">\[w = Q.w\]</span></p>
 
-<p>$$P_r = (-R \cdot V + wV + R \times V)(w - R)$$</p>
+<p>Expand <span  class="math">\(Q*(0,V)\)</span> first:</p>
+
+<p><span  class="math">\[P_r = (-R \cdot V + wV + R \times V)(w - R)\]</span></p>
 
 <p>Expand the second multiplication:</p>
 
-<p>$$P_r = -R \cdot Vw + (wV + R \times V) \cdot R + (R \cdot V)R + w(wV + R \times V) - (wV + R \times V) \times R$$</p>
+<p><span  class="math">\[P_r = -R \cdot Vw + (wV + R \times V) \cdot R + (R \cdot V)R + w(wV + R \times V) - (wV + R \times V) \times R\]</span></p>
 
 <p>The dot product distributes over addition so distribute them all:</p>
 
-<p>$$P_r = -R \cdot Vw + wV \cdot R + R \times V \cdot R + (R \cdot V)R + + w^2V + wR \times V - (wV + R \times V) \times R$$</p>
+<p><span  class="math">\[P_r = -R \cdot Vw + wV \cdot R + R \times V \cdot R + (R \cdot V)R + + w^2V + wR \times V - (wV + R \times V) \times R\]</span></p>
 
 <p>The first two terms cancel as the dot product is commutative:</p>
 
-<p>$$P_r = R \times V \cdot R + (R \cdot V)R + w^2V + wR \times V - (wV + R \times V) \times R$$</p>
+<p><span  class="math">\[P_r = R \times V \cdot R + (R \cdot V)R + w^2V + wR \times V - (wV + R \times V) \times R\]</span></p>
 
-<p>Using the identity $A \times B=-B \times A$ swap the last cross product around:</p>
+<p>Using the identity <span  class="math">\(A \times B=-B \times A\)</span> swap the last cross product around:</p>
 
-<p>$$P_r = R \times V \cdot R + (R \cdot V)R + w^2V + wR \times V + R \times (wV + R \times V)$$</p>
+<p><span  class="math">\[P_r = R \times V \cdot R + (R \cdot V)R + w^2V + wR \times V + R \times (wV + R \times V)\]</span></p>
 
 <p>The cross product distributes over addition so distribute the last cross product:</p>
 
-<p>$$P_r = R \times V \cdot R + (R \cdot V)R + w^2V + wR \times V + R \times wV + R \times (R \times V)$$</p>
+<p><span  class="math">\[P_r = R \times V \cdot R + (R \cdot V)R + w^2V + wR \times V + R \times wV + R \times (R \times V)\]</span></p>
 
-<p>As we&rsquo;re only interested in the <code>xyz</code> components of the result, discard all scalar terms:</p>
+<p>As we're only interested in the <code>xyz</code> components of the result, discard all scalar terms:</p>
 
-<p>$$P_r = (R \cdot V)R + w^2V + wR \times V + R \times wV + R \times (R \times V)$$</p>
+<p><span  class="math">\[P_r = (R \cdot V)R + w^2V + wR \times V + R \times wV + R \times (R \times V)\]</span></p>
 
-<p>Pull the scalar out of $R \times wV$ and sum with its neighbour:</p>
+<p>Pull the scalar out of <span  class="math">\(R \times wV\)</span> and sum with its neighbour:</p>
 
-<p>$$P_r = (R \cdot V)R + w^2V + wR \times V + wR \times V + R \times (R \times V)$$
-$$P_r = (R \cdot V)R + w^2V + 2wR \times V + R \times (R \times V)$$</p>
+<p><span  class="math">\[P_r = (R \cdot V)R + w^2V + wR \times V + wR \times V + R \times (R \times V)\]</span></p>
 
-<p>The next bit requires knowledge of the <a href="http://en.wikipedia.org/wiki/Triple_product#Vector_triple_product">vector triple product</a> (or Lagrange&rsquo;s formula - of many). This takes the form:</p>
+<p><span  class="math">\[P_r = (R \cdot V)R + w^2V + 2wR \times V + R \times (R \times V)\]</span></p>
 
-<p>$$R \times (R \times V) = (R \cdot V)R - (R \cdot R)V$$</p>
+<p>The next bit requires knowledge of the <a href="http://en.wikipedia.org/wiki/Triple_product#Vector_triple_product">vector triple product</a> (or Lagrange's formula - of many). This takes the form:</p>
+
+<p><span  class="math">\[R \times (R \times V) = (R \cdot V)R - (R \cdot R)V\]</span></p>
 
 <p>If we rearrange that to equal zero then we can add that to the end of our existing equation and play around with it a little:</p>
 
-<p>$$R \times (R \times V) - (R \cdot V)R + (R \cdot R)V = 0$$
-$$P_r = (R \cdot V)R + w^2V + 2wR \times V + R \times (R \times V) + R \times (R \times V) - (R \cdot V)R + (R \cdot R)V$$
-$$P_r = (R \cdot V)R + w^2V + 2wR \times V + 2R \times (R \times V) - (R \cdot V)R + (R \cdot R)V$$</p>
+<p><span  class="math">\[R \times (R \times V) - (R \cdot V)R + (R \cdot R)V = 0\]</span></p>
 
-<p>The $(R \cdot V)R$ terms cancel:</p>
+<p><span  class="math">\[P_r = (R \cdot V)R + w^2V + 2wR \times V + R \times (R \times V) + R \times (R \times V) - (R \cdot V)R + (R \cdot R)V\]</span></p>
 
-<p>$$P_r = w^2V + 2wR \times V + 2R \times (R \times V) + (R \cdot R)V$$</p>
+<p><span  class="math">\[P_r = (R \cdot V)R + w^2V + 2wR \times V + 2R \times (R \times V) - (R \cdot V)R + (R \cdot R)V\]</span></p>
 
-<p>We can now factor the scale of $V$:</p>
+<p>The <span  class="math">\((R \cdot V)R\)</span> terms cancel:</p>
 
-<p>$$P_r = w^2V  + (R \cdot R)V+ 2wR \times V + 2R \times (R \times V)$$
-$$P_r = (w^2  + R \cdot R)V+ 2wR \times V + 2R \times (R \times V)$$</p>
+<p><span  class="math">\[P_r = w^2V + 2wR \times V + 2R \times (R \times V) + (R \cdot R)V\]</span></p>
+
+<p>We can now factor the scale of <span  class="math">\(V\)</span>:</p>
+
+<p><span  class="math">\[P_r = w^2V  + (R \cdot R)V+ 2wR \times V + 2R \times (R \times V)\]</span></p>
+
+<p><span  class="math">\[P_r = (w^2  + R \cdot R)V+ 2wR \times V + 2R \times (R \times V)\]</span></p>
 
 <p>The quaternion norm operation is given by:</p>
 
-<p>$$norm(q) = q_w q_w + q_x q_x + q_y q_y + q_z q_z$$</p>
+<p><span  class="math">\[norm(q) = q_w q_w + q_x q_x + q_y q_y + q_z q_z\]</span></p>
 
-<p>Assuming we&rsquo;re dealing with unit quaternions, the norm will always be 1. Looking above, we can see the norm right at the beginning and can get rid of it:</p>
+<p>Assuming we're dealing with unit quaternions, the norm will always be 1. Looking above, we can see the norm right at the beginning and can get rid of it:</p>
 
-<p>$$P_r = V+ 2wR \times V + 2R \times (R \times V)$$</p>
+<p><span  class="math">\[P_r = V+ 2wR \times V + 2R \times (R \times V)\]</span></p>
 
 <p>Finally, factor the 2:</p>
 
-<p>$$P_r = V+ 2(wR \times V + R \times (R \times V))$$</p>
+<p><span  class="math">\[P_r = V+ 2(wR \times V + R \times (R \times V))\]</span></p>
 
 <p>And factor the cross product:</p>
 
-<p>$$P_r = V+ 2(R \times (wV + R \times V))$$</p>
+<p><span  class="math">\[P_r = V+ 2(R \times (wV + R \times V))\]</span></p>
 
 <p>This is a delightfully simple result! The HLSL code is:</p>
 
@@ -529,7 +547,7 @@ $$P_r = (w^2  + R \cdot R)V+ 2wR \times V + 2R \times (R \times V)$$</p>
     <footer id="site-footer">
         <div class="container">
             <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
@@ -538,36 +556,9 @@ $$P_r = (w^2  + R \cdot R)V+ 2wR \times V + 2R \times (R \times V)$$</p>
       $(".heading").fitText();
     </script>
 
-
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        // Fix <code> tags after MathJax finishes running. This is a
-        // hack to overcome a shortcoming of Markdown. Discussion at
-        // https://github.com/mojombo/jekyll/issues/199
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i &lt; all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
+        <script>renderMathInElement(document.body);</script>
+    
 
 
 

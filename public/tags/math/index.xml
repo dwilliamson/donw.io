@@ -28,7 +28,7 @@
       <pubDate>Sat, 15 Oct 2016 21:45:31 +0100</pubDate>
       
       <guid>http://donw.io/post/packed-circle-radius/</guid>
-      <description>&lt;p&gt;When you develop a solver for the Tammes problem you&amp;rsquo;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;
+      <description>&lt;p&gt;When you develop a solver for the Tammes problem you&#39;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>

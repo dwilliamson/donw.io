@@ -18,7 +18,7 @@
       
       <guid>http://donw.io/post/terminal-pacity/</guid>
       <description>Around the age of 15 I started to code after a family friend gave me a BBC Microcomputer Model B that his local army barracks were throwing away. Though primitive, it was a wonderful machine that showed me where my future lay. I learned BBC BASIC and a smattering of 6502 Assembly to gain performance and then moved on to PC.
-I bought a second-hand 286 PC for something like £20 and migrated to QBasic and x86 Assembly using Gavin Estey&amp;rsquo;s tutorials.</description>
+I bought a second-hand 286 PC for something like £20 and migrated to QBasic and x86 Assembly using Gavin Estey&#39;s tutorials.</description>
     </item>
     
     <item>
@@ -27,8 +27,8 @@ I bought a second-hand 286 PC for something like £20 and migrated to QBasic and
       <pubDate>Fri, 21 Apr 2017 20:30:00 +0100</pubDate>
       
       <guid>http://donw.io/post/github-comments/</guid>
-      <description>&lt;p&gt;I&amp;rsquo;ve been considering removing comments from this blog for a while; mainly because the site doesn&amp;rsquo;t
-trigger much discussion and I didn&amp;rsquo;t like keeping the overhead of &lt;a href=&#34;https://disqus.com/&#34;&gt;Disqus&lt;/a&gt;
+      <description>&lt;p&gt;I&#39;ve been considering removing comments from this blog for a while; mainly because the site doesn&#39;t
+trigger much discussion and I didn&#39;t like keeping the overhead of &lt;a href=&#34;https://disqus.com/&#34;&gt;Disqus&lt;/a&gt;
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
 on people loading the site (although you really should be using the likes of &lt;a href=&#34;https://www.eff.org/privacybadger&#34;&gt;Privacy Badger&lt;/a&gt; and &lt;a href=&#34;https://github.com/gorhill/uBlock&#34;&gt;uBlock Origin&lt;/a&gt;).&lt;/p&gt;
 
@@ -52,7 +52,7 @@ on people loading the site (although you really should be using the likes of &lt
       <pubDate>Sat, 15 Oct 2016 21:45:31 +0100</pubDate>
       
       <guid>http://donw.io/post/packed-circle-radius/</guid>
-      <description>&lt;p&gt;When you develop a solver for the Tammes problem you&amp;rsquo;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;
+      <description>&lt;p&gt;When you develop a solver for the Tammes problem you&#39;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>
@@ -74,8 +74,8 @@ on people loading the site (although you really should be using the likes of &lt
       <pubDate>Sun, 19 Jun 2016 21:48:11 +0100</pubDate>
       
       <guid>http://donw.io/post/a-new-host-server-site/</guid>
-      <description>And we are back! It must be a year now since my old site donw.org went dark for many reasons, including being busy working on my own game. There&amp;rsquo;s some big changes with this new setup:
- I own the domain donw.io this time round. I&amp;rsquo;ve gone through a bunch of domains &amp;ndash; donw.org, donw.co.uk, etc. &amp;ndash; that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</description>
+      <description>And we are back! It must be a year now since my old site donw.org went dark for many reasons, including being busy working on my own game. There&#39;s some big changes with this new setup:
+ I own the domain donw.io this time round. I&#39;ve gone through a bunch of domains -- donw.org, donw.co.uk, etc. -- that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</description>
     </item>
     
     <item>
@@ -117,7 +117,7 @@ This is derived from the CMU Graphics Lab Motion Capture Database, which has bee
       <pubDate>Thu, 19 Jul 2012 12:52:03 +0100</pubDate>
       
       <guid>http://donw.io/post/dual-quaternion-skinning/</guid>
-      <description>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they made more sense than real numbers. While it might not exactly be helpful to visualise quaternions as an extension of complex numbers, there&amp;rsquo;s something in there that just grabs at me. Unlike previous posts, I&amp;rsquo;ve managed to update to D3D11 so I&amp;rsquo;ll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</description>
+      <description>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they made more sense than real numbers. While it might not exactly be helpful to visualise quaternions as an extension of complex numbers, there&#39;s something in there that just grabs at me. Unlike previous posts, I&#39;ve managed to update to D3D11 so I&#39;ll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</description>
     </item>
     
     <item>
@@ -126,8 +126,8 @@ This is derived from the CMU Graphics Lab Motion Capture Database, which has bee
       <pubDate>Tue, 03 Jan 2012 07:21:58 +0100</pubDate>
       
       <guid>http://donw.io/post/reflection-cpp-2/</guid>
-      <description>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&amp;rsquo;m going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5).
-The motivation for the development of the SC5 engine was a clean break from the past.</description>
+      <description>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&#39;m going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5).
+The motivation for the development of the SC5 engine was a clean break from the past. We were working with a very, very large code base that used Unreal 2.</description>
     </item>
     
     <item>
@@ -136,7 +136,7 @@ The motivation for the development of the SC5 engine was a clean break from the 
       <pubDate>Sun, 25 Sep 2011 23:34:13 +0100</pubDate>
       
       <guid>http://donw.io/post/reflection-cpp-1/</guid>
-      <description>If there was one job I&amp;rsquo;d love to do other than writing games it&amp;rsquo;d be writing compilers. This probably explains my obsession with the subject of reflection; a topic I&amp;rsquo;ve been hammering away at for almost 10 years now. Having written a few compilers in the past, it became glaringly obvious to me that reflection would be quite simple to add to C++ &amp;ndash; if you&amp;rsquo;re willing to place some limits on it &amp;ndash; and that the language has suffered from its absence.</description>
+      <description>If there was one job I&#39;d love to do other than writing games it&#39;d be writing compilers. This probably explains my obsession with the subject of reflection; a topic I&#39;ve been hammering away at for almost 10 years now. Having written a few compilers in the past, it became glaringly obvious to me that reflection would be quite simple to add to C++ -- if you&#39;re willing to place some limits on it -- and that the language has suffered from its absence.</description>
     </item>
     
   </channel>

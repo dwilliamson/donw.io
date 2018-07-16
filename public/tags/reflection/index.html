@@ -22,7 +22,7 @@
     
         <meta property="og:type" content="website" />
     
-        <meta name="generator" content="Hugo 0.20.7" />
+        <meta name="generator" content="Hugo 0.26" />
         <title>Reflection &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="http://donw.io/tags/reflection/index.xml">
@@ -34,6 +34,8 @@
         <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -79,8 +81,8 @@
     </header>
     
     <section class="post-excerpt">
-        <p>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&rsquo;m going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5).
-The motivation for the development of the SC5 engine was a clean break from the past.</p>
+        <p>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I'm going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5).
+The motivation for the development of the SC5 engine was a clean break from the past. We were working with a very, very large code base that used Unreal 2.</p>
     </section>
 
     <footer class="post-footer">
@@ -101,7 +103,7 @@ The motivation for the development of the SC5 engine was a clean break from the 
     </header>
     
     <section class="post-excerpt">
-        <p>If there was one job I&rsquo;d love to do other than writing games it&rsquo;d be writing compilers. This probably explains my obsession with the subject of reflection; a topic I&rsquo;ve been hammering away at for almost 10 years now. Having written a few compilers in the past, it became glaringly obvious to me that reflection would be quite simple to add to C++ &ndash; if you&rsquo;re willing to place some limits on it &ndash; and that the language has suffered from its absence.</p>
+        <p>If there was one job I'd love to do other than writing games it'd be writing compilers. This probably explains my obsession with the subject of reflection; a topic I've been hammering away at for almost 10 years now. Having written a few compilers in the past, it became glaringly obvious to me that reflection would be quite simple to add to C++ -- if you're willing to place some limits on it -- and that the language has suffered from its absence.</p>
     </section>
 
     <footer class="post-footer">
@@ -121,7 +123,7 @@ The motivation for the development of the SC5 engine was a clean break from the 
     <footer id="site-footer">
         <div class="container">
             <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
@@ -130,36 +132,7 @@ The motivation for the development of the SC5 engine was a clean break from the 
       $(".heading").fitText();
     </script>
 
-
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        // Fix <code> tags after MathJax finishes running. This is a
-        // hack to overcome a shortcoming of Markdown. Discussion at
-        // https://github.com/mojombo/jekyll/issues/199
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i &lt; all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
 
 
 </body>

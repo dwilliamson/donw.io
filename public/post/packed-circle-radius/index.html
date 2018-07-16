@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2016-10-15T21:45:31&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.20.7" />
+        <meta name="generator" content="Hugo 0.26" />
         <title>A Convenient Expression for Packed Circle Radius &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -36,6 +36,12 @@
         <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
+          <link rel="stylesheet" href="/extern/katex/0.6.0/katex.min.css">
+          <script src="/extern/katex/0.6.0/katex.min.js"></script>
+          <script src="/extern/katex/0.6.0/auto-render.min.js"></script>
+        
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -79,51 +85,53 @@
     </header>
 
     <section class="post-content">
-        <p>When you develop a solver for the Tammes problem you&rsquo;re usually concerned with <a href="http://paulbourke.net/geometry/circlesphere/#spherepoints">distributing points evenly on the sphere</a>, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:</p>
+        <p>When you develop a solver for the Tammes problem you're usually concerned with <a href="http://paulbourke.net/geometry/circlesphere/#spherepoints">distributing points evenly on the sphere</a>, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:</p>
 
 <p></p>
 
-<p><center><img src="/img/CirclePacking/snapshot2.png" alt="d" /></center></p>
+<p><center><figure><img src="/img/CirclePacking/snapshot2.png" alt="d"></figure></center></p>
 
 <p>There are known solutions for a <a href="https://arxiv.org/abs/1509.01768">given number of circles</a> but there is no known solution for any number of points. Relaxation can be used in the general case.</p>
 
 <p>Once the unit sphere is packed with circles, finding the radius can start with two circles and the planes they lie within:</p>
 
-<p><center><img src="/img/CirclePacking/planes.png" alt="d" /></center></p>
+<p><center><figure><img src="/img/CirclePacking/planes.png" alt="d"></figure></center></p>
 
-<p>If the circle center points $p_0$ and $p_1$ are on the unit sphere, they can also be considered the normals of the planes they lie within. The acute angle $\theta$ between these two planes is called the <em>dihedral angle</em> and is easily calculated as:</p>
+<p>If the circle center points <span  class="math">\(p_0\)</span> and <span  class="math">\(p_1\)</span> are on the unit sphere, they can also be considered the normals of the planes they lie within. The acute angle <span  class="math">\(\theta\)</span> between these two planes is called the <em>dihedral angle</em> and is easily calculated as:</p>
 
-<p>$$\theta = acos(p_0 \cdot p_1)$$</p>
+<p><span  class="math">\[\theta = acos(p_0 \cdot p_1)\]</span></p>
 
-<p>The obtuse angle, $\alpha$, is called the <em>anhedral angle</em> and is thus:</p>
+<p>The obtuse angle, <span  class="math">\(\alpha\)</span>, is called the <em>anhedral angle</em> and is thus:</p>
 
-<p>$$\alpha = \pi - \theta$$</p>
+<p><span  class="math">\[\alpha = \pi - \theta\]</span></p>
 
-<p>The adjacent/opposite sides of the triangle formed by the two planes and the line joining $p_0$ and $p_1$ will be the same size and can be considered the desired circle radius:</p>
+<p>The adjacent/opposite sides of the triangle formed by the two planes and the line joining <span  class="math">\(p_0\)</span> and <span  class="math">\(p_1\)</span> will be the same size and can be considered the desired circle radius:</p>
 
-<p><center><img src="/img/CirclePacking/triangle.png" alt="d" /></center></p>
+<p><center><figure><img src="/img/CirclePacking/triangle.png" alt="d"></figure></center></p>
 
-<p>Using the <a href="http://mathworld.wolfram.com/LawofCosines.html">Law of Cosines</a> an expression for $d$ and then $r$, can quickly be attained:</p>
+<p>Using the <a href="http://mathworld.wolfram.com/LawofCosines.html">Law of Cosines</a> an expression for <span  class="math">\(d\)</span> and then <span  class="math">\(r\)</span>, can quickly be attained:</p>
 
-<p>$$d^2 = r^2 + r^2 - 2r^2cos(\alpha)$$
-$$d^2 = 2r^2(1 - cos(\alpha))$$
-$$r = \sqrt{\frac{d^2}{2(1 - cos(\alpha))}}$$</p>
+<p><span  class="math">\[d^2 = r^2 + r^2 - 2r^2cos(\alpha)\]</span></p>
 
-<p>This works well enough to get the radius you want but the overuse of transcendentals feels like it can be squeezed some more. Following the <a href="http://mathworld.wolfram.com/LawofSines.html">Law of Sines</a> makes things even worse but there&rsquo;s a clue in the $cos(\alpha)$ term which expands to:</p>
+<p><span  class="math">\[d^2 = 2r^2(1 - cos(\alpha))\]</span></p>
 
-<p>$$cos(\pi - \theta)$$</p>
+<p><span  class="math">\[r = \sqrt{\frac{d^2}{2(1 - cos(\alpha))}}\]</span></p>
+
+<p>This works well enough to get the radius you want but the overuse of transcendentals feels like it can be squeezed some more. Following the <a href="http://mathworld.wolfram.com/LawofSines.html">Law of Sines</a> makes things even worse but there's a clue in the <span  class="math">\(cos(\alpha)\)</span> term which expands to:</p>
+
+<p><span  class="math">\[cos(\pi - \theta)\]</span></p>
 
 <p>This can be reduced using a common trigonometric identity:</p>
 
-<p>$$cos(\pi - \theta) = cos(\pi)cos(\theta) + sin(\pi)sin(\theta)$$</p>
+<p><span  class="math">\[cos(\pi - \theta) = cos(\pi)cos(\theta) + sin(\pi)sin(\theta)\]</span></p>
 
-<p>Given that $cos(\pi)=-1$, $sin(\pi)=0$ and $\theta=acos(p_0 \cdot p_1)$, this immediately reduces to:</p>
+<p>Given that <span  class="math">\(cos(\pi)=-1\)</span>, <span  class="math">\(sin(\pi)=0\)</span> and <span  class="math">\(\theta=acos(p_0 \cdot p_1)\)</span>, this immediately reduces to:</p>
 
-<p>$$cos(\pi - \theta) = -(p_0 \cdot p_1)$$</p>
+<p><span  class="math">\[cos(\pi - \theta) = -(p_0 \cdot p_1)\]</span></p>
 
 <p>Leaving the final substitution:</p>
 
-<p>$$r = \sqrt{\frac{d^2}{2(p_0 \cdot p_1 + 1)}}$$</p>
+<p><span  class="math">\[r = \sqrt{\frac{d^2}{2(p_0 \cdot p_1 + 1)}}\]</span></p>
     </section>
 
     <hr>
@@ -176,7 +184,7 @@ $$r = \sqrt{\frac{d^2}{2(1 - cos(\alpha))}}$$</p>
     <footer id="site-footer">
         <div class="container">
             <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
@@ -185,36 +193,9 @@ $$r = \sqrt{\frac{d^2}{2(1 - cos(\alpha))}}$$</p>
       $(".heading").fitText();
     </script>
 
-
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        // Fix <code> tags after MathJax finishes running. This is a
-        // hack to overcome a shortcoming of Markdown. Discussion at
-        // https://github.com/mojombo/jekyll/issues/199
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i &lt; all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
+        <script>renderMathInElement(document.body);</script>
+    
 
 
 

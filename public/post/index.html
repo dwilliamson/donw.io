@@ -22,7 +22,7 @@
     
         <meta property="og:type" content="website" />
     
-        <meta name="generator" content="Hugo 0.20.7" />
+        <meta name="generator" content="Hugo 0.26" />
         <title>Posts &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="http://donw.io/post/index.xml">
@@ -34,6 +34,8 @@
         <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -80,7 +82,7 @@
     
     <section class="post-excerpt">
         <p>Around the age of 15 I started to code after a family friend gave me a BBC Microcomputer Model B that his local army barracks were throwing away. Though primitive, it was a wonderful machine that showed me where my future lay. I learned BBC BASIC and a smattering of 6502 Assembly to gain performance and then moved on to PC.
-I bought a second-hand 286 PC for something like £20 and migrated to QBasic and x86 Assembly using Gavin Estey&rsquo;s tutorials.</p>
+I bought a second-hand 286 PC for something like £20 and migrated to QBasic and x86 Assembly using Gavin Estey's tutorials.</p>
     </section>
 
     <footer class="post-footer">
@@ -98,8 +100,8 @@ I bought a second-hand 286 PC for something like £20 and migrated to QBasic and
     </header>
     
     <section class="post-excerpt">
-        <p><p>I&rsquo;ve been considering removing comments from this blog for a while; mainly because the site doesn&rsquo;t
-trigger much discussion and I didn&rsquo;t like keeping the overhead of <a href="https://disqus.com/">Disqus</a>
+        <p><p>I've been considering removing comments from this blog for a while; mainly because the site doesn't
+trigger much discussion and I didn't like keeping the overhead of <a href="https://disqus.com/">Disqus</a>
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
 on people loading the site (although you really should be using the likes of <a href="https://www.eff.org/privacybadger">Privacy Badger</a> and <a href="https://github.com/gorhill/uBlock">uBlock Origin</a>).</p>
 
@@ -147,7 +149,7 @@ on people loading the site (although you really should be using the likes of <a 
     </header>
     
     <section class="post-excerpt">
-        <p><p>When you develop a solver for the Tammes problem you&rsquo;re usually concerned with <a href="http://paulbourke.net/geometry/circlesphere/#spherepoints">distributing points evenly on the sphere</a>, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:</p>
+        <p><p>When you develop a solver for the Tammes problem you're usually concerned with <a href="http://paulbourke.net/geometry/circlesphere/#spherepoints">distributing points evenly on the sphere</a>, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:</p>
 
 <p></p></p>
     </section>
@@ -193,8 +195,8 @@ on people loading the site (although you really should be using the likes of <a 
     </header>
     
     <section class="post-excerpt">
-        <p>And we are back! It must be a year now since my old site donw.org went dark for many reasons, including being busy working on my own game. There&rsquo;s some big changes with this new setup:
- I own the domain donw.io this time round. I&rsquo;ve gone through a bunch of domains &ndash; donw.org, donw.co.uk, etc. &ndash; that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</p>
+        <p>And we are back! It must be a year now since my old site donw.org went dark for many reasons, including being busy working on my own game. There's some big changes with this new setup:
+ I own the domain donw.io this time round. I've gone through a bunch of domains -- donw.org, donw.co.uk, etc. -- that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</p>
     </section>
 
     <footer class="post-footer">
@@ -284,7 +286,7 @@ This is derived from the CMU Graphics Lab Motion Capture Database, which has bee
     </header>
     
     <section class="post-excerpt">
-        <p>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they made more sense than real numbers. While it might not exactly be helpful to visualise quaternions as an extension of complex numbers, there&rsquo;s something in there that just grabs at me. Unlike previous posts, I&rsquo;ve managed to update to D3D11 so I&rsquo;ll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</p>
+        <p>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they made more sense than real numbers. While it might not exactly be helpful to visualise quaternions as an extension of complex numbers, there's something in there that just grabs at me. Unlike previous posts, I've managed to update to D3D11 so I'll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</p>
     </section>
 
     <footer class="post-footer">
@@ -314,7 +316,7 @@ This is derived from the CMU Graphics Lab Motion Capture Database, which has bee
     <footer id="site-footer">
         <div class="container">
             <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
@@ -323,36 +325,7 @@ This is derived from the CMU Graphics Lab Motion Capture Database, which has bee
       $(".heading").fitText();
     </script>
 
-
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        // Fix <code> tags after MathJax finishes running. This is a
-        // hack to overcome a shortcoming of Markdown. Discussion at
-        // https://github.com/mojombo/jekyll/issues/199
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i &lt; all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
 
 
 </body>

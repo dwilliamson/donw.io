@@ -28,7 +28,7 @@ This is derived from the CMU Graphics Lab Motion Capture Database, which has bee
       <pubDate>Thu, 19 Jul 2012 12:52:03 +0100</pubDate>
       
       <guid>http://donw.io/post/dual-quaternion-skinning/</guid>
-      <description>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they made more sense than real numbers. While it might not exactly be helpful to visualise quaternions as an extension of complex numbers, there&amp;rsquo;s something in there that just grabs at me. Unlike previous posts, I&amp;rsquo;ve managed to update to D3D11 so I&amp;rsquo;ll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</description>
+      <description>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they made more sense than real numbers. While it might not exactly be helpful to visualise quaternions as an extension of complex numbers, there&#39;s something in there that just grabs at me. Unlike previous posts, I&#39;ve managed to update to D3D11 so I&#39;ll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</description>
     </item>
     
   </channel>

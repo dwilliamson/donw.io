@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2015-02-11T12:58:23&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.20.7" />
+        <meta name="generator" content="Hugo 0.26" />
         <title>Distant Spherical Area Light Sources &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -36,6 +36,12 @@
         <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
+          <link rel="stylesheet" href="/extern/katex/0.6.0/katex.min.css">
+          <script src="/extern/katex/0.6.0/katex.min.js"></script>
+          <script src="/extern/katex/0.6.0/auto-render.min.js"></script>
+        
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -85,41 +91,43 @@
 
 <p>Epic use the following equation for a spherical light source  [<a href="http://blog.selfshadow.com/publications/s2013-shading-course/" title="Real Shading in Unreal Engine 4">1</a>]:</p>
 
-<p>$$\mathbf{C} = (\mathbf{L} \cdot \mathbf{r})\mathbf{r} - \mathbf{L}$$
-$$\mathbf{P} = \mathbf{L} + \langle \frac{sourceRadius}{ &verbar; \mathbf{C} &verbar; } \rangle \mathbf{C}$$</p>
+<p><span  class="math">\[\mathbf{C} = (\mathbf{L} \cdot \mathbf{r})\mathbf{r} - \mathbf{L}\]</span></p>
 
-<p>where the point with the smallest distance to the reflected ray is then $&par;\mathbf{P}&par;$.</p>
+<p><span  class="math">\[\mathbf{P} = \mathbf{L} + \langle \frac{sourceRadius}{ &verbar; \mathbf{C} &verbar; } \rangle \mathbf{C}\]</span></p>
 
-<p>Implicit in this equation is that $\mathbf{L}$ is unnormalised. With a Sun/Earth distance of 149,600,000km and Sun radius of 695,800km these calculations are not really going to work in limited precision shaders. To get around this we need to separate the length of $\mathbf{L}$ from its direction and hope that the large value terms fall out at the end. Using this substitution:</p>
+<p>where the point with the smallest distance to the reflected ray is then <span  class="math">\(||\mathbf{P}||\)</span>.</p>
 
-<p>$$d\mathbf{l} = \mathbf{L}$$</p>
+<p>Implicit in this equation is that <span  class="math">\(\mathbf{L}\)</span> is unnormalised. With a Sun/Earth distance of 149,600,000km and Sun radius of 695,800km these calculations are not really going to work in limited precision shaders. To get around this we need to separate the length of <span  class="math">\(\mathbf{L}\)</span> from its direction and hope that the large value terms fall out at the end. Using this substitution:</p>
+
+<p><span  class="math">\[d\mathbf{l} = \mathbf{L}\]</span></p>
 
 <p>we start with:</p>
 
-<p>$$\mathbf{C} = (d\mathbf{l} \cdot \mathbf{r})\mathbf{r} - d\mathbf{l}$$</p>
+<p><span  class="math">\[\mathbf{C} = (d\mathbf{l} \cdot \mathbf{r})\mathbf{r} - d\mathbf{l}\]</span></p>
 
-<p>As the dot product is homogeneous under scaling we can pull $d$ out and factor it:</p>
+<p>As the dot product is homogeneous under scaling we can pull <span  class="math">\(d\)</span> out and factor it:</p>
 
-<p>$$\mathbf{C} = d((\mathbf{l} \cdot \mathbf{r})\mathbf{r} - \mathbf{l})$$</p>
+<p><span  class="math">\[\mathbf{C} = d((\mathbf{l} \cdot \mathbf{r})\mathbf{r} - \mathbf{l})\]</span></p>
 
-<p>leaving $\mathbf{P}$ at:</p>
+<p>leaving <span  class="math">\(\mathbf{P}\)</span> at:</p>
 
-<p>$$\mathbf{P} = d\mathbf{l} + \langle \frac{sourceRadius}{ sqrt(\mathbf{C} \cdot \mathbf{C}) } \rangle \mathbf{C}$$</p>
+<p><span  class="math">\[\mathbf{P} = d\mathbf{l} + \langle \frac{sourceRadius}{ sqrt(\mathbf{C} \cdot \mathbf{C}) } \rangle \mathbf{C}\]</span></p>
 
 <p>Things become a little easier if we make the simple substitution:</p>
 
-<p>$$\mathbf{D} = (\mathbf{l} \cdot \mathbf{r})\mathbf{r} - \mathbf{l}$$
-$$\mathbf{C} = d\mathbf{D}$$</p>
+<p><span  class="math">\[\mathbf{D} = (\mathbf{l} \cdot \mathbf{r})\mathbf{r} - \mathbf{l}\]</span></p>
 
-<p>After a little reduction, $\mathbf{P}$ simplifies to:</p>
+<p><span  class="math">\[\mathbf{C} = d\mathbf{D}\]</span></p>
 
-<p>$$\mathbf{P} = d\mathbf{l} + \langle \frac{sourceRadius}{d} \frac{1}{sqrt(\mathbf{D} \cdot \mathbf{D})} \rangle d\mathbf{D}$$</p>
+<p>After a little reduction, <span  class="math">\(\mathbf{P}\)</span> simplifies to:</p>
+
+<p><span  class="math">\[\mathbf{P} = d\mathbf{l} + \langle \frac{sourceRadius}{d} \frac{1}{sqrt(\mathbf{D} \cdot \mathbf{D})} \rangle d\mathbf{D}\]</span></p>
 
 <p>This allows two things:</p>
 
 <ul>
-<li>The $\frac{sourceRadius}{d}$ term can be precalculated outside the shader at whatever precision you like. As long as the result is float-representable then you&rsquo;re good to go. As an example, the Sun/Earth ratio is roughly 0.00465.</li>
-<li>The remaining $d$ scalar can be factored and ignored as we&rsquo;re only interested in the direction of $\mathbf{P}$.</li>
+<li>The <span  class="math">\(\frac{sourceRadius}{d}\)</span> term can be precalculated outside the shader at whatever precision you like. As long as the result is float-representable then you're good to go. As an example, the Sun/Earth ratio is roughly 0.00465.</li>
+<li>The remaining <span  class="math">\(d\)</span> scalar can be factored and ignored as we're only interested in the direction of <span  class="math">\(\mathbf{P}\)</span>.</li>
 </ul>
 
 <p>The shader code is just as simple:</p>
@@ -130,7 +138,7 @@ float3 P = l + D * saturate(radius_over_distance * rsqrt(dot(D, D)));
 float3 specular_l = normalize(P);
 </code></pre>
 
-<p>This is a little simpler than the area disk light presented in [<a href="http://www.frostbite.com/2014/11/moving-frostbite-to-pbr/" title="Moving Frostbite to PBR">2</a>] and allows you to use Epic&rsquo;s energy normalisation constant.</p>
+<p>This is a little simpler than the area disk light presented in [<a href="http://www.frostbite.com/2014/11/moving-frostbite-to-pbr/" title="Moving Frostbite to PBR">2</a>] and allows you to use Epic's energy normalisation constant.</p>
 
 <p>References:</p>
 
@@ -190,7 +198,7 @@ float3 specular_l = normalize(P);
     <footer id="site-footer">
         <div class="container">
             <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
@@ -199,36 +207,9 @@ float3 specular_l = normalize(P);
       $(".heading").fitText();
     </script>
 
-
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        // Fix <code> tags after MathJax finishes running. This is a
-        // hack to overcome a shortcoming of Markdown. Discussion at
-        // https://github.com/mojombo/jekyll/issues/199
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i &lt; all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
+        <script>renderMathInElement(document.body);</script>
+    
 
 
 

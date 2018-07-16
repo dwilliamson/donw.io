@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2016-06-19T21:48:11&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.20.7" />
+        <meta name="generator" content="Hugo 0.26" />
         <title>A New Host, Server and Site Generator &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -36,6 +36,8 @@
         <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -79,19 +81,19 @@
     </header>
 
     <section class="post-content">
-        <p>And we are back! It must be a year now since my old site <code>donw.org</code> went dark for many reasons, including being busy working on my own game. There&rsquo;s some big changes with this new setup:</p>
+        <p>And we are back! It must be a year now since my old site <code>donw.org</code> went dark for many reasons, including being busy working on my own game. There's some big changes with this new setup:</p>
 
 <ul>
-<li>I own the domain <a href="donw.io">donw.io</a> this time round. I&rsquo;ve gone through a bunch of domains &ndash; <code>donw.org</code>, <code>donw.co.uk</code>, etc. &ndash; that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</li>
-<li>My old websites were on servers hosted by an old work colleague who was very difficult to contact. I&rsquo;m now running a shared hosting plan at <a href="https://www.digitalocean.com/">Digital Ocean</a> and really enjoy maintaining all the software on that. Digital Ocean&rsquo;s setup is really great, they&rsquo;ve got a good community and are reasonably priced.</li>
-<li>Rather than writing my own blog software <a href="https://github.com/dwilliamson/b">like I did previously</a>, I&rsquo;ve switched to the static website generator <a href="https://gohugo.io/">Hugo</a>. It&rsquo;s some seriously awesome software and updating the site no longer feels like a chore.</li>
+<li>I own the domain <a href="donw.io">donw.io</a> this time round. I've gone through a bunch of domains -- <code>donw.org</code>, <code>donw.co.uk</code>, etc. -- that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</li>
+<li>My old websites were on servers hosted by an old work colleague who was very difficult to contact. I'm now running a shared hosting plan at <a href="https://www.digitalocean.com/">Digital Ocean</a> and really enjoy maintaining all the software on that. Digital Ocean's setup is really great, they've got a good community and are reasonably priced.</li>
+<li>Rather than writing my own blog software <a href="https://github.com/dwilliamson/b">like I did previously</a>, I've switched to the static website generator <a href="https://gohugo.io/">Hugo</a>. It's some seriously awesome software and updating the site no longer feels like a chore.</li>
 </ul>
 
 <p>This all means that I am now in complete control and the site will never go dark again.</p>
 
 <p>I plan to kick-off by bringing back a lot of my older posts that were popular. I used my own Markdown-style engine previously so will have to port all the text over, but that will give me a chance to proof-read and update links.</p>
 
-<p>Let&rsquo;s get this party started!</p>
+<p>Let's get this party started!</p>
 
     </section>
 
@@ -145,7 +147,7 @@
     <footer id="site-footer">
         <div class="container">
             <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
@@ -154,36 +156,7 @@
       $(".heading").fitText();
     </script>
 
-
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        // Fix <code> tags after MathJax finishes running. This is a
-        // hack to overcome a shortcoming of Markdown. Discussion at
-        // https://github.com/mojombo/jekyll/issues/199
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i &lt; all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
 
 
 

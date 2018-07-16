@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2012-01-03T07:21:58&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.20.7" />
+        <meta name="generator" content="Hugo 0.26" />
         <title>Reflection in C&#43;&#43;, Part2: The Simple Implementation of Splinter Cell &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -36,6 +36,8 @@
         <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -79,19 +81,17 @@
     </header>
 
     <section class="post-content">
-        
-
-<p>The <a href="/post/reflection-cpp-1">first part</a> in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&rsquo;m going to go into details and cover the system used to aid the rendering engine in <a href="http://store.steampowered.com/app/33229/">Splinter Cell: Conviction</a> (SC5).</p>
+        <p>The <a href="/post/reflection-cpp-1">first part</a> in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I'm going to go into details and cover the system used to aid the rendering engine in <a href="http://store.steampowered.com/app/33229/">Splinter Cell: Conviction</a> (SC5).</p>
 
 <p>The motivation for the development of the SC5 engine was a clean break from the past. We were working with a very, very large code base that used Unreal 2.5 with many years of modifications and rewrites. While immensely stable, visually very good looking and a code base you could bet a few million dollars on, it slowed the development of new techniques required to push the SC franchise onto the next generation of consoles (the XBox 360, circa 2005).</p>
 
 <p>Compile times were painfully slow, link times were in the order of minutes and it suffered from the classic Unreal issue of requiring huge rebuilds whenever you changed a .uc script file (used to define your interfaces to the editor, among other things - partially solved in UE3, removed in UE4). There were many levels of pipeline and engine indirection added to ship titles that were slowing down the iteration and development of new techniques, simultaneously contributing to a lack of runtime performance on the target platform. After a couple of months of starting a new engine from scratch, we were at a few seconds for compile/link on the PC, sub-1 second single file iteration times, vastly simpler/faster import pipelines, multi-threaded performance that was orders of magnitude faster on the Xbox 360 than the old engine, the ability to live edit C++ rendering code and no compile dependency on Unreal.</p>
 
-<p>As a result we lost a few key technologies along the way that would have helped immensely, such as the ability to carve indoor space up using BSP volumes. We also ended up recreating some already existing features such as light channels and skeletal attachments. But the full story is something for another day and Stephen Hill&rsquo;s fantastic GDC 2010 piece on the development of some of the rendering technologies can give a bit more insight (<a href="http://blog.selfshadow.com/publications/">Rendering with Conviction</a>).</p>
+<p>As a result we lost a few key technologies along the way that would have helped immensely, such as the ability to carve indoor space up using BSP volumes. We also ended up recreating some already existing features such as light channels and skeletal attachments. But the full story is something for another day and Stephen Hill's fantastic GDC 2010 piece on the development of some of the rendering technologies can give a bit more insight (<a href="http://blog.selfshadow.com/publications/">Rendering with Conviction</a>).</p>
 
-<p>This post will cover just the reflection API developed to replace Unreal&rsquo;s object model. The implementation was very simple, written in a couple of days, constrained to a single cpp/h file pair and slowly grew as the needs of the engine evolved. It also helped us develop the new engine while the old engine was still active, supporting 50+ developers and keeping game progress undisturbed. It is my hope that I can demonstrate how simple (and sometimes naive) solutions can help ship great games, as long as you&rsquo;re willing to rub shoulders with some pretty big limitations.</p>
+<p>This post will cover just the reflection API developed to replace Unreal's object model. The implementation was very simple, written in a couple of days, constrained to a single cpp/h file pair and slowly grew as the needs of the engine evolved. It also helped us develop the new engine while the old engine was still active, supporting 50+ developers and keeping game progress undisturbed. It is my hope that I can demonstrate how simple (and sometimes naive) solutions can help ship great games, as long as you're willing to rub shoulders with some pretty big limitations.</p>
 
-<p>An example of this system is <a href="https://bitbucket.org/dwilliamson/reflectabit/overview">Reflectabit</a>, written a few years ago in my spare time. It&rsquo;s unfinished but contains enough to serve as a tutorial of sorts. This post is from memory as I don&rsquo;t have the code to hand anymore.</p>
+<p>An example of this system is <a href="https://bitbucket.org/dwilliamson/reflectabit/overview">Reflectabit</a>, written a few years ago in my spare time. It's unfinished but contains enough to serve as a tutorial of sorts. This post is from memory as I don't have the code to hand anymore.</p>
 
 <h5 id="the-type-id">The Type ID</h5>
 
@@ -130,9 +130,9 @@ inline template &lt;&gt; TypeID GetTypeID&lt;char&gt;() { return TYPE_CHAR; }
 inline template &lt;&gt; TypeID GetTypeID&lt;MyType&gt;() { return TYPE_MYTYPE; }
 </code></pre>
 
-<p>This is not particularly extensible or maintainable in larger projects: if you&rsquo;re working on a changelist that adds a new type and you are using it for serialisation, any incoming changes from members of your own team have the potential to clobber all your data and make the act of submission a chore that is potentially very dangerous. Type IDs will accrue over time and you must ensure that types are added at the end of the list. It&rsquo;s not suitable for a reflection API that ships as part of a 3rd party library that expects its client code to add its own type, although there are many examples of such systems in decades old code (<a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms644930.aspx">WM_APP</a>).</p>
+<p>This is not particularly extensible or maintainable in larger projects: if you're working on a changelist that adds a new type and you are using it for serialisation, any incoming changes from members of your own team have the potential to clobber all your data and make the act of submission a chore that is potentially very dangerous. Type IDs will accrue over time and you must ensure that types are added at the end of the list. It's not suitable for a reflection API that ships as part of a 3rd party library that expects its client code to add its own type, although there are many examples of such systems in decades old code (<a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms644930.aspx">WM_APP</a>).</p>
 
-<p>One good benefit of this method is that you can immediately see the type name in a debugger when inspecting values of type <code>TypeID</code>. However, you can&rsquo;t see them at runtime unless you add a means of also mapping the enum value to a string. Of course, there are ways to do this, for example:</p>
+<p>One good benefit of this method is that you can immediately see the type name in a debugger when inspecting values of type <code>TypeID</code>. However, you can't see them at runtime unless you add a means of also mapping the enum value to a string. Of course, there are ways to do this, for example:</p>
 
 <pre><code class="language-cpp">// ----- TypeIDs.inc ------------------
 
@@ -159,7 +159,7 @@ const char* g_TypeNames[] =
 };
 </code></pre>
 
-<p>This is a well-used technique in many shipping C/C++ products where its variants have been branded <a href="http://drdobbs.com/184401387">X Macros</a>. At this point it&rsquo;s all getting a bit messy/overkill; we ruled it out on SC5 without much thought as there was a much simpler solution:</p>
+<p>This is a well-used technique in many shipping C/C++ products where its variants have been branded <a href="http://drdobbs.com/184401387">X Macros</a>. At this point it's all getting a bit messy/overkill; we ruled it out on SC5 without much thought as there was a much simpler solution:</p>
 
 <pre><code class="language-cpp">// Each reflected type must specialise this
 template &lt;typename TYPE&gt;
@@ -190,7 +190,7 @@ u32 GetTypeID()
 <li>The type names are readily available in the debugger and are part of your executable.</li>
 </ul>
 
-<p>The choice of hash function is important but don&rsquo;t overthink the issue. SC5 used <a href="http://www.greenend.org.uk/rjk/2004/crc.html">CRC32</a> for both type names and object names but this is technically not the purpose of CRC32 (it&rsquo;s a trivial method of error detection in data packets). We used it for hashing of both type and object names and while I was working on the project we had one hash collision with some materials that was easily sorted with a rename (collisions were tracked offline in a MySQL database). These days I use <a href="https://sites.google.com/site/murmurhash/">MurmurHash3</a>, however <a href="http://www.cse.yorku.ca/~oz/hash.html">DJB2</a> is a nice simple implementation and the field is steadily progressing (e.g. see <a href="https://github.com/google/cityhash">CityHash</a>). Whatever you choose, collision visibility is essential as collisions can cause very subtle data integrity issues.</p>
+<p>The choice of hash function is important but don't overthink the issue. SC5 used <a href="http://www.greenend.org.uk/rjk/2004/crc.html">CRC32</a> for both type names and object names but this is technically not the purpose of CRC32 (it's a trivial method of error detection in data packets). We used it for hashing of both type and object names and while I was working on the project we had one hash collision with some materials that was easily sorted with a rename (collisions were tracked offline in a MySQL database). These days I use <a href="https://sites.google.com/site/murmurhash/">MurmurHash3</a>, however <a href="http://www.cse.yorku.ca/~oz/hash.html">DJB2</a> is a nice simple implementation and the field is steadily progressing (e.g. see <a href="https://github.com/google/cityhash">CityHash</a>). Whatever you choose, collision visibility is essential as collisions can cause very subtle data integrity issues.</p>
 
 <p>Before going any further, a small review of some other methods of generating a type ID may be of interest.</p>
 
@@ -203,7 +203,7 @@ const char* GetTypeName()
 }
 </code></pre>
 
-<p>Note that this is not using any runtime aspects of C++ RTTI support beyond calling a function in the <a href="http://www.cplusplus.com/reference/std/typeinfo/type_info/">type_info</a> object returned, which needs to store its information somewhere in memory. Technically this means you should not be penalised for its use at runtime (it doesn&rsquo;t alter the size of any of your objects) but I&rsquo;ve only tested this on MSVC platforms. This is a remarkably simple solution that doesn&rsquo;t require you to specialise <code>GetTypeName</code>.</p>
+<p>Note that this is not using any runtime aspects of C++ RTTI support beyond calling a function in the <a href="http://www.cplusplus.com/reference/std/typeinfo/type_info/">type_info</a> object returned, which needs to store its information somewhere in memory. Technically this means you should not be penalised for its use at runtime (it doesn't alter the size of any of your objects) but I've only tested this on MSVC platforms. This is a remarkably simple solution that doesn't require you to specialise <code>GetTypeName</code>.</p>
 
 <p>One issue you can encounter is that RTTI is a very loosely standardised feature of C++ and different platforms may return different names for each type. I believe GCC <a href="http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname">mangles the result in some way</a>, although none of these issues are insurmountable. Curiously, if you disable RTTI in an MSVC project, typeid still works, demonstrating the theory of no runtime penalty. However, other compilers such as GCC fail to compile.</p>
 
@@ -222,7 +222,7 @@ const char* GetTypeName()
 <pre><code>const char *__cdecl GetTypeName&lt;struct MyType&gt;(void)
 </code></pre>
 
-<p>An important realisation is that this string is unique if your type name is unique so you don&rsquo;t really need to change it. If that bothers you, however, you can do a quick parse of the string and cache it locally in a static char buffer, or similar.</p>
+<p>An important realisation is that this string is unique if your type name is unique so you don't really need to change it. If that bothers you, however, you can do a quick parse of the string and cache it locally in a static char buffer, or similar.</p>
 
 <h5 id="types-in-memory">Types in Memory</h5>
 
@@ -269,7 +269,7 @@ private:
 };
 </code></pre>
 
-<p>We didn&rsquo;t use the STL to define our types; I&rsquo;m using it above to demonstrate intent.</p>
+<p>We didn't use the STL to define our types; I'm using it above to demonstrate intent.</p>
 
 <p>The <code>Name</code> type always stored both the null-terminated string pointer and hash of that string. Type names were always present, stored in a read-only segment of memory when the compiler encounters any calls to <code>GetTypeName</code>. Object names were never stored in memory. Instead, they were stored in a MySQL database which was queried by a Visual Studio debugger plugin whenever it wanted to display a name in the watch window. This was a great way of always having object names present in console builds without consuming runtime memory, even in our most final release builds.</p>
 
@@ -303,7 +303,7 @@ TypeDB db;
 db.CreateType&lt;MyType&gt;();
 </code></pre>
 
-<p>This gives enough information to be able to allocate space for objects of a given type, however a means of constructing/destructing that object has yet to be defined. In C++ you can&rsquo;t create function pointers to the constructor or destructor (see C++98 12.1 for more info) but given a memory address, they can be called:</p>
+<p>This gives enough information to be able to allocate space for objects of a given type, however a means of constructing/destructing that object has yet to be defined. In C++ you can't create function pointers to the constructor or destructor (see C++98 12.1 for more info) but given a memory address, they can be called:</p>
 
 <pre><code class="language-cpp">template &lt;typename TYPE&gt; void ConstructObject(void* object)
 {
@@ -391,11 +391,11 @@ TypeDB db;
 db.CreateType&lt;MyType&gt;().Fields(fields);
 </code></pre>
 
-<p>Of course, while the properties of a field are automatically deduced, the specification of what fields comprise a type is manual. This caused a few errors along the way on our small team and it was thought that the effort involved trying to minimise this wasn&rsquo;t a priority.</p>
+<p>Of course, while the properties of a field are automatically deduced, the specification of what fields comprise a type is manual. This caused a few errors along the way on our small team and it was thought that the effort involved trying to minimise this wasn't a priority.</p>
 
-<p>Note that the field for <code>OtherType</code> is created before <code>OtherType</code> is potentially created. To offset the need to register types in any specific order, any calls to <code>GetType</code> would allocate the type if it didn&rsquo;t already exist. Subsequent calls to <code>CreateType</code> would retrieve the allocated copy and describe it.</p>
+<p>Note that the field for <code>OtherType</code> is created before <code>OtherType</code> is potentially created. To offset the need to register types in any specific order, any calls to <code>GetType</code> would allocate the type if it didn't already exist. Subsequent calls to <code>CreateType</code> would retrieve the allocated copy and describe it.</p>
 
-<p>Note also that the field name is manually specified, which is another potential source of user error. Instead, we could have used the pre-processor stringising operator to ensure it was in sync. Again, this wasn&rsquo;t considered important and at the time and I didn&rsquo;t fancy adding extra layers with pre-processor macros. I did start playing around this a couple of years ago and some investigative results can be found in <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/Test/TestSerialisation.cpp">Reflectabit&rsquo;s serialisation tests</a>. I still prefer the manual solution, however.</p>
+<p>Note also that the field name is manually specified, which is another potential source of user error. Instead, we could have used the pre-processor stringising operator to ensure it was in sync. Again, this wasn't considered important and at the time and I didn't fancy adding extra layers with pre-processor macros. I did start playing around this a couple of years ago and some investigative results can be found in <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/Test/TestSerialisation.cpp">Reflectabit's serialisation tests</a>. I still prefer the manual solution, however.</p>
 
 <p>Implementing the Field constructor requires answering three questions at compile-time:</p>
 
@@ -434,7 +434,7 @@ struct StripPointer&lt;TYPE*&gt;
 };
 </code></pre>
 
-<p>It also required the use of the <a href="http://www.cplusplus.com/reference/clibrary/cstddef/offsetof/">offsetof</a> macro, making the assumption that we never use virtual or multiple inheritance (we didn&rsquo;t). With these tools, the <code>Field</code> constructor is quite simple:</p>
+<p>It also required the use of the <a href="http://www.cplusplus.com/reference/clibrary/cstddef/offsetof/">offsetof</a> macro, making the assumption that we never use virtual or multiple inheritance (we didn't). With these tools, the <code>Field</code> constructor is quite simple:</p>
 
 <pre><code class="language-cpp">struct Field
 {
@@ -478,7 +478,7 @@ struct StripPointer&lt;TYPE*&gt;
 
 <h5 id="inheritance">Inheritance</h5>
 
-<p>All registered types could only have one base class and fields declared within that type only existed in the fields array of that type (i.e. the fields within an inheritance hierarchy weren&rsquo;t merged). Registering a base class was done with another method in <code>Type</code>:</p>
+<p>All registered types could only have one base class and fields declared within that type only existed in the fields array of that type (i.e. the fields within an inheritance hierarchy weren't merged). Registering a base class was done with another method in <code>Type</code>:</p>
 
 <pre><code class="language-cpp">struct Type
 {
@@ -544,7 +544,7 @@ TypeDB db;
 db.CreateType&lt;TestEnumType&gt;().EnumConstants(enum_consts);
 </code></pre>
 
-<p>Again, this relies upon manual registration of any enumeration constants you have and can be error-prone if you forget to add a constant or incorrectly name it. I can&rsquo;t recall this causing us any issues but the potential for making mistakes was there. We were careful and determined that going any further would not be a good investment of our time.</p>
+<p>Again, this relies upon manual registration of any enumeration constants you have and can be error-prone if you forget to add a constant or incorrectly name it. I can't recall this causing us any issues but the potential for making mistakes was there. We were careful and determined that going any further would not be a good investment of our time.</p>
 
 <h5 id="attributes">Attributes</h5>
 
@@ -581,7 +581,7 @@ db.CreateType&lt;TestEnumType&gt;().EnumConstants(enum_consts);
 };
 </code></pre>
 
-<p>These are entirely hard-coded attributes that the reflection system defines. There are only two string attributes: <code>description</code> and <code>group</code>, that are used for user interface population. If you&rsquo;re defining a material type then you can group its properties into (for example) &ldquo;Textures&rdquo; and &ldquo;Lighting&rdquo;.</p>
+<p>These are entirely hard-coded attributes that the reflection system defines. There are only two string attributes: <code>description</code> and <code>group</code>, that are used for user interface population. If you're defining a material type then you can group its properties into (for example) &quot;Textures&quot; and &quot;Lighting&quot;.</p>
 
 <p>The rest of the attributes were boolean flags, merged into the single flags field. Some examples are:</p>
 
@@ -615,7 +615,8 @@ db.CreateType&lt;TestEnumType&gt;().EnumConstants(enum_consts);
 
 <p>As evident, you could only add new boolean attributes if there were flag bits left and adding attributes with more complexity required extending <code>Field</code>. Perfect for our use-case but not ideal for a more general system.</p>
 
-<h5 id="containers">Containers</h5>
+<h5 id="containers">Containers#
+</h5>
 
 <p>Our container support was very primitive, similar to the <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/inc/rflb/Container.h">container support in Reflectabit</a> but lacking its completeness. The basic premise was to use an interface pointer to an underlying container wrapper, like so:</p>
 
@@ -662,11 +663,11 @@ struct Field
 };
 </code></pre>
 
-<p>There is more information on the technique in part 1 of this series. Again, we didn&rsquo;t use any STL code, opting for our own custom containers, so the above is just an example to highlight how it was achieved. For each field container type, the compiler will generate all of the necessary code to access/mutate the containers which are controlled through the container interface. It&rsquo;s not ideal in terms of generated code size but it&rsquo;s simple and it works well enough.</p>
+<p>There is more information on the technique in part 1 of this series. Again, we didn't use any STL code, opting for our own custom containers, so the above is just an example to highlight how it was achieved. For each field container type, the compiler will generate all of the necessary code to access/mutate the containers which are controlled through the container interface. It's not ideal in terms of generated code size but it's simple and it works well enough.</p>
 
 <h5 id="working-with-objects">Working with objects</h5>
 
-<p>We had the luxury of not having to create a controlling object model as Unreal&rsquo;s package system was already doing a good enough job. As a result, all of our objects were anonymously contained by an equivalent <code>UObject</code> and we merely had a resource database that mapped object names to their instances:</p>
+<p>We had the luxury of not having to create a controlling object model as Unreal's package system was already doing a good enough job. As a result, all of our objects were anonymously contained by an equivalent <code>UObject</code> and we merely had a resource database that mapped object names to their instances:</p>
 
 <pre><code class="language-cpp">// The base object type for root-serialisable objects
 struct Object
@@ -791,9 +792,9 @@ int* x_ptr = (int*)x-&gt;GetPtr(mt);
 };
 </code></pre>
 
-<p>Unlike IFF, this uses the hash of the field name to uniquely identify a chunk. If the field didn&rsquo;t exist, the data was skipped during load and not preserved. It also uses 8 bytes to carry a small description of the type of the field when it was serialised. This allowed us to change the type or attributes of a field and have the loading code skip over the data or convert it if any of those changed.</p>
+<p>Unlike IFF, this uses the hash of the field name to uniquely identify a chunk. If the field didn't exist, the data was skipped during load and not preserved. It also uses 8 bytes to carry a small description of the type of the field when it was serialised. This allowed us to change the type or attributes of a field and have the loading code skip over the data or convert it if any of those changed.</p>
 
-<p>The serialisation logic was very similar to that discussed in part 1 with some additions. Reflectabit&rsquo;s <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/src/SerialiseBinary.cpp">binary serialisation</a> contains a simpler example of this.</p>
+<p>The serialisation logic was very similar to that discussed in part 1 with some additions. Reflectabit's <a href="https://bitbucket.org/dwilliamson/reflectabit/src/tip/src/SerialiseBinary.cpp">binary serialisation</a> contains a simpler example of this.</p>
 
 <p>One minor feature was the ability to use masks to specify what fields would be serialised based on what attributes the field had set. This allowed the use of the same code path for serialising files on disk and network messages, described shortly.</p>
 
@@ -850,7 +851,7 @@ db.CreateType&lt;Format&gt;().EnumConstants(format_enums);
 db.CreateType&lt;Texture&gt;().Base&lt;Object&gt;().Fields(texture_fields);
 </code></pre>
 
-<p>The <code>data</code> field above is a raw <code>IDirect3DTexture</code> pointer. A version number was embedded in the field flags, occupying about 5 or 6 bits, I can&rsquo;t recall which exactly. This allowed the loading code to skip version numbers it didn&rsquo;t know how to load or, in the case of custom loading code, forward onto the appropriate loading code:</p>
+<p>The <code>data</code> field above is a raw <code>IDirect3DTexture</code> pointer. A version number was embedded in the field flags, occupying about 5 or 6 bits, I can't recall which exactly. This allowed the loading code to skip version numbers it didn't know how to load or, in the case of custom loading code, forward onto the appropriate loading code:</p>
 
 <pre><code class="language-cpp">void LoadTextureData2(Buffer&amp; inbuf, unsigned int flags, void* object)
 {       
@@ -894,17 +895,17 @@ void SaveTextureData(Buffer&amp; outbuf, unsigned int flags, void* object)
 
 <p>The code above describes the texture loading code in its early state. Eventually, texture streaming was supported; at which point, the texture data was serialised on-demand and the reflection code was merely responsible for creating texture handles.</p>
 
-<p>Unreal performs version upgrades incrementally: it can load old file formats and when you save your package, it will be saved in the new format. Tools can be written which further automate this process. When it comes to serialising complicated data, Unreal&rsquo;s solution is a single method within your object. Over time you prune old loading code as your compiled data catches up. We found that our modification to this process was more stable and easier to maintain.</p>
+<p>Unreal performs version upgrades incrementally: it can load old file formats and when you save your package, it will be saved in the new format. Tools can be written which further automate this process. When it comes to serialising complicated data, Unreal's solution is a single method within your object. Over time you prune old loading code as your compiled data catches up. We found that our modification to this process was more stable and easier to maintain.</p>
 
-<p>Pointers were serialised as the hash of the name of any object being pointed to. Because we didn&rsquo;t control the order of loading (that was up to Unreal) we had to come up with ways of ensuring pointers to objects that weren&rsquo;t yet created were satisfied. I think the solution we settled on was to create a proxy object using the type information embedded in the field chunk before actual object creation came along later and completed the creation. While this also handled the issue of circular references, it wasn&rsquo;t a great solution, but it worked!</p>
+<p>Pointers were serialised as the hash of the name of any object being pointed to. Because we didn't control the order of loading (that was up to Unreal) we had to come up with ways of ensuring pointers to objects that weren't yet created were satisfied. I think the solution we settled on was to create a proxy object using the type information embedded in the field chunk before actual object creation came along later and completed the creation. While this also handled the issue of circular references, it wasn't a great solution, but it worked!</p>
 
-<p>After adding support for stream writing containers of PODs as an optimisation, bitfields and automatic endianness swapping, the serialisation didn&rsquo;t change much and was a pretty straight-forward piece of code.</p>
+<p>After adding support for stream writing containers of PODs as an optimisation, bitfields and automatic endianness swapping, the serialisation didn't change much and was a pretty straight-forward piece of code.</p>
 
 <h5 id="the-network-server">The Network Server</h5>
 
 <p>The engine had the ability to accept arbitrary TCP/IP connections while running on Windows or console, using Winsock. Again, the code was pretty minimal, just a bunch of socket, <code>bind</code>, <code>accept</code>, <code>send</code>, <code>recv</code> calls for dealing with anonymous chunks of data.</p>
 
-<p>The network server ran on the same thread as the engine, polling once a frame for any incoming connections or data. Obviously you don&rsquo;t want to do this kind of thing for actual game network code but for development code it works superbly - don&rsquo;t let any work-hungry programmers try to convince you otherwise.</p>
+<p>The network server ran on the same thread as the engine, polling once a frame for any incoming connections or data. Obviously you don't want to do this kind of thing for actual game network code but for development code it works superbly - don't let any work-hungry programmers try to convince you otherwise.</p>
 
 <p>There was only one format of network message it could send and receive, but those messages were of arbitrary length and contained reflection-serialised data within them:</p>
 
@@ -973,7 +974,7 @@ void SaveTextureData(Buffer&amp; outbuf, unsigned int flags, void* object)
 
 <ul>
 <li>A material editor.</li>
-<li>A sort-of &ldquo;realtime PIX&rdquo; profiling and debugging tool.</li>
+<li>A sort-of &quot;realtime PIX&quot; profiling and debugging tool.</li>
 <li>A post-processing editor.</li>
 </ul>
 
@@ -981,7 +982,7 @@ void SaveTextureData(Buffer&amp; outbuf, unsigned int flags, void* object)
 
 <p>The profiling tool is one example I can share. In “real-time” (every couple of ms), it updated all of its panels with performance info on the GPU and CPU – much of the information that PIX was providing back in 2006:</p>
 
-<p><img src="/img/profiler.gif" alt="Lead 3D Debug Client" /></p>
+<p><figure><img src="/img/profiler.gif" alt="Lead 3D Debug Client"></figure></p>
 
 <p>In order to achieve this, we needed a set of C# libraries that understood the C++ reflection API, its serialisation and its object model. Network communication was trivial and much easier than using Winsock on the C++ side - we just used <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.aspx">System.Net.Sockets</a> to build the C# equivalent of the C++ NetworkServer.</p>
 
@@ -996,7 +997,7 @@ void SaveTextureData(Buffer&amp; outbuf, unsigned int flags, void* object)
 <li>Several message handlers attached to <code>NetworkServer</code> would pick up and respond to the messages using the message structures already defined.</li>
 </ul>
 
-<p>While this covers how the two programs logically interacted with each other, it doesn&rsquo;t explain how the C# tools could modify any object running live in the game. Whenever a C# tool connected to the game, one of the first messages it would send would be a request for the entire C++ type database. Once received, it could use that type information to auto-generate user interfaces, swapping in whatever widget was necessary for the type being edited (e.g. an HSB colour selector, slider, check-box for bools, list-box for enum lookup) and adding tool-tips/descriptions from the C++ metadata.</p>
+<p>While this covers how the two programs logically interacted with each other, it doesn't explain how the C# tools could modify any object running live in the game. Whenever a C# tool connected to the game, one of the first messages it would send would be a request for the entire C++ type database. Once received, it could use that type information to auto-generate user interfaces, swapping in whatever widget was necessary for the type being edited (e.g. an HSB colour selector, slider, check-box for bools, list-box for enum lookup) and adding tool-tips/descriptions from the C++ metadata.</p>
 
 <p>This was a very stable means of getting type descriptions, as the editor could never be out-of-sync with the game it was editing. Contrast this to methods that involve loading a description of types from a separate file that must be integrated with your build system, somehow.</p>
 
@@ -1094,15 +1095,15 @@ public ClassValue : Value
 
 <p>Once you wrote your code for displaying/editing the objects, entire objects could be replicated or the same code could be used to partially replicate an object. The C++ code would simply locate the existing object by name and overwrite only the fields which were present in the network-serialised data. The editor tools could request that the runtime generate data for it; the material editor, for example, would request material, mesh and texture thumbnails be generated and sent over the network on demand.</p>
 
-<p>And finally, on Windows, the C# tools could create a blank canvas window, send its <code>HWND</code> over the network and the 3D renderer would happily render into it, taking cues from whatever keyboard and mouse input was sent along with it. This meant that we didn&rsquo;t need to send over any of the heavyweight data, such as textures or vertices, choosing instead to give them the &ldquo;network transient&rdquo; attribute. Of course, that information could be sent over on-demand (for when you wanted to inspect all pixels of a texture, for example) but it was never stored persistently.</p>
+<p>And finally, on Windows, the C# tools could create a blank canvas window, send its <code>HWND</code> over the network and the 3D renderer would happily render into it, taking cues from whatever keyboard and mouse input was sent along with it. This meant that we didn't need to send over any of the heavyweight data, such as textures or vertices, choosing instead to give them the &quot;network transient&quot; attribute. Of course, that information could be sent over on-demand (for when you wanted to inspect all pixels of a texture, for example) but it was never stored persistently.</p>
 
 <p>This method of tools development was really quite natural: you could iterate amazingly quickly on the C# tools code while the game was still running, edit your C# code, build (a couple of seconds), and have it running and connected another couple of seconds later without any expensive level/data reloads!</p>
 
 <h5 id="conclusion">Conclusion</h5>
 
-<p>The methods contained within are among those that you should keep in your bag of tricks and bring out when you need good, scalable solutions quickly. If you&rsquo;re into the new-fangled idea of developing your tools in a web browser, these techniques will get you most of the way there and even allow you to write native browser games without having to write plugins!</p>
+<p>The methods contained within are among those that you should keep in your bag of tricks and bring out when you need good, scalable solutions quickly. If you're into the new-fangled idea of developing your tools in a web browser, these techniques will get you most of the way there and even allow you to write native browser games without having to write plugins!</p>
 
-<p>If you&rsquo;re meta-programming hungry, part 3 will cover some more elaborate reflection technology which I wouldn&rsquo;t necessarily recommend these days. It will hopefully serve as a lesson in how things can get complicated very fast. Stay tuned, as the internals of a basic IDL compiler will also be covered.</p>
+<p>If you're meta-programming hungry, part 3 will cover some more elaborate reflection technology which I wouldn't necessarily recommend these days. It will hopefully serve as a lesson in how things can get complicated very fast. Stay tuned, as the internals of a basic IDL compiler will also be covered.</p>
 
     </section>
 
@@ -1156,7 +1157,7 @@ public ClassValue : Value
     <footer id="site-footer">
         <div class="container">
             <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
@@ -1165,36 +1166,7 @@ public ClassValue : Value
       $(".heading").fitText();
     </script>
 
-
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        // Fix <code> tags after MathJax finishes running. This is a
-        // hack to overcome a shortcoming of Markdown. Discussion at
-        // https://github.com/mojombo/jekyll/issues/199
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i &lt; all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
 
 
 
