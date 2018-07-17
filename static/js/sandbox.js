@@ -900,6 +900,7 @@ Input = (function()
 		this.KeyState = [ ];
 		this.MouseDelta = [ 0, 0 ];
 		this.LastMouseDragPos = null;
+		this.ActiveTouchID = null;
 
 		// Set event handlers
 		var self = this;
@@ -909,6 +910,9 @@ Input = (function()
 		canvas.onmouseup = function(ev) { OnMouseUp(self, ev); };
 		canvas.onmouseout = function(ev) { OnMouseOut(self, ev); };
 		canvas.onmousemove = function(ev) { OnMouseMove(self, ev); };
+		canvas.ontouchstart = function(ev) { OnTouchStart(self, ev); };
+		canvas.ontouchend = function(ev) { OnTouchEnd(self, ev); };
+		canvas.ontouchmove = function(ev) { return OnTouchMove(self, ev); };
 	}
 
 	// Listening for keyboard events requires tabindex set on the canvas so that it can focus
@@ -947,6 +951,38 @@ Input = (function()
 			self.MouseDelta[1] += ev.clientY - self.LastMouseDragPos[1];
 			self.LastMouseDragPos[0] = ev.clientX;
 			self.LastMouseDragPos[1] = ev.clientY;
+		}
+	}
+	
+	function OnTouchStart(self, ev)
+	{
+		// Use position of the first touch in the list
+		var touch = ev.changedTouches[0];
+		self.KeyState[Keys.MB] = true;
+		self.LastMouseDragPos = [ touch.pageX, touch.pageY ];
+		self.ActiveTouchID = touch.identifier;
+	}
+	function OnTouchEnd(self, ev)
+	{
+		self.KeyState[Keys.MB] = false;
+		self.LastMouseDragPos = null;
+		self.ActiveTouchID = null;
+	}
+	function OnTouchMove(self, ev)
+	{
+		// Find the currently active touch to update movement
+		for (var i = 0; i < ev.changedTouches.length; i++)
+		{
+			var touch = ev.changedTouches[i];
+			if (touch.identifier == self.ActiveTouchID)
+			{
+				self.MouseDelta[0] += touch.pageX - self.LastMouseDragPos[0];
+				self.MouseDelta[1] += touch.pageY - self.LastMouseDragPos[1];
+				self.LastMouseDragPos[0] = touch.pageX;
+				self.LastMouseDragPos[1] = touch.pageY;
+				return false;
+				break;
+			}
 		}
 	}
 	
