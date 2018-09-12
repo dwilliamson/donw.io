@@ -100,7 +100,7 @@ Basis = (function()
 {
 	function Basis(vector)
 	{
-		this.vector = vector;
+		this.vector = vec3_create(vector[0], vector[1], vector[2]);
 
 		// Axis is normal
 		this.z = vec3_create(vector[0], vector[1], vector[2]);
