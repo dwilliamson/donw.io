@@ -544,24 +544,57 @@ function AddConePrimitive(a, b, basis, radius, position_array, index_array)
 }
 
 
-function CreateLineGeometry(a, b, size)
+function CreateLineGeometry(a, b, size, cone_size, dash_size)
 {
+	var position_array = new Array();
+	var index_array = new Array();
+
 	// Line basis
 	var axis = vec3.create();
 	vec3.sub(axis, b, a);
 	var basis = new Basis(axis);
 
-	// Create cone endpoint
-	var cone_size = size * 3;
-	var c = vec3.create();
-	vec3.scale(c, basis.z, cone_size * 2);
-	vec3.add(c, c, b);
+	if (dash_size)
+	{
+		// The basis vector is used to size the cylinder so needs to be scaled
+		// to the size of the dash
+		vec3.scale(basis.vector, basis.z, dash_size);
 
-	// Add a cylinder and cone at the tip
-	var position_array = new Array();
-	var index_array = new Array();
-	AddCylinderPrimitive(a, b, basis, size, position_array, index_array);
-	AddConePrimitive(b, c, basis, cone_size, position_array, index_array);
+		var last_pos = null;
+		var draw = false;
+		var length = vec3.length(axis);
+		for (var t = 0; t < length; t += dash_size)
+		{
+			var pos = vec3.create();
+			vec3.scale(pos, basis.z, t);
+			vec3.add(pos, pos, a);
+
+			if (last_pos != null && draw)
+			{
+				AddCylinderPrimitive(last_pos, pos, basis, size, position_array, index_array);
+			}
+
+			// Toggle rendering
+			last_pos = pos;
+			draw ^= true;
+		}
+	}
+	else
+	{
+		AddCylinderPrimitive(a, b, basis, size, position_array, index_array);
+	}
+
+	// TODO:: draw bit left over
+
+	// Create cone endpoint
+	if (cone_size)
+	{
+		var c = vec3.create();
+		vec3.scale(c, basis.z, cone_size * 2);
+		vec3.add(c, c, b);
+		AddConePrimitive(b, c, basis, cone_size, position_array, index_array);
+	}
+
 	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
 }
 
