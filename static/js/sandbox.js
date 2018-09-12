@@ -599,6 +599,40 @@ function CreateLineGeometry(a, b, size, cone_size, dash_size)
 }
 
 
+function CreateCircleLineGeometry(divisions, radius, thickness)
+{
+	var position_array = new Array();
+	var index_array = new Array();
+
+	var end = 3.1412 * 2;
+	var step = end / divisions;
+	var t = 0;
+	var last_pos = null;
+
+	for (var i = 0; i < divisions + 1; i++)
+	{
+		var u = Math.sin(t) * radius;
+		var v = Math.cos(t) * radius;
+
+		var pos = vec3_create(u, v, 0);
+		if (last_pos != null)
+		{
+			// Line basis
+			var axis = vec3.create();
+			vec3.sub(axis, pos, last_pos);
+			var basis = new Basis(axis);
+
+			AddCylinderPrimitive(last_pos, pos, basis, thickness, position_array, index_array);
+		}
+		last_pos = pos;
+
+		t += step;
+	}
+
+	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
+}
+
+
 function CreateWireframeIndices(index_type, indices)
 {
 	var wireframe_indices = new Array();
@@ -1245,6 +1279,16 @@ Scene = (function()
 		m.Colour = colour;
 		m.FillColour = colour;
 		return m;			
+	}
+
+
+	Scene.prototype.AddCircleLineMesh = function(divisions, radius, thickness, colour)
+	{
+		var g = CreateCircleLineGeometry(divisions, radius, thickness, colour);
+		var m = this.AddMesh(DrawType.WIREFRAME_TRIS, g);
+		m.Colour = colour;
+		m.FillColour = colour;
+		return m;
 	}
 
 
