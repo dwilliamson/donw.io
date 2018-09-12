@@ -453,9 +453,9 @@ function AddCylinderPrimitive(a, b, basis, radius, position_array, index_array)
 
 	var o = vec3.create();
 	var end = 3.1412 * 2;
-	var step = end / 16.0;
+	var step = end / 8.0;
 	var t = 0;
-	for (var i = 0; i < 17; i++)
+	for (var i = 0; i < 9; i++)
 	{
 		var u = Math.sin(t) * radius;
 		var v = Math.cos(t) * radius;
@@ -510,9 +510,9 @@ function AddConePrimitive(a, b, basis, radius, position_array, index_array)
 
 	var o = vec3.create();
 	var end = 3.1412 * 2;
-	var step = end / 16.0;
+	var step = end / 8.0;
 	var t = 0;
-	for (var i = 0; i < 17; i++)
+	for (var i = 0; i < 9; i++)
 	{
 		var u = Math.sin(t) * radius;
 		var v = Math.cos(t) * radius;
