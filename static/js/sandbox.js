@@ -407,16 +407,21 @@ function AddLinePrimitives(a, b, axis, position_array, index_array)
 }
 
 
-function AddCirclePrimitive(center, basis, radius, position_array, index_array)
+function AddCirclePrimitive(center, basis, radius, position_array, index_array, divisions)
 {
+	// Center point
 	var center_index = position_array.length;
+	position_array.push(center);
 	var index = position_array.length;
+
+	if (divisions == null)
+		divisions = 16;
 
 	var o = vec3.create();
 	var end = 3.1412 * 2;
-	var step = end / 16.0;
+	var step = end / divisions;
 	var t = 0;
-	for (var i = 0; i < 17; i++)
+	for (var i = 0; i < divisions + 1; i++)
 	{
 		var u = Math.sin(t) * radius;
 		var v = Math.cos(t) * radius;
@@ -427,15 +432,12 @@ function AddCirclePrimitive(center, basis, radius, position_array, index_array)
 		vec3.scale(o, basis.y, v);
 		vec3.add(p, p, o);
 
-		if (t > 0)
-		{
-			position_array.push(p);
+		position_array.push(p);
 
-			index_array.push(index - 1);
-			index_array.push(index);
-			index_array.push(center_index);
-			index++;
-		}
+		index_array.push(index - 1);
+		index_array.push(index);
+		index_array.push(center_index);
+		index++;
 
 		t += step;
 	}
