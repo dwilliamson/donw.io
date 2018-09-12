@@ -1271,9 +1271,9 @@ Scene = (function()
 		if (mesh.DrawType == DrawType.SOLID)
 		{
 			if (mesh.IndexType == IndexType.TRIANGLE_STRIP)
-				DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, Colours.WHITE);
+				DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, mesh.FillColour);
 			else
-				DrawMeshPass(this, mesh, gl.TRIANGLES, Colours.WHITE);
+				DrawMeshPass(this, mesh, gl.TRIANGLES, mesh.FillColour);
 		}
 
 		else if (mesh.DrawType & DrawType.WIREFRAME)
