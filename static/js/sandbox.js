@@ -447,7 +447,6 @@ function AddCylinderPrimitive(a, b, basis, radius, position_array, index_array)
 	// Center point vertices of cylinder caps
 	var a_center_index = position_array.length;
 	position_array.push(a);
-	var b_center_index = position_array.length;
 	position_array.push(b);
 
 	var o = vec3.create();
