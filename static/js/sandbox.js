@@ -1238,9 +1238,9 @@ Scene = (function()
 	}
 
 
-	Scene.prototype.AddLineMesh = function(a, b, size, colour)
+	Scene.prototype.AddLineMesh = function(a, b, size, colour, cone_size, dash_size)
 	{
-		var g = CreateLineGeometry(a, b, size);
+		var g = CreateLineGeometry(a, b, size, cone_size, dash_size);
 		var m = this.AddMesh(DrawType.WIREFRAME_TRIS, g);
 		m.Colour = colour;
 		m.FillColour = colour;
