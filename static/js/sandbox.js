@@ -106,8 +106,11 @@ Basis = (function()
 		this.z = vec3_create(vector[0], vector[1], vector[2]);
 		vec3.normalize(this.z, this.z);
 
-		// Perpendicular to fixed up (TODO: fix)s
-		var up = vec3_create(0, 1, 0);
+		// Perpendicular to fixed up
+		if (Math.abs(vector[1]) < 0.99)
+			var up = vec3_create(0, 1, 0);
+		else	
+			var up = vec3_create(vector[1], 0, 0);
 		this.x = vec3.create();
 		vec3.cross(this.x, this.z, up);
 		vec3.normalize(this.x, this.x);
