@@ -1161,8 +1161,10 @@ var CameraType = {
 
 Scene = (function()
 {
-	function Scene(gl, vshader, fshader, canvas)
+	function Scene(gl, vshader, fshader, canvas, overlay)
 	{
+		this.Overlay = overlay;
+
 		// Create matrices
 		this.CameraRotationMatrix = mat4.create();
 		this.glInvViewMatrix = mat4.create();
@@ -1421,7 +1423,7 @@ function DrawScene(gl, scene, input)
 }
 
 
-function main(canvas, status_bar)
+function main(canvas, status_bar, overlay)
 {
 	// Resize the width of the canvas to that of its parent
 	canvas.width = canvas.parentNode.offsetWidth;
@@ -1475,7 +1477,7 @@ function main(canvas, status_bar)
 	if (fshader == null || vshader == null)
 		return null;
 
-	var scene = new Scene(gl, vshader, fshader, canvas);
+	var scene = new Scene(gl, vshader, fshader, canvas, overlay);
 
 	(function animloop(){
 		DrawScene(gl, scene, input);
@@ -1559,12 +1561,13 @@ SandboxHTML = (function()
 			<div class="wglsbx-Root">
 				<div class="wglsbx-CanvasHost">
 					<canvas height="500" tabindex="1"></canvas>
-					<div class="wglsbx-Buttons">Control Mode
-						<label><input type="radio" name="select3" /><span>Fly</span></label>
-						<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
-					</div>
+						<div class="wglsbx-Buttons">Control Mode
+							<label><input type="radio" name="select3" /><span>Fly</span></label>
+							<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
+						</div>
 					<div class="wglsbx-Status">Status: OK</div>
 					<span class="wglsbx-Controls">Rotate: LMB, Move: WSAD</span>
+					<div class="wglsbx-Overlay"></div>
 				</div>
 
 				<div class="wglsbx-CodeEditor">
@@ -1590,6 +1593,7 @@ SandboxHTML = (function()
 		this.FlyButton = buttons.children[0].children[0];
 		this.RotateButton = buttons.children[1].children[0];
 		this.Status = this.Host.children[2];
+		this.Overlay = this.Host.children[4];
 		this.Editor = root.children[1];
 
 		// Put textarea in the editor div
@@ -1650,7 +1654,7 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 	window.setTimeout(function(){
 
 		// Create the WebGL context/scene
-		var scene = main(html.Canvas, html.Status);
+		var scene = main(html.Canvas, html.Status, html.Overlay);
 		if (scene == null)
 			return;
 
@@ -1673,8 +1677,6 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 		}, 1000);
 
 	}, 1);
-
-	return html;
 }
 
 return SetupLiveEditEnvironment;
