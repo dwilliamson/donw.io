@@ -1551,6 +1551,8 @@ SandboxHTML = (function()
 {
 	function SandboxHTML(textarea, lsname)
 	{
+		this.Name = lsname;
+		
 		// Create host HTML
 		var div = document.createElement("div");
 		var html = `
@@ -1671,6 +1673,8 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 		}, 1000);
 
 	}, 1);
+
+	return html;
 }
 
 return SetupLiveEditEnvironment;
