@@ -1097,6 +1097,29 @@ var DrawType = {
 var g_ShaderMap = [ ];
 
 
+FloatingText = (function()
+{
+	function FloatingText(parent, text, position)
+	{
+		// Create the text node and attach it to the parent
+		this.div = document.createElement("div");
+		this.div.className = "wglsbx-FloatingText";
+		var text_node = document.createTextNode(text);
+		this.div.appendChild(text_node);
+		parent.appendChild(this.div);
+
+		this.Position = vec4.create();
+		this.Position[0] = position[0];
+		this.Position[1] = position[1];
+		this.Position[2] = position[2];
+		this.Position[3] = 1;
+	}
+
+	return FloatingText;
+	
+})();
+
+
 Mesh = (function()
 {
 	function Mesh(gl, draw_type, geometry, program)
@@ -1170,8 +1193,9 @@ Scene = (function()
 		this.glInvViewMatrix = mat4.create();
 		this.glViewMatrix = mat4.create();
 
-		// List of meshes to render in the scene
+		// List of objects to render in the scene
 		this.Meshes = [ ];
+		this.FloatingTexts = [ ];
 
 		// Bind the scene to the context
 		this.gl = gl;
@@ -1294,7 +1318,13 @@ Scene = (function()
 	}
 
 
-	Scene.prototype.DrawMeshes = function()
+	Scene.prototype.AddFloatingText = function(text, position)
+	{
+		this.FloatingTexts.push(new FloatingText(this.Overlay, text, position));
+	}
+
+
+	Scene.prototype.DrawObjects = function()
 	{
 		this.UpdateMatrices();
 
@@ -1302,6 +1332,26 @@ Scene = (function()
 		{
 			var mesh = this.Meshes[i];
 			this.DrawMesh(mesh);
+		}
+
+		var world_to_clip = mat4.create();
+		mat4.mul(world_to_clip, this.glProjectionMatrix, this.glViewMatrix);
+
+		var vv = vec4.create();
+
+		for (i in this.FloatingTexts)
+		{
+			var text = this.FloatingTexts[i];
+			vec4.transformMat4(vv, text.Position, world_to_clip);
+
+			vv[0] /= vv[3];
+			vv[1] /= vv[3];
+
+			var x = (vv[0] *  0.5 + 0.5) * this.CanvasWidth;
+			var y = (vv[1] * -0.5 + 0.5) * this.CanvasHeight;
+
+			text.div.style.left = Math.floor(x) + "px";
+			text.div.style.top = Math.floor(y) + "px";
 		}
 	}
 
@@ -1419,7 +1469,7 @@ function DrawScene(gl, scene, input)
 	if (input.KeyState[Keys.Q])
 		vec3.sub(scene.CameraPosition, scene.CameraPosition, up);
 
-	scene.DrawMeshes();
+	scene.DrawObjects();
 }
 
 
@@ -1567,7 +1617,7 @@ SandboxHTML = (function()
 						</div>
 					<div class="wglsbx-Status">Status: OK</div>
 					<span class="wglsbx-Controls">Rotate: LMB, Move: WSAD</span>
-					<div class="wglsbx-Overlay"></div>
+					<div class="wglsbx-Overlay" tabindex="0"></div>
 				</div>
 
 				<div class="wglsbx-CodeEditor">
