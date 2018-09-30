@@ -1432,7 +1432,7 @@ function main(canvas, status_bar, overlay)
 	var gl = InitWebGL(canvas, status_bar);
 	if (!gl)
 		return null;
-	var input = new Input(canvas);
+	var input = new Input(overlay);
 
 	// Initialise the window with red backdrop
 	gl.clearColor(1, 0, 0, 1);
