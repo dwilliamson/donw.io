@@ -965,7 +965,7 @@ var Keys = {
 
 Input = (function()
 {
-	function Input(canvas)
+	function Input(container)
 	{
 		// Initialise default state
 		this.KeyState = [ ];
@@ -975,15 +975,15 @@ Input = (function()
 
 		// Set event handlers
 		var self = this;
-		canvas.onkeydown = function(ev) { OnKeyDown(self, ev); };
-		canvas.onkeyup = function(ev) { OnKeyUp(self, ev); };
-		canvas.onmousedown = function(ev) { OnMouseDown(self, ev); };
-		canvas.onmouseup = function(ev) { OnMouseUp(self, ev); };
-		canvas.onmouseout = function(ev) { OnMouseOut(self, ev); };
-		canvas.onmousemove = function(ev) { OnMouseMove(self, ev); };
-		canvas.ontouchstart = function(ev) { OnTouchStart(self, ev); };
-		canvas.ontouchend = function(ev) { OnTouchEnd(self, ev); };
-		canvas.ontouchmove = function(ev) { return OnTouchMove(self, ev); };
+		container.onkeydown = function(ev) { OnKeyDown(self, ev); };
+		container.onkeyup = function(ev) { OnKeyUp(self, ev); };
+		container.onmousedown = function(ev) { OnMouseDown(self, ev); };
+		container.onmouseup = function(ev) { OnMouseUp(self, ev); };
+		container.onmouseout = function(ev) { OnMouseOut(self, ev); };
+		container.onmousemove = function(ev) { OnMouseMove(self, ev); };
+		container.ontouchstart = function(ev) { OnTouchStart(self, ev); };
+		container.ontouchend = function(ev) { OnTouchEnd(self, ev); };
+		container.ontouchmove = function(ev) { return OnTouchMove(self, ev); };
 	}
 
 	// Listening for keyboard events requires tabindex set on the canvas so that it can focus
