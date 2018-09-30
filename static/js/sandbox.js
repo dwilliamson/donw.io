@@ -1104,8 +1104,8 @@ FloatingText = (function()
 		// Create the text node and attach it to the parent
 		this.div = document.createElement("div");
 		this.div.className = "wglsbx-FloatingText";
-		var text_node = document.createTextNode(text);
-		this.div.appendChild(text_node);
+		var html = katex.renderToString(text, { throwOnError: false });
+		this.div.innerHTML = "<span style='font-size:20px'>" + html + "</span>";
 		parent.appendChild(this.div);
 
 		this.Position = vec4.create();
