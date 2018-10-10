@@ -1147,7 +1147,7 @@ Mesh = (function()
 		
 		// Set initial position on the origin
 		this.Position = vec3.create();
-		this.ModelMatrix = mat4.create();
+		this.ObjectToWorld = mat4.create();
 		this.SetPosition(0, 0, 0);
 
 		// Any gl state
@@ -1167,8 +1167,8 @@ Mesh = (function()
 	Mesh.prototype.SetPosition = function(x, y ,z)
 	{
 		vec3.set(this.Position, x, y, z);
-		mat4.identity(this.ModelMatrix);
-		mat4.translate(this.ModelMatrix, this.ModelMatrix, this.Position);
+		mat4.identity(this.ObjectToWorld);
+		mat4.translate(this.ObjectToWorld, this.ObjectToWorld, this.Position);
 	}
 
 	return Mesh;
@@ -1182,6 +1182,48 @@ var CameraType = {
 };
 
 
+Transform = (function()
+{
+	function Transform(x, y, z, rx, ry, rz)
+	{
+		this.Position = vec3_create(x, y, z);
+		this.Rotation = vec3_create(rx, ry, rz);
+
+		this.PositionMatrix = mat4.create();
+		this.RotationMatrix = mat4.create();
+
+		this.UpdateMatrices();
+	}
+
+
+	Transform.prototype.UpdatePositionMatrix = function()
+	{
+		mat4.identity(this.PositionMatrix);
+		mat4.translate(this.PositionMatrix, this.PositionMatrix, this.Position);
+		return this.PositionMatrix;
+	}
+
+
+	Transform.prototype.UpdateRotationMatrix = function()
+	{
+		mat4.identity(this.RotationMatrix);
+		mat4.rotateY(this.RotationMatrix, this.RotationMatrix, this.Rotation[1]);
+		mat4.rotateX(this.RotationMatrix, this.RotationMatrix, this.Rotation[0]);
+		return this.RotationMatrix;
+	}
+
+
+	Transform.prototype.UpdateMatrices = function()
+	{
+		this.UpdatePositionMatrix();
+		this.UpdateRotationMatrix();
+	}
+
+
+	return Transform;
+})();
+
+
 Scene = (function()
 {
 	function Scene(gl, vshader, fshader, canvas, overlay)
@@ -1189,9 +1231,8 @@ Scene = (function()
 		this.Overlay = overlay;
 
 		// Create matrices
-		this.CameraRotationMatrix = mat4.create();
-		this.glInvViewMatrix = mat4.create();
-		this.glViewMatrix = mat4.create();
+		this.CameraToWorld = mat4.create();
+		this.WorldToCamera = mat4.create();
 
 		// List of objects to render in the scene
 		this.Meshes = [ ];
@@ -1210,53 +1251,43 @@ Scene = (function()
 		this.AspectRatio = this.CanvasWidth / this.CanvasHeight;
 
 		// Set a default perspective matrix
-		this.glProjectionMatrix = mat4.create();
-		mat4.perspective(this.glProjectionMatrix, 45, this.AspectRatio, 0.1, 100.0);
+		this.CameraToClip = mat4.create();
+		mat4.perspective(this.CameraToClip, 45, this.AspectRatio, 0.1, 100.0);
 
 		// Set default camera orientation
-		this.CameraPosition = vec3.create();
-		this.CameraRotation = vec3.create();
-		vec3.set(this.CameraPosition, 0, 0, 3);
-		vec3.set(this.CameraRotation, 0, 0, 0);
+		this.FlyCameraTransform = new Transform(0, 0, 3, 0, 0, 0);
+		this.RotateCameraTransform = new Transform(0, 0, 3, 0, 0, 0);
+		this.CameraTransform = this.RotateCameraTransform;
 		this.CameraType = CameraType.ROTATE;
 
 		this.UpdateMatrices();
 	}
 
 
-	Scene.prototype.UpdateRotationMatrix = function()
-	{
-		mat4.identity(this.CameraRotationMatrix);
-		mat4.rotateY(this.CameraRotationMatrix, this.CameraRotationMatrix, this.CameraRotation[1]);
-		mat4.rotateX(this.CameraRotationMatrix, this.CameraRotationMatrix, this.CameraRotation[0]);
-		return this.CameraRotationMatrix;
-	}
-
-
 	Scene.prototype.UpdateMatrices = function()
 	{
-		this.UpdateRotationMatrix();
+		this.CameraTransform.UpdateMatrices();
 
 		// Calculate view matrix from the camera
-		mat4.identity(this.glInvViewMatrix);
-		mat4.translate(this.glInvViewMatrix, this.glInvViewMatrix, this.CameraPosition);
 		if (this.CameraType == CameraType.ROTATE)
-			mat4.mul(this.glInvViewMatrix, this.CameraRotationMatrix, this.glInvViewMatrix);
+			mat4.mul(this.CameraToWorld, this.CameraTransform.RotationMatrix, this.CameraTransform.PositionMatrix);
 		else
-			mat4.mul(this.glInvViewMatrix, this.glInvViewMatrix, this.CameraRotationMatrix);
-		mat4.invert(this.glViewMatrix, this.glInvViewMatrix);
+			mat4.mul(this.CameraToWorld, this.CameraTransform.PositionMatrix, this.CameraTransform.RotationMatrix);
+		mat4.invert(this.WorldToCamera, this.CameraToWorld);
 	}
 
 
 	Scene.prototype.SetCameraPosition = function(x, y, z)
 	{
-		vec3.set(this.CameraPosition, x, y, z);
+		vec3.set(this.FlyCameraTransform.Position, x, y, z);
+		vec3.set(this.RotateCameraTransform.Position, x, y, z);
 	}
 
 
 	Scene.prototype.SetCameraRotation = function(x, y, z)
 	{
-		vec3.set(this.CameraRotation, x, y, z);
+		vec3.set(this.FlyCameraTransform.Rotation, x, y, z);
+		vec3.set(this.RotateCameraTransform.Rotation, x, y, z);
 	}
 
 
@@ -1335,7 +1366,7 @@ Scene = (function()
 		}
 
 		var world_to_clip = mat4.create();
-		mat4.mul(world_to_clip, this.glProjectionMatrix, this.glViewMatrix);
+		mat4.mul(world_to_clip, this.CameraToClip, this.WorldToCamera);
 
 		var vv = vec4.create();
 
@@ -1360,14 +1391,15 @@ Scene = (function()
 	{
 		var gl = self.gl;
 
-		// Concatenate with identity to get model view for now
-		var model_view = mat4.create();
-		mat4.mul(model_view, mesh.ModelMatrix, self.glViewMatrix);
+		// Concatenate camera/mesh matrices
+		var object_to_camera = mat4.create();
+		mat4.mul(object_to_camera, self.WorldToCamera, mesh.ObjectToWorld);
+		var object_to_clip = mat4.create();
+		mat4.mul(object_to_clip, self.CameraToClip, object_to_camera);
 
 		// Apply program and set shader constants
 		gl.useProgram(mesh.Program);
-		SetShaderUniformMatrix4(gl, mesh.Program, "glProjectionMatrix", self.glProjectionMatrix);
-		SetShaderUniformMatrix4(gl, mesh.Program, "glModelViewMatrix", model_view);
+		SetShaderUniformMatrix4(gl, mesh.Program, "ObjectToClip", object_to_clip);
 		SetShaderUniformVector3(gl, mesh.Program, "glColour", colour);
 
 		// Apply mesh-specific gl state
@@ -1435,9 +1467,9 @@ function DrawScene(gl, scene, input)
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// Update camera rotation and reset mouse delta
-	scene.CameraRotation[0] -= input.MouseDelta[1] * 0.004;
-	scene.CameraRotation[1] -= input.MouseDelta[0] * 0.004;
-	var rotation_matrix = scene.UpdateRotationMatrix();
+	scene.CameraTransform.Rotation[0] -= input.MouseDelta[1] * 0.004;
+	scene.CameraTransform.Rotation[1] -= input.MouseDelta[0] * 0.004;
+	var rotation_matrix = scene.CameraTransform.UpdateRotationMatrix();
 	input.MouseDelta[0] = 0;
 	input.MouseDelta[1] = 0;
 
@@ -1457,17 +1489,17 @@ function DrawScene(gl, scene, input)
 
 	// Move the camera based on what the user presses
 	if (input.KeyState[Keys.W])
-		vec3.add(scene.CameraPosition, scene.CameraPosition, forward);
+		vec3.add(scene.CameraTransform.Position, scene.CameraTransform.Position, forward);
 	if (input.KeyState[Keys.S])
-		vec3.sub(scene.CameraPosition, scene.CameraPosition, forward);
+		vec3.sub(scene.CameraTransform.Position, scene.CameraTransform.Position, forward);
 	if (input.KeyState[Keys.A])
-		vec3.sub(scene.CameraPosition, scene.CameraPosition, right);
+		vec3.sub(scene.CameraTransform.Position, scene.CameraTransform.Position, right);
 	if (input.KeyState[Keys.D])
-		vec3.add(scene.CameraPosition, scene.CameraPosition, right);
+		vec3.add(scene.CameraTransform.Position, scene.CameraTransform.Position, right);
 	if (input.KeyState[Keys.E])
-		vec3.add(scene.CameraPosition, scene.CameraPosition, up);
+		vec3.add(scene.CameraTransform.Position, scene.CameraTransform.Position, up);
 	if (input.KeyState[Keys.Q])
-		vec3.sub(scene.CameraPosition, scene.CameraPosition, up);
+		vec3.sub(scene.CameraTransform.Position, scene.CameraTransform.Position, up);
 
 	scene.DrawObjects();
 }
@@ -1512,15 +1544,14 @@ function main(canvas, status_bar, overlay)
 	var vshader = CreateShader(gl, gl.VERTEX_SHADER,`
 		attribute vec3 glVertex;
 
-		uniform mat4 glModelViewMatrix;
-		uniform mat4 glProjectionMatrix;
+		uniform mat4 ObjectToClip;
 
 		varying vec3 ls_Position;
 
 		void main(void)
 		{
 			ls_Position = glVertex;
-			gl_Position = glProjectionMatrix * glModelViewMatrix * vec4(glVertex, 1.0);
+			gl_Position = ObjectToClip * vec4(glVertex, 1.0);
 		}
 	`);
 
@@ -1709,7 +1740,11 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 			return;
 
 		// Change scene camera type on radio button select
-		html.OnControlModeChange(function(camera_type) { scene.CameraType = camera_type; });
+		html.OnControlModeChange(function(camera_type)
+		{
+			scene.CameraType = camera_type;
+			scene.CameraTransform = camera_type == CameraType.FLY ? scene.FlyCameraTransform : scene.RotateCameraTransform;
+		});
 
 		// Perform the first code execution run
 		ExecuteCode(cm, scene, html.Status, lsname);
