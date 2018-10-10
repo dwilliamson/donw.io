@@ -11,7 +11,7 @@
 {{ partial "header.html" . }}
 <main class="content" role="main">
 	<div class="container">
-	{{ range .Paginator.Pages }}
+	{{ range where .Paginator.Pages "Params.hidden" "ne" "true" }}
 		{{ .Render "li" }}
 	{{ end }}
 	{{ partial "pagination.html" . }}
