@@ -407,6 +407,21 @@ function AddLinePrimitives(a, b, axis, position_array, index_array)
 }
 
 
+function CreateSphereGeometry(radius, subdivisions)
+{
+	var geom = CreateOctahedronGeometry();
+	
+	// Subdivide and sphere project after
+
+	for (var i = 0; i < subdivisions; i++)
+		SubdivideGeometryTriangleList(geom, false);
+
+	ProjectVerticesToSphere(geom.Vertices, radius);
+
+	return geom;
+}
+
+
 function AddCirclePrimitive(center, basis, radius, position_array, index_array, divisions)
 {
 	// Center point
@@ -1336,6 +1351,17 @@ Scene = (function()
 		m.Colour = colour;
 		m.FillColour = colour;
 		return m;			
+	}
+
+	
+	Scene.prototype.AddSphereMesh = function(center, radius, subdivisions, colour)
+	{
+		var g = CreateSphereGeometry(radius, subdivisions);
+		var m = this.AddMesh(DrawType.SOLID, g);
+		m.Colour = colour;
+		m.FillColour = colour;
+		m.SetPosition(center[0], center[1], center[2]);
+		return m;
 	}
 
 
