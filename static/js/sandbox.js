@@ -910,35 +910,35 @@ function CreateIndexBuffer(gl, indices)
 }
 
 
-function GetShaderUniform(gl, program, uniform_name)
+function GetShaderUniform(gl, program, uniform_name, optional)
 {
 	var uniform = gl.getUniformLocation(program, uniform_name);
-	if (!uniform)
+	if (uniform == null && !optional)
 		FatalError("Couldn't locate uniform: " + uniform_name);
 
 	return uniform;
 }
 
 
-function SetShaderUniformFloat(gl, program, uniform_name, value)
+function SetShaderUniformFloat(gl, program, uniform_name, value, optional)
 {
-	var uniform = GetShaderUniform(gl, program, uniform_name);
+	var uniform = GetShaderUniform(gl, program, uniform_name, optional);
 	if (uniform)
 		gl.uniform1f(uniform, value);
 }
 
 
-function SetShaderUniformVector3(gl, program, uniform_name, vector)
+function SetShaderUniformVector3(gl, program, uniform_name, vector, optional)
 {
-	var uniform = GetShaderUniform(gl, program, uniform_name);
+	var uniform = GetShaderUniform(gl, program, uniform_name, optional);
 	if (uniform)
 		gl.uniform3fv(uniform, vector);
 }
 
 
-function SetShaderUniformMatrix4(gl, program, uniform_name, matrix)
+function SetShaderUniformMatrix4(gl, program, uniform_name, matrix, optional)
 {
-	var uniform = GetShaderUniform(gl, program, uniform_name);
+	var uniform = GetShaderUniform(gl, program, uniform_name, optional);
 	if (uniform)
 		gl.uniformMatrix4fv(uniform, false, matrix);
 }
@@ -1181,6 +1181,8 @@ Mesh = (function()
 		}
 
 		this.Program = program;
+		this.FloatUniforms = { };
+		this.Vec3Uniforms = { };
 		
 		// Set initial position on the origin
 		this.Position = vec3.create();
@@ -1504,6 +1506,19 @@ Scene = (function()
 		SetShaderUniformMatrix4(gl, mesh.Program, "ObjectToClip", object_to_clip);
 		SetShaderUniformVector3(gl, mesh.Program, "glColour", colour);
 
+		// Set all mesh uniforms
+		// To keep the interactive editing experience smooth with no exceptions, make all uniforms optional in the shader
+		for (var name in mesh.FloatUniforms)
+		{
+			var value = mesh.FloatUniforms[name];
+			SetShaderUniformFloat(gl, mesh.Program, name, value, optional=true);
+		}
+		for (var name in mesh.Vec3Uniforms)
+		{
+			var value = mesh.Vec3Uniforms[name];
+			SetShaderUniformVec3(gl, mesh.Program, name, value, optional=true);
+		}
+
 		// Apply mesh-specific gl state
 		if (mesh.CullingEnabled)
 			gl.enable(gl.CULL_FACE);
@@ -1554,6 +1569,7 @@ Scene = (function()
 					DrawMeshPass(this, mesh, gl.TRIANGLES, mesh.FillColour);
 				gl.depthRange(0, 1);
 			}
+
 			DrawMeshPass(this, mesh, gl.LINES, mesh.Colour);
 		}
 	}
