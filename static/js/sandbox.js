@@ -1401,6 +1401,46 @@ Scene = (function()
 	{
 		this.FloatingTexts.push(new FloatingText(this.Overlay, text, position, normal));
 	}
+
+
+	Scene.prototype.AddMeasure = function(a, b, col, perp_dist, text, x_text_shift, z_text_shift)
+	{
+		var basis = new Basis(a, b);
+	
+		// Perpendicular
+		var perp = vec3_create(basis.y[0], basis.y[1], basis.y[2]);
+		vec3.scale(perp, perp, perp_dist);
+	
+		// Perpendicular-shifted end points
+		var a0 = vec3.create();
+		vec3.add(a0, a, perp);
+		var b0 = vec3.create();
+		vec3.add(b0, b, perp);
+	
+		// Center point
+		var c = vec3.create();
+		vec3.add(c, a0, b0);
+		vec3.scale(c, c, 0.5);
+	
+		// Inside line starting points
+		var center_shift = vec3.create();
+		vec3.scale(center_shift, basis.z, 0.15);
+		var a1 = vec3.create();
+		vec3.sub(a1, c, center_shift);
+		var b1 = vec3.create();
+		vec3.add(b1, c, center_shift);
+	
+		this.AddLineMesh(a1, a0, 0.001, col, 0.025, 0.02);
+		this.AddLineMesh(b1, b0, 0.001, col, 0.025, 0.02);
+	
+		var text_shift_0 = vec3.create();
+		vec3.scale(text_shift_0, basis.y, x_text_shift);
+		var text_shift_1 = vec3.create();
+		vec3.scale(text_shift_1, basis.z, z_text_shift);
+		var t = vec3.create();
+		vec3.add(t, c, text_shift_0);
+		vec3.add(t, t, text_shift_1);
+		this.AddFloatingText(text, t);
 	}
 
 
