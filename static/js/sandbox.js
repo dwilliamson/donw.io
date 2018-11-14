@@ -1126,7 +1126,7 @@ var g_ShaderMap = [ ];
 
 FloatingText = (function()
 {
-	function FloatingText(parent, text, position)
+	function FloatingText(parent, text, position, normal)
 	{
 		// Create the text node and attach it to the parent
 		this.div = document.createElement("div");
@@ -1135,11 +1135,21 @@ FloatingText = (function()
 		this.div.innerHTML = "<span style='font-size:20px'>" + html + "</span>";
 		parent.appendChild(this.div);
 
+		// Copy position to vec4 ready for perspective transform
 		this.Position = vec4.create();
 		this.Position[0] = position[0];
 		this.Position[1] = position[1];
 		this.Position[2] = position[2];
 		this.Position[3] = 1;
+
+		// Copy the optional normal
+		if (normal)
+		{
+			this.Normal = vec3.create();
+			this.Normal[0] = normal[0];
+			this.Normal[1] = normal[1];
+			this.Normal[2] = normal[2]
+		}
 	}
 
 	return FloatingText;
@@ -1387,9 +1397,10 @@ Scene = (function()
 	}
 
 
-	Scene.prototype.AddFloatingText = function(text, position)
+	Scene.prototype.AddFloatingText = function(text, position, normal)
 	{
-		this.FloatingTexts.push(new FloatingText(this.Overlay, text, position));
+		this.FloatingTexts.push(new FloatingText(this.Overlay, text, position, normal));
+	}
 	}
 
 
@@ -1406,18 +1417,31 @@ Scene = (function()
 		var world_to_clip = mat4.create();
 		mat4.mul(world_to_clip, this.CameraToClip, this.WorldToCamera);
 
-		var vv = vec4.create();
+		var world_to_camera_rotation = mat3.create();
+		mat3.fromMat4(world_to_camera_rotation, this.WorldToCamera);
+
+		var position = vec4.create();
+		var normal = vec3.create();
 
 		for (i in this.FloatingTexts)
 		{
 			var text = this.FloatingTexts[i];
-			vec4.transformMat4(vv, text.Position, world_to_clip);
 
-			vv[0] /= vv[3];
-			vv[1] /= vv[3];
+			// If the text has a normal, use that to backface cull
+			if (text.Normal)
+			{
+				vec3.transformMat3(normal, text.Normal, world_to_camera_rotation);
+				var visible = normal[2] > 0;
+				text.div.style.display = visible ? "" : "none";
+			}
 
-			var x = (vv[0] *  0.5 + 0.5) * this.CanvasWidth;
-			var y = (vv[1] * -0.5 + 0.5) * this.CanvasHeight;
+			vec4.transformMat4(position, text.Position, world_to_clip);
+
+			position[0] /= position[3];
+			position[1] /= position[3];
+
+			var x = (position[0] *  0.5 + 0.5) * this.CanvasWidth;
+			var y = (position[1] * -0.5 + 0.5) * this.CanvasHeight;
 
 			text.div.style.left = Math.floor(x) + "px";
 			text.div.style.top = Math.floor(y) + "px";
