@@ -22,7 +22,7 @@ function ClearError(status_bar)
 
 function SetError(status_bar, error)
 {
-	status_bar.innerHTML = "Status: <span style='color:#f44'>Errors</span><br/>" + error;
+	status_bar.innerHTML = "Status: <span style='color:#f44;font-weight:bold;'>Errors</span><br/>" + error;
 }
 
 
