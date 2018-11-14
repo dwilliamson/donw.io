@@ -37,8 +37,10 @@
     position: absolute;
     top: 10px;
     left: 10px;
-    color: #222;
+    color: #eee;
     z-index: 10;
+    opacity: 0;
+    transition: opacity .5s ease-out;
 }
 .wglsbx-Buttons label input
 {
@@ -55,8 +57,8 @@
 .wglsbx-Buttons input:checked + span
 {
     /* Button style when checked */
-    color: #000;
-    background: #aaa;
+    color: #222;
+    background: #888;
 }
 
 .wglsbx-Controls
@@ -64,7 +66,9 @@
     position: absolute;
     right: 10px;
     top: 10px;
-    color: #222;
+    color: #eee;
+    opacity: 0;
+    transition: opacity .5s ease-out;
 }
 
 .wglsbx-Status
@@ -74,7 +78,17 @@
     bottom: 0px;
     left: 10px;
     font-family: monospace;
-    color: #222;
+    color: #eee;
+}
+
+/* Elements to activate when hovering over the canvas */
+.wglsbx-CanvasHost:hover .wglsbx-Buttons
+{
+    opacity: 1;
+}
+.wglsbx-CanvasHost:hover .wglsbx-Controls
+{
+    opacity: 1;
 }
 
 .wglsbx-CodeEditor
