@@ -907,6 +907,7 @@ for (var i = 0; i < depth; i++)
 ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
 
 var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
+mesh.FloatUniforms["QuadsPerEdge"] = (1 << depth);
 
 
 //===================================================================
@@ -917,6 +918,7 @@ var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined
 precision highp float;
 
 uniform vec3 glColour;
+uniform float QuadsPerEdge;
 
 varying vec3 ls_Position;
 
@@ -979,11 +981,11 @@ int GetTriangleIndex(vec3 P)
 	uv.y = dot(point_on_plane - v0, Y);
 
 	// Normalise plane x position to units of sub triangle half-edges
-	float sub_tri_edge_len = inv_oct_side_len / 8.0;
+	float sub_tri_edge_len = inv_oct_side_len / QuadsPerEdge;
 	uv.x = uv.x / (sub_tri_edge_len * 0.5);
 
 	// Normalise plane y position to units of sub triangle heights (the easy bit)
-	uv.y = (uv.y * inv_oct_tri_height) * 8.0;
+	uv.y = (uv.y * inv_oct_tri_height) * QuadsPerEdge;
 
 	// Get integer indices, y is already in its final form
 	int x = int(uv.x);
