@@ -1446,6 +1446,60 @@ Scene = (function()
 	}
 
 
+	Scene.prototype.AddSubdividedTriangle = function(subdivs, complete_subdivs, edge_width)
+	{
+		var half_edge_width = edge_width * 0.5;
+		var height = Math.sqrt(edge_width * edge_width - half_edge_width * half_edge_width);
+		var complete_height = height / subdivs * complete_subdivs;
+	
+		function ClipToY(y, a, b)
+		{
+			if (b[1] > y)
+			{
+				var oy = b[1] - y;
+				var dx = b[0] - a[0];
+				var dy = b[1] - a[1];
+	
+				b[1] = y;
+	
+				var t = oy / dy;
+				b[0] = b[0] - dx * t;
+			}
+		}
+	
+		for (var i = 0; i < subdivs; i++)
+		{
+			v = i / subdivs;
+	
+			if (i <= complete_subdivs)
+			{
+				// Horizontal
+				var y = v * height;
+				var l = -half_edge_width + v * half_edge_width;
+				var r =  half_edge_width - v * half_edge_width;
+				var a = vec3_create(l, y, 0);
+				var b = vec3_create(r, y, 0);
+				this.AddLineMesh(b, a, 0.001, [ 1.0, 1.0, 1.0 ]);
+			}
+	
+			// Diagonal left-to-right
+			var y = height - v * height;
+			var l = -half_edge_width + v * edge_width;
+			var r = v * half_edge_width; 
+			var a = vec3_create(l, 0, 0);
+			var b = vec3_create(r, y, 0);
+			ClipToY(complete_height, a, b);
+			this.AddLineMesh(b, a, 0.001, [ 1.0, 1.0, 1.0 ]);
+	
+			// Diagonal right-to-left
+			var a = vec3_create(-l, 0, 0);
+			var b = vec3_create(-r, y, 0);
+			ClipToY(complete_height, a, b);
+			this.AddLineMesh(b, a, 0.001, [ 1.0, 1.0, 1.0 ]);
+		}
+	}
+
+	
 	Scene.prototype.DrawObjects = function()
 	{
 		this.UpdateMatrices();
