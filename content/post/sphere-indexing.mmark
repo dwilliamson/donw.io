@@ -2,8 +2,9 @@
 date = "2017-07-28T00:27:21+01:00"
 draft = false
 hidden = true
-title = "Fast, Constant Time Sphere Indexing"
+title = "Fast, Constant Time Sphere Indexing, Part 1"
 hasMath = true
+ghcommentid = 18
 +++
 
 The problem statement is: Assuming a triangle-subdivided sphere, map any 3D point on or above it to a triangle index in constant-time, without using recursion, table lookups or complicated branching logic. Even better; make it so simple you can use it in a pixel shader. This is useful for when your playing field is on/above a sphere and you have some lookup tables you want to reference based on player/camera position.
@@ -420,7 +421,7 @@ Assuming a point floating above the unit sphere, the basic method is:
 1. Identify which octant of the Octahedron the point faces.
 2. Cast a ray from the query point to the Octahedron origin and find an intersection point with the Octahedron face.
 3. Construct a basis in the plane of the face and project the intersection point into 2D, relative to bottom-left face point.
-4. Calculate triangle column and row indices the point lies within. This would be non-trivial with methods 1 and 3.
+4. Calculate triangle column and row indices the point lies within. This is made simple due to the resultant subdivision containing equilateral triangles.
 5. Combine these indices with the octant index to give a unique index for the final triangle.
 
 The Octahedron looks like this with colour-coded octant indices from 0 to 8:
@@ -885,14 +886,122 @@ uv.y = dot(point_on_plane - v0, Y);
 
 `uv` gives us an effective distance of the point along each axis.
 
+The penultimate step is to map this 2D position to a unique triangle index on the face:
 
+
+
+{{< wglsbx name="SubdividedTriangle" localstore="false" hidecode="true" >}}
+
+var smpos = vec3_create(0.06, 0.25, 0);
+var sm = scene.AddSphereMesh(smpos, 0.01, 1, [ 1.0, 0.4, 0.8 ]);
+
+scene.AddSubdividedTriangle(8, 8, 1);
+
+scene.SetCameraPosition(0, 0.4, 1.15);
+
+{{< /wglsbx >}}
+
+There are 8 rows in the above face and 8 triangles with their base touching the bottom edge. Given a subdivision depth $$d$$, the row index is simply:
+
+$$row = \left \lfloor{\frac{l_y}{2^d}}\right \rfloor$$
+
+where $$d=0$$ represents no subdivision. Calculating the triangle index within a row is slightly more involved. The method works by splitting each triangle in half and mapping rectangles over the top:
+
+{{< wglsbx name="TriangleRow" localstore="false" hidecode="true" >}}
+
+scene.AddSubdividedTriangle(8, 1, 1);
+
+function AddDashLine(a, b)
+{
+	scene.AddLineMesh(a, b, 0.001, [ 1.0, 1.0, 1.0 ], 0, 0.01);
+}
+
+var y = 1.0 / 9.0;
+for (var i = 0; i <= 16; i++)
+{
+	var l = -0.5 + i / 16.0;
+	var a = vec3_create(l, 0, 0);
+	var b = vec3_create(l, y, 0);
+	AddDashLine(a, b);
+}
+
+var a = vec3_create(-0.5 + 0.0 / 16.0, y, 0);
+var b = vec3_create(-0.5 + 1.0 / 16.0, y, 0);
+AddDashLine(a, b);
+
+var a = vec3_create(-0.5 + 15.0 / 16.0, y, 0);
+var b = vec3_create(-0.5 + 16.0 / 16.0, y, 0);
+AddDashLine(a, b);
+
+scene.SetCameraPosition(0, 0, 1.12);
+
+{{< /wglsbx >}}
+
+Treat the rectangles in pairs where the first triangle has a rising diagonal (left-to-right) and the second triangle has a falling diagonal. Find where the point is within the rectangle it falls upon ($$\{u,v \mid 0 \le u,v < 1 \}$$) and the following rules determine which half of the sub-triangle the point is in:
+
+* For even rectangles, if $$v - u > 0$$ the point is in the top sub-triangle.
+* For odd triangles, if $$u + v < 1$$ the point is in the bottom sub-triangle.
+
+You can then use that decision to shift the rectangle index down by one to correct to the triangle index within the row:
+
+```cpp
+// Normalise plane x position to units of sub triangle half-edges
+float sub_tri_edge_len = inv_oct_side_len / 16;
+uv.x = uv.x / sub_tri_edge_len;
+
+// Normalise plane y position to units of sub triangle heights (the easy bit)
+uv.y = (uv.y * inv_oct_tri_height) * 8;
+
+// Get integer indices, y is already in its final form
+int x = int(uv.x);
+int y = int(uv.y);
+
+// Get fractionals
+float u = uv.x - float(x);
+float v = uv.y - float(y);
+
+// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
+// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
+// direction based on parity of y index.
+if (and(x, 1) != and(y, 1))
+{
+	if (u + v < 1.0)
+		x--;
+}
+else
+{
+	if (v - u > 0.0)
+		x--;
+}
+```
+
+The `and` function here is a terrible little workaround function for GLSL in WebGL 1 that can't do bitwise integer arithmetic. It's available in the final example below.
+
+The triangle row and index now need to be turned into a linear triangle index within the octant and that's trivially achieved by treating the octant as a grid and ignoring indices outside the octant triangle. The grid width is a function of the subdivision depth, noting that one less triangle than rectangles can be stored:
+
+$$gridwidth = 2^d * 2 - 1$$
+
+Which can then be combined with the octant index to give the final linear index:
+
+```cpp
+// This is a nice way of making sure that triangles on each row start off at index 0
+//
+//    x -= y;
+//
+// However, can't easily turn that into a linear index as row starting indices form the following sequence
+//
+//    0, 15, 28, 39, 48, 55, 60, 63
+//
+// Instead, juse assume a square grid and only store data for those triangles within the octahedron face bounds.
+return octant_index * 15 * 15 + y * 15 + x;
+```
+
+The resultant code can be seen and edited below. Setting `depth` to something high like 6 highlights the difference in projected area between big triangles in the middle of an octant and and small triangles on the edge.
 
 {{< wglsbx name="InitialMap" localstore="false" hidecode="false" >}}
 //
 // Given a 3D point on the sphere, map to a unique, sub-divided triangle
 // index in O(1) with no recursive searching or table lookups.
-// Gist here https://gist.github.com/dwilliamson/65a81bf6fcd0e2000039
-// Thanks to @rompa for a couple of optimisations.
 //
 
 // Generate initial octahedron and subdivide it
@@ -907,7 +1016,9 @@ for (var i = 0; i < depth; i++)
 ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
 
 var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
-mesh.FloatUniforms["QuadsPerEdge"] = (1 << depth);
+mesh.FloatUniforms["Rows"] = (1 << depth);
+mesh.FloatUniforms["TriHalfBasesPerEdge"] = (1 << depth) * 2;
+mesh.FloatUniforms["GridLUT"] = (1 << depth) * 2 - 1;
 
 
 //===================================================================
@@ -918,7 +1029,9 @@ mesh.FloatUniforms["QuadsPerEdge"] = (1 << depth);
 precision highp float;
 
 uniform vec3 glColour;
-uniform float QuadsPerEdge;
+uniform float Rows;
+uniform float TriHalfBasesPerEdge;
+uniform float GridLUT;
 
 varying vec3 ls_Position;
 
@@ -981,11 +1094,11 @@ int GetTriangleIndex(vec3 P)
 	uv.y = dot(point_on_plane - v0, Y);
 
 	// Normalise plane x position to units of sub triangle half-edges
-	float sub_tri_edge_len = inv_oct_side_len / QuadsPerEdge;
-	uv.x = uv.x / (sub_tri_edge_len * 0.5);
+	float sub_tri_edge_len = inv_oct_side_len / TriHalfBasesPerEdge;
+	uv.x = uv.x / sub_tri_edge_len;
 
 	// Normalise plane y position to units of sub triangle heights (the easy bit)
-	uv.y = (uv.y * inv_oct_tri_height) * QuadsPerEdge;
+	uv.y = (uv.y * inv_oct_tri_height) * Rows;
 
 	// Get integer indices, y is already in its final form
 	int x = int(uv.x);
@@ -1016,7 +1129,8 @@ int GetTriangleIndex(vec3 P)
 	// 0, 15, 28, 39, 48, 55, 60, 63
 	// Instead, juse assume a square grid and only store data for those triangles within the
 	// octahedron face bounds.
-	return octant_index * 15 * 15 + y * 15 + x;
+	int l = int(GridLUT);
+	return octant_index * l * l + y * l + x;
 }
 
 
@@ -1040,3 +1154,7 @@ void main(void)
 
 {{< /wglsbx >}}
 
+
+While this code is pretty fast (pixel-shader fast, even) it can be optimised much more. These optimisations will be covered in a further post.
+
+Thanks to [Mark Wayland](https://twitter.com/rompa69), [Mykhailo Parfeniuk](https://twitter.com/sopyer), [Randall Rauwendaal](https://twitter.com/raegnar), [Mike Ducker](https://twitter.com/mike_ducker) and [Kai Jouran](https://twitter.com/questorInter) for optimisations, fixes, suggestions and proof-reading.
