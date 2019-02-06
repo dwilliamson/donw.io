@@ -1,0 +1,589 @@
++++
+date = "2019-02-06T13:13:00+01:00"
+draft = false
+hidden = false
+title = "Fast, Constant Time Sphere Indexing, Part 2"
+hasMath = true
+ghcommentid = 20
+[twitter]
+  card = "summary_large_image"
+  site = "@Donzanoid"
+  creator = "@Donzanoid"
+  title = "Fast, Constant Time Sphere Indexing, Part 2"
+  description = "Reduction of Triangle-Subdivided Sphere Indexing from Ray Intersection to Octahedral Vectors"
+  image = "http://donw.io/img/SphereIndexing2/summary.png"
++++
+
+Let's take the final solution from [Part 1]({{<relref "post/sphere-indexing.mmark">}}):
+
+{{< wglsbx_include >}}
+
+{{< wglsbx name="InitialMap" localstore="false" hidecode="false" >}}
+//
+// Given a 3D point on the sphere, map to a unique, sub-divided triangle
+// index in O(1) with no recursive searching or table lookups.
+//
+
+// Generate initial octahedron and subdivide it
+var octahedron_geometry = CreateOctahedronGeometry();
+var depth = 3;
+for (var i = 0; i < depth; i++)
+	SubdivideGeometryTriangleList(octahedron_geometry, false);
+
+// Use nlerp to project onto sphere. Would be better to slerp to get less
+// distortion but that breaks the indexing scheme. UNCOMMENT to see source
+// octahedron.
+ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
+
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
+mesh.FloatUniforms["Rows"] = (1 << depth);
+mesh.FloatUniforms["TriHalfBasesPerEdge"] = (1 << depth) * 2;
+mesh.FloatUniforms["GridLUT"] = (1 << depth) * 2 - 1;
+
+
+//===================================================================
+//@buffer(OctahedronShader)
+//===================================================================
+
+
+precision highp float;
+
+uniform vec3 glColour;
+uniform float Rows;
+uniform float TriHalfBasesPerEdge;
+uniform float GridLUT;
+
+varying vec3 ls_Position;
+
+
+// Some silly boolean logic code because WebGL...
+bool and(int x, int y)
+{
+	return mod(float(x), exp2(float(y))) != 0.0;
+}
+
+
+int GetTriangleIndex(vec3 P)
+{
+	// Get octant index
+	ivec3 side;
+	side.x = P.x >= 0.0 ? 1 : 0;
+	side.y = P.y >= 0.0 ? 2 : 0;
+	side.z = P.z >= 0.0 ? 4 : 0;
+	int octant_index = side.x + side.y + side.z;
+
+	// Generate face direction from sidedness
+	vec3 face_dir = vec3(side) * vec3(2.0, 1.0, 0.5) - 1.0;
+
+	// Get triangle vertices for the current face
+	// Winding order relative to other faces is irrelevant so we're free to assume all meridian
+	// edges start at one of the two points on the z-axis and point toward one of the two
+	// points on the x-axis...
+	vec3 v0 = vec3(0, 0, face_dir.z);
+	vec3 v1 = vec3(face_dir.x, 0, 0);
+
+	// ...the last vertex is one of the two poles on the y-axis
+	vec3 v2 = vec3(0, face_dir.y, 0);
+
+	// Find a point on the octahedron face that maps to the current point on the sphere surface
+	// As edge subdivisions were generated using normalized midpoints, tracing a ray back from the
+	// sphere to the origin and finding where it intersects the face will yield the original position.
+	// There is less distortion generating midpoints with a slerp, but that then makes this back-trace
+	// technique a lot trickier to use.
+	// Note use of unnormalised face direction as length factors out
+	float d = dot(v0 - P, face_dir) / dot(P, face_dir);
+	vec3 point_on_plane = P + P * d;
+
+	// Assume octahedron is circumscribed by the unit sphere, length of its meridian edges is known
+	float inv_oct_side_len = 2.0 / sqrt(2.0);
+
+	// What remains is normalisation of Y, which has a length equal to the octahedron triangle's height.
+	float inv_oct_tri_height = 1.0 / sqrt(1.5);
+
+	// Make 2D basis in the face plane using the meridian edge midpoint as the origin
+	vec3 O = (v0 + v1) * 0.5;
+	vec3 X = (v1 - O) * inv_oct_side_len;
+	vec3 Y = (v2 - O) * inv_oct_tri_height;
+
+	// Project the intersection point onto this plane
+	vec2 uv;
+	uv.x = dot(point_on_plane - v0, X);
+	uv.y = dot(point_on_plane - v0, Y);
+
+	// Normalise plane x position to units of sub triangle half-edges
+	float sub_tri_edge_len = inv_oct_side_len / TriHalfBasesPerEdge;
+	uv.x = uv.x / sub_tri_edge_len;
+
+	// Normalise plane y position to units of sub triangle heights (the easy bit)
+	uv.y = (uv.y * inv_oct_tri_height) * Rows;
+
+	// Get integer indices, y is already in its final form
+	int x = int(uv.x);
+	int y = int(uv.y);
+
+	// Get fractionals
+	float u = uv.x - float(x);
+	float v = uv.y - float(y);
+
+	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
+	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
+	// direction based on parity of y index.
+	if (and(x, 1) != and(y, 1))
+	{
+		if (u + v < 1.0)
+			x--;
+	}
+	else
+	{
+		if (v - u > 0.0)
+			x--;
+	}
+
+	// This is a nice way of making sure that triangles on each row start off at index 0
+	// x -= y;
+	// However, can't easily turn that into a linear index as row starting indices form
+	// the following sequence
+	// 0, 15, 28, 39, 48, 55, 60, 63
+	// Instead, juse assume a square grid and only store data for those triangles within the
+	// octahedron face bounds.
+	int l = int(GridLUT);
+	return octant_index * l * l + y * l + x;
+}
+
+
+void main(void)
+{
+	int tri_index = GetTriangleIndex(ls_Position);
+	tri_index = int(mod(float(tri_index), 8.0));
+
+	vec3 debug_colour;
+	if (tri_index == 0) debug_colour = vec3(0.7, 0.5, 0.2);
+	if (tri_index == 1) debug_colour = vec3(0.6, 0.7, 0.2);
+	if (tri_index == 2) debug_colour = vec3(0.2, 0.7, 0.2);
+	if (tri_index == 3) debug_colour = vec3(0.2, 0.7, 0.6);
+	if (tri_index == 4) debug_colour = vec3(0.2, 0.5, 0.7);
+	if (tri_index == 5) debug_colour = vec3(0.3, 0.2, 0.7);
+	if (tri_index == 6) debug_colour = vec3(0.7, 0.2, 0.7);
+	if (tri_index == 7) debug_colour = vec3(0.7, 0.2, 0.3);
+
+	gl_FragColor = vec4(glColour + debug_colour * 1.1, 1);
+}
+
+{{< /wglsbx >}}
+
+The code is conceptually simple but is a mess of maths and constants screaming out to be simplified. This could be *much* faster so let's kick a can down the road of simplification and see if it hits anything.
+
+##### Initial Reduction
+
+Take the original point projection onto the plane:
+
+```cpp
+float d = dot(v0 - P, face_dir) / dot(P, face_dir);
+vec3 point_on_plane = P + P * d;
+```
+
+The numerator dot product distributes:
+
+```cpp
+float d = (dot(v0, face_dir) - dot(P, face_dir)) / dot(P, face_dir);
+```
+
+and the second `dot(P, face_dir)` division cancels:
+
+```cpp
+float d = dot(v0, face_dir) / dot(P, face_dir) - 1.0;
+```
+
+Only `v0.z` is set here so we can immediately multiply that through:
+
+```cpp
+float d = face_dir.z * face_dir.z / dot(P, face_dir) - 1.0;
+```
+
+Face direction components can only be 1 or -1 so their square will always be 1:
+
+```cpp
+float d = 1.0 / dot(P, face_dir) - 1.0;
+```
+
+Now substitute `d` back into the projection:
+
+```cpp
+vec3 point_on_plane = P + P * (1.0 / dot(P, face_dir) - 1.0);
+```
+
+Distribute `P`:
+
+```cpp
+vec3 point_on_plane = P + P  / dot(P, face_dir) - P;
+```
+
+And `P` disappears!
+
+```cpp
+vec3 point_on_plane = P / dot(P, face_dir);
+```
+
+Next up are the three basis vectors:
+
+```cpp
+vec3 O = (v0 + v1) * 0.5;
+vec3 X = (v1 - O) * inv_oct_side_len;
+vec3 Y = (v2 - O) * inv_oct_tri_height;
+```
+
+There are a bunch of zero components in here that should allow some simplification. `O` sums as:
+
+```cpp
+vec3 O = vec3(face_dir.x, 0.0, face_dir.z) * 0.5;
+```
+
+`X` sums as:
+
+```cpp
+vec3 X = vec3(face_dir.x - face_dir.x * 0.5, 0.0, -face_dir.z * 0.5) * inv_oct_side_len;
+```
+
+Given that `k - k * 0.5` is always `k * 0.5` this simplifies a little:
+
+```cpp
+vec3 X = vec3(face_dir.x, 0.0, -face_dir.z) * inv_oct_side_len * 0.5;
+```
+
+`Y` sums as:
+
+```cpp
+vec3 Y = vec3(-face_dir.x * 0.5, face_dir.y, -face_dir.z * 0.5) * inv_oct_tri_height;
+```
+
+If we pair the calculation of `X` with `uv.x` it's easy to notice something:
+
+```cpp
+vec3 X = vec3(face_dir.x, 0.0, -face_dir.z) * inv_oct_side_len * 0.5;
+float sub_tri_edge_len = inv_oct_side_len / TriHalfBasesPerEdge;
+uv.x = uv.x / sub_tri_edge_len;
+```
+
+`inv_oct_side_len` cancels leaving only:
+
+```cpp
+vec3 X = vec3(face_dir.x, 0.0, -face_dir.z);
+uv.x = uv.x * TriHalfBasesPerEdge * 0.5;
+```
+
+`inv_oct_tri_height` unfortunately doesn't cancel but it distributes, allowing the multiply to be deferred to a single scalar later:
+
+```cpp
+vec3 Y = vec3(-face_dir.x * 0.5, face_dir.y, -face_dir.z * 0.5);
+uv.y = (uv.y * inv_oct_tri_height * inv_oct_tri_height) * Rows;
+```
+
+Folding all the immediates into shader constants leaves us with:
+
+```cpp
+// Get octant index
+ivec3 side;
+side.x = P.x >= 0.0 ? 1 : 0;
+side.y = P.y >= 0.0 ? 2 : 0;
+side.z = P.z >= 0.0 ? 4 : 0;
+int octant_index = side.x + side.y + side.z;
+
+// Generate face direction from sidedness
+vec3 face_dir = vec3(side) * vec3(2.0, 1.0, 0.5) - 1.0;
+
+// Projection onto face
+vec3 point_on_plane = P / dot(P, face_dir);	
+vec3 X = face_dir * vec3(1.0, 0.0, -1.0);
+vec3 Y = face_dir * vec3(-0.5, 1.0, -0.5);
+
+// 2D projection
+vec2 uv;
+uv.x = dot(point_on_plane, X) + 1.0;
+uv.y = dot(point_on_plane, Y) + 0.5;
+
+// Scale for indexing
+uv.x = uv.x * Constants.x;
+uv.y = uv.y * Constants.y;
+```
+
+and:
+
+```cpp
+Constants.x = 1 << depth;
+Constants.y = (1 << depth) / 1.5;
+```
+
+This is looking great! But we're not done yet...
+
+##### Constraining to an Octant
+
+Something feels redundant here: the octant that a point projects to is used twice in the calculation; first to determine and octant index offset and then to project onto the correct face. Conceptually the projection for all faces can be treated as a projection onto one face only, using the octant index to offset and make unique. Let's try it!
+
+Let's project all vertices onto the face with `face_dir={1,1,1}`. All points that don't project onto this face are simply flipped around using `abs`:
+
+```cpp
+// Get octant index
+int side_x = P.x >= 0.0 ? 1 : 0;
+int side_y = P.y >= 0.0 ? 2 : 0;
+int side_z = P.z >= 0.0 ? 4 : 0;
+int octant_index = side_x + side_y + side.z;
+
+// Projection onto face
+vec3 point_on_plane = abs(P) / dot(abs(P), vec3(1));
+vec3 X = vec3(1.0, 0.0, -1.0);
+vec3 Y = vec3(-0.5, 1.0, -0.5);
+
+// 2D projection
+vec2 uv;
+uv.x = dot(point_on_plane, X) + 1.0;
+uv.y = dot(point_on_plane, Y) + 0.5;
+
+// Scale for indexing
+uv.x = uv.x * Constants.x;
+uv.y = uv.y * Constants.y;
+```
+
+There's a couple of very interesting geometric operations in here that are worth investigating in more detail.
+
+##### Visualising the Planes
+
+The last two dot products look like plane/distance equations, except the plane normals aren't unit length. They can be normalised by pushing the the required scale factor into the CPU constants. The length of the first normal is `sqrt(2)` and the second is `sqrt(1.5)`, so:
+
+```cpp
+// Projection onto face and point/plane distances using 4x vectors
+vec4 point_on_plane = vec4(abs(P) / dot(abs(P), vec3(1)), 1.0);
+vec4 X = vec4(1.0, 0.0, -1.0, 1.0) / sqrt(2.0);
+vec4 Y = vec4(-0.5, 1.0, -0.5, 0.5) / sqrt(1.5);
+vec2 uv;
+uv.x = dot(point_on_plane, X);
+uv.y = dot(point_on_plane, Y);
+```
+
+and the CPU constants are then:
+
+```cpp
+k = 1 << depth;
+Constants.x = k * Math.sqrt(2);
+Constants.y = k / 1.5 * Math.sqrt(1.5);
+```
+
+Rendering the planes gives:
+
+{{< wglsbx name="RayCast" localstore="false" hidecode="true" >}}
+
+var SoftWhite = [ 0.8, 0.8, 0.8 ];
+
+// Subdivided octahedron face corner lays down no-overwrite stencil
+var geom_face = CreateOctahedronFaceGeometry();
+for (var i = 0; i < 3; i++)
+    SubdivideGeometryTriangleList(geom_face, false);
+var mesh_face = scene.AddMesh(DrawType.WIREFRAME, geom_face);
+mesh_face.Colour = SoftWhite;
+
+var plane0 = vec4_create(1, 0, -1, 1);
+vec4.scale(plane0, plane0, 1.0 / Math.sqrt(2.0));
+var plane1 = vec4_create(-0.5, 1, -0.5, 0.5);
+vec4.scale(plane1, plane1, 1.0 / Math.sqrt(1.5));
+
+var pm0 = scene.AddPlane(plane0, 2, 2);
+pm0.Colour = SoftWhite;
+pm0.FillColour = [ 0.6, 0.2, 0.2 ];
+var pm1 = scene.AddPlane(plane1, 2, 2);
+pm1.Colour = SoftWhite;
+pm1.FillColour = [ 0.2, 0.6, 0.2 ];
+
+scene.SetCameraPosition(0.25, 0.25, 4.2);
+scene.SetCameraRotation(-0.6, 1.2, 0);
+
+{{< /wglsbx >}}
+
+These two planes are clearly orthogonal and have a line of intersection that passes through the bottom left point, as we worked through in [Part 1]({{<relref "post/sphere-indexing.mmark">}}).
+
+The scale constants also make sense: both distances are initially normalised by the meridian length ($$\frac{2}{\sqrt{2}}$$)/face height ($$\sqrt{1.5}$$) and then multiplied by the the number of rows/columns to get a 2D index.
+
+##### Changing the Frame of Reference
+
+It's important to note that this is an orthogonal projection and that as long as the planes stay orthogonal, you can rotate them and re-run the projection with adjusted constants to get a unique 2D position. Index reconstruction will be difficult, however, as the planes will no longer be aligned with the rows and columns...
+
+...except for one special case that is easier to visualise with an orthographic projection:
+
+{{< wglsbx name="OrthogonalFrame" localstore="false" hidecode="true" orthographic="true" >}}
+
+var SoftWhite = [ 0.8, 0.8, 0.8 ];
+
+// Subdivided octahedron face corner lays down no-overwrite stencil
+var geom_face = CreateOctahedronFaceGeometry();
+for (var i = 0; i < 3; i++)
+    SubdivideGeometryTriangleList(geom_face, false);
+var mesh_face = scene.AddMesh(DrawType.WIREFRAME, geom_face);
+mesh_face.Colour = SoftWhite;
+
+var plane0 = vec4_create(1, 0, 0, 0);
+var plane1 = vec4_create(0, 1, 0, 0);
+
+var pm0 = scene.AddPlane(plane0, 2, 2);
+pm0.Colour = SoftWhite;
+pm0.FillColour = [ 0.6, 0.2, 0.2 ];
+var pm1 = scene.AddPlane(plane1, 2, 2);
+pm1.Colour = SoftWhite;
+pm1.FillColour = [ 0.2, 0.6, 0.2 ];
+
+scene.SetCameraPosition(0.25, 0.25, 4.2);
+scene.SetCameraRotation(0, 0, 0);
+
+{{< /wglsbx >}}
+
+Go ahead and rotate the view to get a clear picture of what's going on here. Immediately we can see:
+
+* The planes are much simpler: $$<1,0,0,0>$$ and $$<0, 1, 0, 0>$$.
+* The two planes clearly align with rows and columns.
+* There is no difference of triangle orientation between rows.
+* Rows and columns are now scaled equally with no arbitrary scale factors anywhere.
+
+The initial version of this in code looks like:
+
+```cpp
+// Get octant index
+int side_x = P.x >= 0.0 ? 1 : 0;
+int side_y = P.y >= 0.0 ? 2 : 0;
+int side_z = P.z >= 0.0 ? 4 : 0;
+int octant_index = side_x + side_y + side_z;
+
+// Projection onto face
+vec3 point_on_plane = abs(P) / dot(abs(P), vec3(1));
+vec3 X = vec3(1.0, 0.0, 0.0);
+vec3 Y = vec3(0.0, 1.0, 0.0);
+
+// 2D projection
+vec2 uv;
+uv.x = dot(point_on_plane, X);
+uv.y = dot(point_on_plane, Y);
+
+// Scale for indexing
+uv.x = uv.x * Constants.x;
+uv.y = uv.y * Constants.x;
+```
+
+where:
+
+```cpp
+Constants.x = 1 << depth;
+```
+
+Look at all those zeroes! Multiplying them out, we're left with:
+
+```cpp
+// Get octant index
+int side_x = P.x >= 0.0 ? 1 : 0;
+int side_y = P.y >= 0.0 ? 2 : 0;
+int side_z = P.z >= 0.0 ? 4 : 0;
+int octant_index = side_x + side_y + side_z;
+
+// Projection onto face
+vec2 point_on_plane = abs(P.xy) / dot(abs(P), vec3(1));
+
+// Projection onto 2D domain
+vec2 uv = point_on_plane * Constants.xx;
+```
+
+Even better, there's no need to check for parity anymore as the triangle orientation doesn't change between rows so the nested if statements are gone:
+
+```cpp
+// Get indices and fractionals
+ivec2 xy = ivec2(uv);
+uv -= vec2(xy);
+
+// Double x to account for two trangles per square 
+xy.x *= 2;
+
+// Offset by one for the upper triangle
+xy.x = (uv.x + uv.y > 1.0) ? xy.x + 1 : xy.x;
+```
+
+Through determined reduction we've managed to derive the core of Octahedral Normal Vectors and use them, maybe, where they weren't expected. The final code is below. While the indices now are different -- something the colour changes visually demonstrate -- they are still unique.
+
+{{< wglsbx name="FinalMap" localstore="false" hidecode="false" >}}
+//
+// Given a 3D point on the sphere, map to a unique, sub-divided triangle
+// index in O(1) with no recursive searching or table lookups.
+//
+
+// Generate initial octahedron and subdivide it
+var octahedron_geometry = CreateOctahedronGeometry();
+var depth = 3;
+for (var i = 0; i < depth; i++)
+	SubdivideGeometryTriangleList(octahedron_geometry, false);
+
+// Use nlerp to project onto sphere. Would be better to slerp to get less
+// distortion but that breaks the indexing scheme. UNCOMMENT to see source
+// octahedron.
+ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
+
+var k = 1 << depth;
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
+mesh.FloatUniforms["GridLUT"] = k * 2 - 1;
+mesh.Vec3Uniforms["Constants"] = vec3_create(k, 0, 0);
+
+
+//===================================================================
+//@buffer(OctahedronShader)
+//===================================================================
+
+
+precision highp float;
+
+uniform vec3 glColour;
+uniform float GridLUT;
+uniform vec3 Constants;
+
+varying vec3 ls_Position;
+
+
+int GetTriangleIndex(vec3 P)
+{
+	// Get octant index
+	int side_x = P.x >= 0.0 ? 1 : 0;
+	int side_y = P.y >= 0.0 ? 2 : 0;
+	int side_z = P.z >= 0.0 ? 4 : 0;
+	int octant_index = side_x + side_y + side_z;
+
+	// Projection onto face
+	vec2 point_on_plane = abs(P.xy) / dot(abs(P), vec3(1));
+
+	// Projection onto 2D domain
+	vec2 uv = point_on_plane * Constants.xx;
+
+	// Get indices and fractionals
+	ivec2 xy = ivec2(uv);
+	uv -= vec2(xy);
+	
+	// Double x to account for two trangles per square 
+	xy.x *= 2;
+
+	// Offset by one for the upper triangle
+	xy.x = (uv.x + uv.y > 1.0) ? xy.x + 1 : xy.x;
+
+	// Composite indices
+	int l = int(GridLUT);
+	return octant_index * l * l + xy.y * l + xy.x;
+}
+
+
+void main(void)
+{
+	int tri_index = GetTriangleIndex(ls_Position);
+	tri_index = int(mod(float(tri_index), 8.0));
+	
+	vec3 debug_colour;
+	if (tri_index == 0) debug_colour = vec3(0.7, 0.5, 0.2);
+	if (tri_index == 1) debug_colour = vec3(0.6, 0.7, 0.2);
+	if (tri_index == 2) debug_colour = vec3(0.2, 0.7, 0.2);
+	if (tri_index == 3) debug_colour = vec3(0.2, 0.7, 0.6);
+	if (tri_index == 4) debug_colour = vec3(0.2, 0.5, 0.7);
+	if (tri_index == 5) debug_colour = vec3(0.3, 0.2, 0.7);
+	if (tri_index == 6) debug_colour = vec3(0.7, 0.2, 0.7);
+	if (tri_index == 7) debug_colour = vec3(0.7, 0.2, 0.3);
+
+	gl_FragColor = vec4(glColour + debug_colour * 1.1, 1);
+}
+{{< /wglsbx >}}
