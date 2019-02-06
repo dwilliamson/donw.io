@@ -4,6 +4,6 @@
 <script type="text/javascript">
     
     var textarea = document.getElementById('{{.Get "name"}}');
-    new WebGLSandbox(textarea, '{{.Get "name"}}LS', {{.Get "localstore"}} == "true", {{ .Get "hidecode" }} == "true");
+    new WebGLSandbox(textarea, '{{.Get "name"}}LS', {{.Get "localstore"}} == "true", {{ .Get "hidecode" }} == "true", {{ .Get "orthographic" }} == "true");
 
 </script>
