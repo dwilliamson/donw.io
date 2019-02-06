@@ -17,9 +17,7 @@
       <pubDate>Mon, 17 Dec 2012 11:38:22 +0100</pubDate>
       
       <guid>http://donw.io/post/high-prec-gradient-noise/</guid>
-      <description>&lt;p&gt;A recently published article by Inigo Quilez on &lt;a href=&#34;http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm&#34;&gt;Voronoi Edges&lt;/a&gt; highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+      <description>&lt;p&gt;A recently published article by Inigo Quilez on &lt;a href=&#34;http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm&#34;&gt;Voronoi Edges&lt;/a&gt; highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.&lt;/p&gt;</description>
     </item>
     
   </channel>

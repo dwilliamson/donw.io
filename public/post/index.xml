@@ -6,10 +6,19 @@
     <description>Recent content in Posts on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 19 May 2017 15:21:27 +0100</lastBuildDate>
+    <lastBuildDate>Wed, 21 Nov 2018 14:27:21 +0100</lastBuildDate>
     
 	<atom:link href="http://donw.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Fast, Constant Time Sphere Indexing, Part 1</title>
+      <link>http://donw.io/post/sphere-indexing/</link>
+      <pubDate>Wed, 21 Nov 2018 14:27:21 +0100</pubDate>
+      
+      <guid>http://donw.io/post/sphere-indexing/</guid>
+      <description>The problem statement is: Assuming a triangle-subdivided sphere, map any 3D point on or above it to a triangle index in constant-time, without using recursion, table lookups or complicated branching logic. Even better; make it so simple you can use it in a pixel shader. This is useful for when your playing field is on/above a sphere and you have some lookup tables you want to reference based on player/camera position.</description>
+    </item>
     
     <item>
       <title>20 Years since Terminal Pacity</title>
@@ -30,9 +39,7 @@ I bought a second-hand 286 PC for something like £20 and migrated to QBasic and
       <description>&lt;p&gt;I&#39;ve been considering removing comments from this blog for a while; mainly because the site doesn&#39;t
 trigger much discussion and I didn&#39;t like keeping the overhead of &lt;a href=&#34;https://disqus.com/&#34;&gt;Disqus&lt;/a&gt;
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
-on people loading the site (although you really should be using the likes of &lt;a href=&#34;https://www.eff.org/privacybadger&#34;&gt;Privacy Badger&lt;/a&gt; and &lt;a href=&#34;https://github.com/gorhill/uBlock&#34;&gt;uBlock Origin&lt;/a&gt;).&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+on people loading the site (although you really should be using the likes of &lt;a href=&#34;https://www.eff.org/privacybadger&#34;&gt;Privacy Badger&lt;/a&gt; and &lt;a href=&#34;https://github.com/gorhill/uBlock&#34;&gt;uBlock Origin&lt;/a&gt;).&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -41,9 +48,7 @@ on people loading the site (although you really should be using the likes of &lt
       <pubDate>Sun, 23 Oct 2016 19:14:32 +0100</pubDate>
       
       <guid>http://donw.io/post/frustum-point-extraction/</guid>
-      <description>&lt;p&gt;Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+      <description>&lt;p&gt;Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -52,9 +57,7 @@ on people loading the site (although you really should be using the likes of &lt
       <pubDate>Sat, 15 Oct 2016 21:45:31 +0100</pubDate>
       
       <guid>http://donw.io/post/packed-circle-radius/</guid>
-      <description>&lt;p&gt;When you develop a solver for the Tammes problem you&#39;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+      <description>&lt;p&gt;When you develop a solver for the Tammes problem you&#39;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -63,9 +66,7 @@ on people loading the site (although you really should be using the likes of &lt
       <pubDate>Thu, 25 Aug 2016 22:05:56 +0100</pubDate>
       
       <guid>http://donw.io/post/high-prec-noise-hlsl/</guid>
-      <description>&lt;p&gt;I posted an article a while back, entitled &lt;a href=&#34;http://donw.io/post/high-prec-gradient-noise/&#34;&gt;Very Fast, High-Precision SIMD/GPU Gradient Noise&lt;/a&gt;, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that &lt;code&gt;floor&lt;/code&gt; could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+      <description>&lt;p&gt;I posted an article a while back, entitled &lt;a href=&#34;http://donw.io/post/high-prec-gradient-noise/&#34;&gt;Very Fast, High-Precision SIMD/GPU Gradient Noise&lt;/a&gt;, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that &lt;code&gt;floor&lt;/code&gt; could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -84,9 +85,7 @@ on people loading the site (although you really should be using the likes of &lt
       <pubDate>Wed, 11 Feb 2015 12:58:23 +0100</pubDate>
       
       <guid>http://donw.io/post/distant-sphere-lights/</guid>
-      <description>&lt;p&gt;This is a small test post exercising math notation with &lt;a href=&#34;http://www.mathjax.org/&#34;&gt;MathJax&lt;/a&gt; in &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+      <description>&lt;p&gt;This is a small test post exercising math notation with &lt;a href=&#34;http://www.mathjax.org/&#34;&gt;MathJax&lt;/a&gt; in &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;.&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -95,9 +94,7 @@ on people loading the site (although you really should be using the likes of &lt
       <pubDate>Mon, 17 Dec 2012 11:38:22 +0100</pubDate>
       
       <guid>http://donw.io/post/high-prec-gradient-noise/</guid>
-      <description>&lt;p&gt;A recently published article by Inigo Quilez on &lt;a href=&#34;http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm&#34;&gt;Voronoi Edges&lt;/a&gt; highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+      <description>&lt;p&gt;A recently published article by Inigo Quilez on &lt;a href=&#34;http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm&#34;&gt;Voronoi Edges&lt;/a&gt; highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.&lt;/p&gt;</description>
     </item>
     
     <item>

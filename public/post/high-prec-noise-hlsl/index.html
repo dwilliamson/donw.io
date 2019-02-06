@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2016-08-25T22:05:56&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.26" />
+        <meta name="generator" content="Hugo 0.51" />
         <title>Mixed Precision GPU Noise with HLSL &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -38,6 +38,9 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
 
         
+
+        
+
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -82,8 +85,6 @@
 
     <section class="post-content">
         <p>I posted an article a while back, entitled <a href="/post/high-prec-gradient-noise/">Very Fast, High-Precision SIMD/GPU Gradient Noise</a>, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that <code>floor</code> could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.</p>
-
-<p></p>
 
 <p>The GPU code was initially written in OpenCL and then ported to CUDA using <a href="https://github.com/Celtoys/ComputeBridge">ComputeBridge</a>. Neither were good platforms for releasing a game; releasing them on both at the same time was a recipe for madness so I ported everything to HLSL. Unfortunately HLSL SM5 doesn't support <code>floor(double)</code>.</p>
 
@@ -206,7 +207,7 @@ double4 Floor(double4 v)
 
 <script type="text/javascript" src="http://donw.io/js/github-comments.js"></script>
 <script type="text/javascript">
-    DoGithubComments("");
+    DoGithubComments( null );
 </script>
 
 </article>

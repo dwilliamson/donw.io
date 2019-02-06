@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2012-12-17T11:38:22&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.26" />
+        <meta name="generator" content="Hugo 0.51" />
         <title>Very Fast, High-Precision SIMD/GPU Gradient Noise &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -38,6 +38,9 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
 
         
+
+        
+
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -82,8 +85,6 @@
 
     <section class="post-content">
         <p>A recently published article by Inigo Quilez on <a href="http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm">Voronoi Edges</a> highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.</p>
-
-<p></p>
 
 <p>The GPGPU crowd have used similar techniques for a while, dubbed <a href="http://www.mpi-inf.mpg.de/~strzodka/projects/double/">Mixed Precision Methods</a> and the first reference I can find to using relative values for &quot;Infinite noise&quot; is in Pixar's paper on <a href="http://graphics.pixar.com/library/WaveletNoise/paper.pdf">Wavelet Noise</a>.</p>
 
@@ -659,7 +660,7 @@ float gradient_noise_d(__global const float3* gradient_table, double3 p)
 
 <script type="text/javascript" src="http://donw.io/js/github-comments.js"></script>
 <script type="text/javascript">
-    DoGithubComments("");
+    DoGithubComments( null );
 </script>
 
 </article>

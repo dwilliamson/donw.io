@@ -20,9 +20,7 @@
       <description>&lt;p&gt;I&#39;ve been considering removing comments from this blog for a while; mainly because the site doesn&#39;t
 trigger much discussion and I didn&#39;t like keeping the overhead of &lt;a href=&#34;https://disqus.com/&#34;&gt;Disqus&lt;/a&gt;
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
-on people loading the site (although you really should be using the likes of &lt;a href=&#34;https://www.eff.org/privacybadger&#34;&gt;Privacy Badger&lt;/a&gt; and &lt;a href=&#34;https://github.com/gorhill/uBlock&#34;&gt;uBlock Origin&lt;/a&gt;).&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
+on people loading the site (although you really should be using the likes of &lt;a href=&#34;https://www.eff.org/privacybadger&#34;&gt;Privacy Badger&lt;/a&gt; and &lt;a href=&#34;https://github.com/gorhill/uBlock&#34;&gt;uBlock Origin&lt;/a&gt;).&lt;/p&gt;</description>
     </item>
     
   </channel>

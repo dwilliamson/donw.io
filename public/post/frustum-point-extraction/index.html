@@ -24,7 +24,7 @@
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2016-10-23T19:14:32&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.26" />
+        <meta name="generator" content="Hugo 0.51" />
         <title>Three Methods to Extract Frustum Points &middot; Gazoo.vrv </title>
         <link rel="canonical" href="http://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
@@ -42,6 +42,9 @@
           <script src="/extern/katex/0.6.0/katex.min.js"></script>
           <script src="/extern/katex/0.6.0/auto-render.min.js"></script>
         
+
+        
+
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
@@ -86,8 +89,6 @@
 
     <section class="post-content">
         <p>Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.</p>
-
-<p></p>
 
 <h5 id="reverse-projection">Reverse Projection</h5>
 
@@ -273,7 +274,7 @@ v[7] = far_center  + axis_x * far_ext_x  - axis_y * far_ext_y;
 
 <script type="text/javascript" src="http://donw.io/js/github-comments.js"></script>
 <script type="text/javascript">
-    DoGithubComments("");
+    DoGithubComments( null );
 </script>
 
 </article>

@@ -22,7 +22,7 @@ function ClearError(status_bar)
 
 function SetError(status_bar, error)
 {
-	status_bar.innerHTML = "Status: <span style='color:#f44'>Errors</span><br/>" + error;
+	status_bar.innerHTML = "Status: <span style='color:#f44;font-weight:bold;'>Errors</span><br/>" + error;
 }
 
 
@@ -98,16 +98,28 @@ function vec3_create(x, y, z)
 
 Basis = (function()
 {
-	function Basis(vector)
+	function Basis(a, b)
 	{
-		this.vector = vector;
+		// Input is either a vector or a line segment
+		if (b)
+		{
+			this.vector = vec3.create();
+			vec3.sub(this.vector, b, a);
+		}
+		else
+		{
+			this.vector = vec3_create(a[0], a[1], a[2]);
+		}
 
 		// Axis is normal
-		this.z = vec3_create(vector[0], vector[1], vector[2]);
+		this.z = vec3_create(this.vector[0], this.vector[1], this.vector[2]);
 		vec3.normalize(this.z, this.z);
 
-		// Perpendicular to fixed up (TODO: fix)s
-		var up = vec3_create(0, 1, 0);
+		// Perpendicular to fixed up
+		if (Math.abs(this.vector[1]) < 0.99)
+			var up = vec3_create(0, 1, 0);
+		else	
+			var up = vec3_create(this.vector[1], 0, 0);
 		this.x = vec3.create();
 		vec3.cross(this.x, this.z, up);
 		vec3.normalize(this.x, this.x);
@@ -404,16 +416,36 @@ function AddLinePrimitives(a, b, axis, position_array, index_array)
 }
 
 
-function AddCirclePrimitive(center, basis, radius, position_array, index_array)
+function CreateSphereGeometry(radius, subdivisions)
 {
+	var geom = CreateOctahedronGeometry();
+	
+	// Subdivide and sphere project after
+
+	for (var i = 0; i < subdivisions; i++)
+		SubdivideGeometryTriangleList(geom, false);
+
+	ProjectVerticesToSphere(geom.Vertices, radius);
+
+	return geom;
+}
+
+
+function AddCirclePrimitive(center, basis, radius, position_array, index_array, divisions)
+{
+	// Center point
 	var center_index = position_array.length;
+	position_array.push(center);
 	var index = position_array.length;
+
+	if (divisions == null)
+		divisions = 16;
 
 	var o = vec3.create();
 	var end = 3.1412 * 2;
-	var step = end / 16.0;
+	var step = end / divisions;
 	var t = 0;
-	for (var i = 0; i < 17; i++)
+	for (var i = 0; i < divisions + 1; i++)
 	{
 		var u = Math.sin(t) * radius;
 		var v = Math.cos(t) * radius;
@@ -424,15 +456,12 @@ function AddCirclePrimitive(center, basis, radius, position_array, index_array)
 		vec3.scale(o, basis.y, v);
 		vec3.add(p, p, o);
 
-		if (t > 0)
-		{
-			position_array.push(p);
+		position_array.push(p);
 
-			index_array.push(index - 1);
-			index_array.push(index);
-			index_array.push(center_index);
-			index++;
-		}
+		index_array.push(index - 1);
+		index_array.push(index);
+		index_array.push(center_index);
+		index++;
 
 		t += step;
 	}
@@ -444,14 +473,13 @@ function AddCylinderPrimitive(a, b, basis, radius, position_array, index_array)
 	// Center point vertices of cylinder caps
 	var a_center_index = position_array.length;
 	position_array.push(a);
-	var b_center_index = position_array.length;
 	position_array.push(b);
 
 	var o = vec3.create();
 	var end = 3.1412 * 2;
-	var step = end / 16.0;
+	var step = end / 8.0;
 	var t = 0;
-	for (var i = 0; i < 17; i++)
+	for (var i = 0; i < 9; i++)
 	{
 		var u = Math.sin(t) * radius;
 		var v = Math.cos(t) * radius;
@@ -506,9 +534,9 @@ function AddConePrimitive(a, b, basis, radius, position_array, index_array)
 
 	var o = vec3.create();
 	var end = 3.1412 * 2;
-	var step = end / 16.0;
+	var step = end / 8.0;
 	var t = 0;
-	for (var i = 0; i < 17; i++)
+	for (var i = 0; i < 9; i++)
 	{
 		var u = Math.sin(t) * radius;
 		var v = Math.cos(t) * radius;
@@ -540,24 +568,94 @@ function AddConePrimitive(a, b, basis, radius, position_array, index_array)
 }
 
 
-function CreateLineGeometry(a, b, size)
+function CreateLineGeometry(a, b, size, cone_size, dash_size)
 {
-	// Line basis
-	var axis = vec3.create();
-	vec3.sub(axis, b, a);
-	var basis = new Basis(axis);
-
-	// Create cone endpoint
-	var cone_size = size * 3;
-	var c = vec3.create();
-	vec3.scale(c, basis.z, cone_size * 2);
-	vec3.add(c, c, b);
-
-	// Add a cylinder and cone at the tip
 	var position_array = new Array();
 	var index_array = new Array();
-	AddCylinderPrimitive(a, b, basis, size, position_array, index_array);
-	AddConePrimitive(b, c, basis, cone_size, position_array, index_array);
+
+	// Line basis
+	var basis = new Basis(a, b);
+
+	var end_point = b;
+	if (cone_size)
+	{
+		// Recalculate line end point for cone tip
+		var cone_axis = vec3.create();
+		vec3.scale(cone_axis, basis.z, cone_size * 2);
+		end_point = vec3.create();
+		vec3.sub(end_point, b, cone_axis);
+		vec3.sub(basis.vector, end_point, a);
+
+		// Create cone endpoint
+		AddConePrimitive(end_point, b, basis, cone_size, position_array, index_array);
+	}
+
+	if (dash_size)
+	{
+		// The basis vector is used to size the cylinder so needs to be scaled
+		// to the size of the dash
+		var length = vec3.length(basis.vector);
+		vec3.scale(basis.vector, basis.z, dash_size);
+
+		var last_pos = null;
+		var draw = false;
+		for (var t = 0; t < length; t += dash_size)
+		{
+			var pos = vec3.create();
+			vec3.scale(pos, basis.z, t);
+			vec3.add(pos, pos, a);
+
+			if (last_pos != null && draw)
+			{
+				AddCylinderPrimitive(last_pos, pos, basis, size, position_array, index_array);
+			}
+
+			// Toggle rendering
+			last_pos = pos;
+			draw ^= true;
+		}
+	}
+	else
+	{
+		AddCylinderPrimitive(a, end_point, basis, size, position_array, index_array);
+	}
+
+	// TODO:: draw bit left over
+
+	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
+}
+
+
+function CreateCircleLineGeometry(divisions, radius, thickness)
+{
+	var position_array = new Array();
+	var index_array = new Array();
+
+	var end = 3.1412 * 2;
+	var step = end / divisions;
+	var t = 0;
+	var last_pos = null;
+
+	for (var i = 0; i < divisions + 1; i++)
+	{
+		var u = Math.sin(t) * radius;
+		var v = Math.cos(t) * radius;
+
+		var pos = vec3_create(u, v, 0);
+		if (last_pos != null)
+		{
+			// Line basis
+			var axis = vec3.create();
+			vec3.sub(axis, pos, last_pos);
+			var basis = new Basis(axis);
+
+			AddCylinderPrimitive(last_pos, pos, basis, thickness, position_array, index_array);
+		}
+		last_pos = pos;
+
+		t += step;
+	}
+
 	return new Geometry(IndexType.TRIANGLE_LIST, position_array, index_array);
 }
 
@@ -812,35 +910,35 @@ function CreateIndexBuffer(gl, indices)
 }
 
 
-function GetShaderUniform(gl, program, uniform_name)
+function GetShaderUniform(gl, program, uniform_name, optional)
 {
 	var uniform = gl.getUniformLocation(program, uniform_name);
-	if (!uniform)
+	if (uniform == null && !optional)
 		FatalError("Couldn't locate uniform: " + uniform_name);
 
 	return uniform;
 }
 
 
-function SetShaderUniformFloat(gl, program, uniform_name, value)
+function SetShaderUniformFloat(gl, program, uniform_name, value, optional)
 {
-	var uniform = GetShaderUniform(gl, program, uniform_name);
+	var uniform = GetShaderUniform(gl, program, uniform_name, optional);
 	if (uniform)
 		gl.uniform1f(uniform, value);
 }
 
 
-function SetShaderUniformVector3(gl, program, uniform_name, vector)
+function SetShaderUniformVector3(gl, program, uniform_name, vector, optional)
 {
-	var uniform = GetShaderUniform(gl, program, uniform_name);
+	var uniform = GetShaderUniform(gl, program, uniform_name, optional);
 	if (uniform)
 		gl.uniform3fv(uniform, vector);
 }
 
 
-function SetShaderUniformMatrix4(gl, program, uniform_name, matrix)
+function SetShaderUniformMatrix4(gl, program, uniform_name, matrix, optional)
 {
-	var uniform = GetShaderUniform(gl, program, uniform_name);
+	var uniform = GetShaderUniform(gl, program, uniform_name, optional);
 	if (uniform)
 		gl.uniformMatrix4fv(uniform, false, matrix);
 }
@@ -894,21 +992,25 @@ var Keys = {
 
 Input = (function()
 {
-	function Input(canvas)
+	function Input(container)
 	{
 		// Initialise default state
 		this.KeyState = [ ];
 		this.MouseDelta = [ 0, 0 ];
 		this.LastMouseDragPos = null;
+		this.ActiveTouchID = null;
 
 		// Set event handlers
 		var self = this;
-		canvas.onkeydown = function(ev) { OnKeyDown(self, ev); };
-		canvas.onkeyup = function(ev) { OnKeyUp(self, ev); };
-		canvas.onmousedown = function(ev) { OnMouseDown(self, ev); };
-		canvas.onmouseup = function(ev) { OnMouseUp(self, ev); };
-		canvas.onmouseout = function(ev) { OnMouseOut(self, ev); };
-		canvas.onmousemove = function(ev) { OnMouseMove(self, ev); };
+		container.onkeydown = function(ev) { OnKeyDown(self, ev); };
+		container.onkeyup = function(ev) { OnKeyUp(self, ev); };
+		container.onmousedown = function(ev) { OnMouseDown(self, ev); };
+		container.onmouseup = function(ev) { OnMouseUp(self, ev); };
+		container.onmouseout = function(ev) { OnMouseOut(self, ev); };
+		container.onmousemove = function(ev) { OnMouseMove(self, ev); };
+		container.ontouchstart = function(ev) { OnTouchStart(self, ev); };
+		container.ontouchend = function(ev) { OnTouchEnd(self, ev); };
+		container.ontouchmove = function(ev) { return OnTouchMove(self, ev); };
 	}
 
 	// Listening for keyboard events requires tabindex set on the canvas so that it can focus
@@ -947,6 +1049,38 @@ Input = (function()
 			self.MouseDelta[1] += ev.clientY - self.LastMouseDragPos[1];
 			self.LastMouseDragPos[0] = ev.clientX;
 			self.LastMouseDragPos[1] = ev.clientY;
+		}
+	}
+	
+	function OnTouchStart(self, ev)
+	{
+		// Use position of the first touch in the list
+		var touch = ev.changedTouches[0];
+		self.KeyState[Keys.MB] = true;
+		self.LastMouseDragPos = [ touch.pageX, touch.pageY ];
+		self.ActiveTouchID = touch.identifier;
+	}
+	function OnTouchEnd(self, ev)
+	{
+		self.KeyState[Keys.MB] = false;
+		self.LastMouseDragPos = null;
+		self.ActiveTouchID = null;
+	}
+	function OnTouchMove(self, ev)
+	{
+		// Find the currently active touch to update movement
+		for (var i = 0; i < ev.changedTouches.length; i++)
+		{
+			var touch = ev.changedTouches[i];
+			if (touch.identifier == self.ActiveTouchID)
+			{
+				self.MouseDelta[0] += touch.pageX - self.LastMouseDragPos[0];
+				self.MouseDelta[1] += touch.pageY - self.LastMouseDragPos[1];
+				self.LastMouseDragPos[0] = touch.pageX;
+				self.LastMouseDragPos[1] = touch.pageY;
+				return false;
+				break;
+			}
 		}
 	}
 	
@@ -990,6 +1124,39 @@ var DrawType = {
 var g_ShaderMap = [ ];
 
 
+FloatingText = (function()
+{
+	function FloatingText(parent, text, position, normal)
+	{
+		// Create the text node and attach it to the parent
+		this.div = document.createElement("div");
+		this.div.className = "wglsbx-FloatingText";
+		var html = katex.renderToString(text, { throwOnError: false });
+		this.div.innerHTML = "<span style='font-size:20px'>" + html + "</span>";
+		parent.appendChild(this.div);
+
+		// Copy position to vec4 ready for perspective transform
+		this.Position = vec4.create();
+		this.Position[0] = position[0];
+		this.Position[1] = position[1];
+		this.Position[2] = position[2];
+		this.Position[3] = 1;
+
+		// Copy the optional normal
+		if (normal)
+		{
+			this.Normal = vec3.create();
+			this.Normal[0] = normal[0];
+			this.Normal[1] = normal[1];
+			this.Normal[2] = normal[2]
+		}
+	}
+
+	return FloatingText;
+	
+})();
+
+
 Mesh = (function()
 {
 	function Mesh(gl, draw_type, geometry, program)
@@ -1014,10 +1181,12 @@ Mesh = (function()
 		}
 
 		this.Program = program;
+		this.FloatUniforms = { };
+		this.Vec3Uniforms = { };
 		
 		// Set initial position on the origin
 		this.Position = vec3.create();
-		this.ModelMatrix = mat4.create();
+		this.ObjectToWorld = mat4.create();
 		this.SetPosition(0, 0, 0);
 
 		// Any gl state
@@ -1037,8 +1206,8 @@ Mesh = (function()
 	Mesh.prototype.SetPosition = function(x, y ,z)
 	{
 		vec3.set(this.Position, x, y, z);
-		mat4.identity(this.ModelMatrix);
-		mat4.translate(this.ModelMatrix, this.ModelMatrix, this.Position);
+		mat4.identity(this.ObjectToWorld);
+		mat4.translate(this.ObjectToWorld, this.ObjectToWorld, this.Position);
 	}
 
 	return Mesh;
@@ -1052,17 +1221,61 @@ var CameraType = {
 };
 
 
+Transform = (function()
+{
+	function Transform(x, y, z, rx, ry, rz)
+	{
+		this.Position = vec3_create(x, y, z);
+		this.Rotation = vec3_create(rx, ry, rz);
+
+		this.PositionMatrix = mat4.create();
+		this.RotationMatrix = mat4.create();
+
+		this.UpdateMatrices();
+	}
+
+
+	Transform.prototype.UpdatePositionMatrix = function()
+	{
+		mat4.identity(this.PositionMatrix);
+		mat4.translate(this.PositionMatrix, this.PositionMatrix, this.Position);
+		return this.PositionMatrix;
+	}
+
+
+	Transform.prototype.UpdateRotationMatrix = function()
+	{
+		mat4.identity(this.RotationMatrix);
+		mat4.rotateY(this.RotationMatrix, this.RotationMatrix, this.Rotation[1]);
+		mat4.rotateX(this.RotationMatrix, this.RotationMatrix, this.Rotation[0]);
+		return this.RotationMatrix;
+	}
+
+
+	Transform.prototype.UpdateMatrices = function()
+	{
+		this.UpdatePositionMatrix();
+		this.UpdateRotationMatrix();
+	}
+
+
+	return Transform;
+})();
+
+
 Scene = (function()
 {
-	function Scene(gl, vshader, fshader, canvas)
+	function Scene(gl, vshader, fshader, canvas, overlay)
 	{
-		// Create matrices
-		this.CameraRotationMatrix = mat4.create();
-		this.glInvViewMatrix = mat4.create();
-		this.glViewMatrix = mat4.create();
+		this.Overlay = overlay;
 
-		// List of meshes to render in the scene
+		// Create matrices
+		this.CameraToWorld = mat4.create();
+		this.WorldToCamera = mat4.create();
+
+		// List of objects to render in the scene
 		this.Meshes = [ ];
+		this.FloatingTexts = [ ];
 
 		// Bind the scene to the context
 		this.gl = gl;
@@ -1077,53 +1290,43 @@ Scene = (function()
 		this.AspectRatio = this.CanvasWidth / this.CanvasHeight;
 
 		// Set a default perspective matrix
-		this.glProjectionMatrix = mat4.create();
-		mat4.perspective(this.glProjectionMatrix, 45, this.AspectRatio, 0.1, 100.0);
+		this.CameraToClip = mat4.create();
+		mat4.perspective(this.CameraToClip, 45, this.AspectRatio, 0.1, 100.0);
 
 		// Set default camera orientation
-		this.CameraPosition = vec3.create();
-		this.CameraRotation = vec3.create();
-		vec3.set(this.CameraPosition, 0, 0, 3);
-		vec3.set(this.CameraRotation, 0, 0, 0);
+		this.FlyCameraTransform = new Transform(0, 0, 3, 0, 0, 0);
+		this.RotateCameraTransform = new Transform(0, 0, 3, 0, 0, 0);
+		this.CameraTransform = this.RotateCameraTransform;
 		this.CameraType = CameraType.ROTATE;
 
 		this.UpdateMatrices();
 	}
 
 
-	Scene.prototype.UpdateRotationMatrix = function()
-	{
-		mat4.identity(this.CameraRotationMatrix);
-		mat4.rotateY(this.CameraRotationMatrix, this.CameraRotationMatrix, this.CameraRotation[1]);
-		mat4.rotateX(this.CameraRotationMatrix, this.CameraRotationMatrix, this.CameraRotation[0]);
-		return this.CameraRotationMatrix;
-	}
-
-
 	Scene.prototype.UpdateMatrices = function()
 	{
-		this.UpdateRotationMatrix();
+		this.CameraTransform.UpdateMatrices();
 
 		// Calculate view matrix from the camera
-		mat4.identity(this.glInvViewMatrix);
-		mat4.translate(this.glInvViewMatrix, this.glInvViewMatrix, this.CameraPosition);
 		if (this.CameraType == CameraType.ROTATE)
-			mat4.mul(this.glInvViewMatrix, this.CameraRotationMatrix, this.glInvViewMatrix);
+			mat4.mul(this.CameraToWorld, this.CameraTransform.RotationMatrix, this.CameraTransform.PositionMatrix);
 		else
-			mat4.mul(this.glInvViewMatrix, this.glInvViewMatrix, this.CameraRotationMatrix);
-		mat4.invert(this.glViewMatrix, this.glInvViewMatrix);
+			mat4.mul(this.CameraToWorld, this.CameraTransform.PositionMatrix, this.CameraTransform.RotationMatrix);
+		mat4.invert(this.WorldToCamera, this.CameraToWorld);
 	}
 
 
 	Scene.prototype.SetCameraPosition = function(x, y, z)
 	{
-		vec3.set(this.CameraPosition, x, y, z);
+		vec3.set(this.FlyCameraTransform.Position, x, y, z);
+		vec3.set(this.RotateCameraTransform.Position, x, y, z);
 	}
 
 
 	Scene.prototype.SetCameraRotation = function(x, y, z)
 	{
-		vec3.set(this.CameraRotation, x, y, z);
+		vec3.set(this.FlyCameraTransform.Rotation, x, y, z);
+		vec3.set(this.RotateCameraTransform.Rotation, x, y, z);
 	}
 
 
@@ -1165,17 +1368,139 @@ Scene = (function()
 	}
 
 
-	Scene.prototype.AddLineMesh = function(a, b, size, colour)
+	Scene.prototype.AddLineMesh = function(a, b, size, colour, cone_size, dash_size)
 	{
-		var g = CreateLineGeometry(a, b, size);
+		var g = CreateLineGeometry(a, b, size, cone_size, dash_size);
 		var m = this.AddMesh(DrawType.WIREFRAME_TRIS, g);
 		m.Colour = colour;
 		m.FillColour = colour;
 		return m;			
 	}
 
+	
+	Scene.prototype.AddSphereMesh = function(center, radius, subdivisions, colour)
+	{
+		var g = CreateSphereGeometry(radius, subdivisions);
+		var m = this.AddMesh(DrawType.SOLID, g);
+		m.Colour = colour;
+		m.FillColour = colour;
+		m.SetPosition(center[0], center[1], center[2]);
+		return m;
+	}
 
-	Scene.prototype.DrawMeshes = function()
+
+	Scene.prototype.AddCircleLineMesh = function(divisions, radius, thickness, colour)
+	{
+		var g = CreateCircleLineGeometry(divisions, radius, thickness, colour);
+		var m = this.AddMesh(DrawType.WIREFRAME_TRIS, g);
+		m.Colour = colour;
+		m.FillColour = colour;
+		return m;
+	}
+
+
+	Scene.prototype.AddFloatingText = function(text, position, normal)
+	{
+		this.FloatingTexts.push(new FloatingText(this.Overlay, text, position, normal));
+	}
+
+
+	Scene.prototype.AddMeasure = function(a, b, col, perp_dist, text, x_text_shift, z_text_shift)
+	{
+		var basis = new Basis(a, b);
+	
+		// Perpendicular
+		var perp = vec3_create(basis.y[0], basis.y[1], basis.y[2]);
+		vec3.scale(perp, perp, perp_dist);
+	
+		// Perpendicular-shifted end points
+		var a0 = vec3.create();
+		vec3.add(a0, a, perp);
+		var b0 = vec3.create();
+		vec3.add(b0, b, perp);
+	
+		// Center point
+		var c = vec3.create();
+		vec3.add(c, a0, b0);
+		vec3.scale(c, c, 0.5);
+	
+		// Inside line starting points
+		var center_shift = vec3.create();
+		vec3.scale(center_shift, basis.z, 0.15);
+		var a1 = vec3.create();
+		vec3.sub(a1, c, center_shift);
+		var b1 = vec3.create();
+		vec3.add(b1, c, center_shift);
+	
+		this.AddLineMesh(a1, a0, 0.001, col, 0.025, 0.02);
+		this.AddLineMesh(b1, b0, 0.001, col, 0.025, 0.02);
+	
+		var text_shift_0 = vec3.create();
+		vec3.scale(text_shift_0, basis.y, x_text_shift);
+		var text_shift_1 = vec3.create();
+		vec3.scale(text_shift_1, basis.z, z_text_shift);
+		var t = vec3.create();
+		vec3.add(t, c, text_shift_0);
+		vec3.add(t, t, text_shift_1);
+		this.AddFloatingText(text, t);
+	}
+
+
+	Scene.prototype.AddSubdividedTriangle = function(subdivs, complete_subdivs, edge_width)
+	{
+		var half_edge_width = edge_width * 0.5;
+		var height = Math.sqrt(edge_width * edge_width - half_edge_width * half_edge_width);
+		var complete_height = height / subdivs * complete_subdivs;
+	
+		function ClipToY(y, a, b)
+		{
+			if (b[1] > y)
+			{
+				var oy = b[1] - y;
+				var dx = b[0] - a[0];
+				var dy = b[1] - a[1];
+	
+				b[1] = y;
+	
+				var t = oy / dy;
+				b[0] = b[0] - dx * t;
+			}
+		}
+	
+		for (var i = 0; i < subdivs; i++)
+		{
+			v = i / subdivs;
+	
+			if (i <= complete_subdivs)
+			{
+				// Horizontal
+				var y = v * height;
+				var l = -half_edge_width + v * half_edge_width;
+				var r =  half_edge_width - v * half_edge_width;
+				var a = vec3_create(l, y, 0);
+				var b = vec3_create(r, y, 0);
+				this.AddLineMesh(b, a, 0.001, [ 1.0, 1.0, 1.0 ]);
+			}
+	
+			// Diagonal left-to-right
+			var y = height - v * height;
+			var l = -half_edge_width + v * edge_width;
+			var r = v * half_edge_width; 
+			var a = vec3_create(l, 0, 0);
+			var b = vec3_create(r, y, 0);
+			ClipToY(complete_height, a, b);
+			this.AddLineMesh(b, a, 0.001, [ 1.0, 1.0, 1.0 ]);
+	
+			// Diagonal right-to-left
+			var a = vec3_create(-l, 0, 0);
+			var b = vec3_create(-r, y, 0);
+			ClipToY(complete_height, a, b);
+			this.AddLineMesh(b, a, 0.001, [ 1.0, 1.0, 1.0 ]);
+		}
+	}
+
+	
+	Scene.prototype.DrawObjects = function()
 	{
 		this.UpdateMatrices();
 
@@ -1184,6 +1509,39 @@ Scene = (function()
 			var mesh = this.Meshes[i];
 			this.DrawMesh(mesh);
 		}
+
+		var world_to_clip = mat4.create();
+		mat4.mul(world_to_clip, this.CameraToClip, this.WorldToCamera);
+
+		var world_to_camera_rotation = mat3.create();
+		mat3.fromMat4(world_to_camera_rotation, this.WorldToCamera);
+
+		var position = vec4.create();
+		var normal = vec3.create();
+
+		for (i in this.FloatingTexts)
+		{
+			var text = this.FloatingTexts[i];
+
+			// If the text has a normal, use that to backface cull
+			if (text.Normal)
+			{
+				vec3.transformMat3(normal, text.Normal, world_to_camera_rotation);
+				var visible = normal[2] > 0;
+				text.div.style.display = visible ? "" : "none";
+			}
+
+			vec4.transformMat4(position, text.Position, world_to_clip);
+
+			position[0] /= position[3];
+			position[1] /= position[3];
+
+			var x = (position[0] *  0.5 + 0.5) * this.CanvasWidth;
+			var y = (position[1] * -0.5 + 0.5) * this.CanvasHeight;
+
+			text.div.style.left = Math.floor(x) + "px";
+			text.div.style.top = Math.floor(y) + "px";
+		}
 	}
 
 
@@ -1191,15 +1549,29 @@ Scene = (function()
 	{
 		var gl = self.gl;
 
-		// Concatenate with identity to get model view for now
-		var model_view = mat4.create();
-		mat4.mul(model_view, mesh.ModelMatrix, self.glViewMatrix);
+		// Concatenate camera/mesh matrices
+		var object_to_camera = mat4.create();
+		mat4.mul(object_to_camera, self.WorldToCamera, mesh.ObjectToWorld);
+		var object_to_clip = mat4.create();
+		mat4.mul(object_to_clip, self.CameraToClip, object_to_camera);
 
 		// Apply program and set shader constants
 		gl.useProgram(mesh.Program);
-		SetShaderUniformMatrix4(gl, mesh.Program, "glProjectionMatrix", self.glProjectionMatrix);
-		SetShaderUniformMatrix4(gl, mesh.Program, "glModelViewMatrix", model_view);
+		SetShaderUniformMatrix4(gl, mesh.Program, "ObjectToClip", object_to_clip);
 		SetShaderUniformVector3(gl, mesh.Program, "glColour", colour);
+
+		// Set all mesh uniforms
+		// To keep the interactive editing experience smooth with no exceptions, make all uniforms optional in the shader
+		for (var name in mesh.FloatUniforms)
+		{
+			var value = mesh.FloatUniforms[name];
+			SetShaderUniformFloat(gl, mesh.Program, name, value, optional=true);
+		}
+		for (var name in mesh.Vec3Uniforms)
+		{
+			var value = mesh.Vec3Uniforms[name];
+			SetShaderUniformVec3(gl, mesh.Program, name, value, optional=true);
+		}
 
 		// Apply mesh-specific gl state
 		if (mesh.CullingEnabled)
@@ -1235,9 +1607,9 @@ Scene = (function()
 		if (mesh.DrawType == DrawType.SOLID)
 		{
 			if (mesh.IndexType == IndexType.TRIANGLE_STRIP)
-				DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, Colours.WHITE);
+				DrawMeshPass(this, mesh, gl.TRIANGLE_STRIP, mesh.FillColour);
 			else
-				DrawMeshPass(this, mesh, gl.TRIANGLES, Colours.WHITE);
+				DrawMeshPass(this, mesh, gl.TRIANGLES, mesh.FillColour);
 		}
 
 		else if (mesh.DrawType & DrawType.WIREFRAME)
@@ -1251,6 +1623,7 @@ Scene = (function()
 					DrawMeshPass(this, mesh, gl.TRIANGLES, mesh.FillColour);
 				gl.depthRange(0, 1);
 			}
+
 			DrawMeshPass(this, mesh, gl.LINES, mesh.Colour);
 		}
 	}
@@ -1266,9 +1639,9 @@ function DrawScene(gl, scene, input)
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// Update camera rotation and reset mouse delta
-	scene.CameraRotation[0] -= input.MouseDelta[1] * 0.004;
-	scene.CameraRotation[1] -= input.MouseDelta[0] * 0.004;
-	var rotation_matrix = scene.UpdateRotationMatrix();
+	scene.CameraTransform.Rotation[0] -= input.MouseDelta[1] * 0.004;
+	scene.CameraTransform.Rotation[1] -= input.MouseDelta[0] * 0.004;
+	var rotation_matrix = scene.CameraTransform.UpdateRotationMatrix();
 	input.MouseDelta[0] = 0;
 	input.MouseDelta[1] = 0;
 
@@ -1288,23 +1661,23 @@ function DrawScene(gl, scene, input)
 
 	// Move the camera based on what the user presses
 	if (input.KeyState[Keys.W])
-		vec3.add(scene.CameraPosition, scene.CameraPosition, forward);
+		vec3.add(scene.CameraTransform.Position, scene.CameraTransform.Position, forward);
 	if (input.KeyState[Keys.S])
-		vec3.sub(scene.CameraPosition, scene.CameraPosition, forward);
+		vec3.sub(scene.CameraTransform.Position, scene.CameraTransform.Position, forward);
 	if (input.KeyState[Keys.A])
-		vec3.sub(scene.CameraPosition, scene.CameraPosition, right);
+		vec3.sub(scene.CameraTransform.Position, scene.CameraTransform.Position, right);
 	if (input.KeyState[Keys.D])
-		vec3.add(scene.CameraPosition, scene.CameraPosition, right);
+		vec3.add(scene.CameraTransform.Position, scene.CameraTransform.Position, right);
 	if (input.KeyState[Keys.E])
-		vec3.add(scene.CameraPosition, scene.CameraPosition, up);
+		vec3.add(scene.CameraTransform.Position, scene.CameraTransform.Position, up);
 	if (input.KeyState[Keys.Q])
-		vec3.sub(scene.CameraPosition, scene.CameraPosition, up);
+		vec3.sub(scene.CameraTransform.Position, scene.CameraTransform.Position, up);
 
-	scene.DrawMeshes();
+	scene.DrawObjects();
 }
 
 
-function main(canvas, status_bar)
+function main(canvas, status_bar, overlay)
 {
 	// Resize the width of the canvas to that of its parent
 	canvas.width = canvas.parentNode.offsetWidth;
@@ -1313,7 +1686,7 @@ function main(canvas, status_bar)
 	var gl = InitWebGL(canvas, status_bar);
 	if (!gl)
 		return null;
-	var input = new Input(canvas);
+	var input = new Input(overlay);
 
 	// Initialise the window with red backdrop
 	gl.clearColor(1, 0, 0, 1);
@@ -1343,22 +1716,21 @@ function main(canvas, status_bar)
 	var vshader = CreateShader(gl, gl.VERTEX_SHADER,`
 		attribute vec3 glVertex;
 
-		uniform mat4 glModelViewMatrix;
-		uniform mat4 glProjectionMatrix;
+		uniform mat4 ObjectToClip;
 
 		varying vec3 ls_Position;
 
 		void main(void)
 		{
 			ls_Position = glVertex;
-			gl_Position = glProjectionMatrix * glModelViewMatrix * vec4(glVertex, 1.0);
+			gl_Position = ObjectToClip * vec4(glVertex, 1.0);
 		}
 	`);
 
 	if (fshader == null || vshader == null)
 		return null;
 
-	var scene = new Scene(gl, vshader, fshader, canvas);
+	var scene = new Scene(gl, vshader, fshader, canvas, overlay);
 
 	(function animloop(){
 		DrawScene(gl, scene, input);
@@ -1434,18 +1806,21 @@ SandboxHTML = (function()
 {
 	function SandboxHTML(textarea, lsname)
 	{
+		this.Name = lsname;
+		
 		// Create host HTML
 		var div = document.createElement("div");
 		var html = `
 			<div class="wglsbx-Root">
 				<div class="wglsbx-CanvasHost">
 					<canvas height="500" tabindex="1"></canvas>
-					<div class="wglsbx-Buttons">Control Mode
-						<label><input type="radio" name="select3" /><span>Fly</span></label>
-						<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
-					</div>
+						<div class="wglsbx-Buttons">Control Mode
+							<label><input type="radio" name="select3" /><span>Fly</span></label>
+							<label><input type="radio" name="select3" checked="true"/><span>Rotate</span></label>
+						</div>
 					<div class="wglsbx-Status">Status: OK</div>
 					<span class="wglsbx-Controls">Rotate: LMB, Move: WSAD</span>
+					<div class="wglsbx-Overlay" tabindex="0"></div>
 				</div>
 
 				<div class="wglsbx-CodeEditor">
@@ -1471,6 +1846,7 @@ SandboxHTML = (function()
 		this.FlyButton = buttons.children[0].children[0];
 		this.RotateButton = buttons.children[1].children[0];
 		this.Status = this.Host.children[2];
+		this.Overlay = this.Host.children[4];
 		this.Editor = root.children[1];
 
 		// Put textarea in the editor div
@@ -1531,12 +1907,16 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 	window.setTimeout(function(){
 
 		// Create the WebGL context/scene
-		var scene = main(html.Canvas, html.Status);
+		var scene = main(html.Canvas, html.Status, html.Overlay);
 		if (scene == null)
 			return;
 
 		// Change scene camera type on radio button select
-		html.OnControlModeChange(function(camera_type) { scene.CameraType = camera_type; });
+		html.OnControlModeChange(function(camera_type)
+		{
+			scene.CameraType = camera_type;
+			scene.CameraTransform = camera_type == CameraType.FLY ? scene.FlyCameraTransform : scene.RotateCameraTransform;
+		});
 
 		// Perform the first code execution run
 		ExecuteCode(cm, scene, html.Status, lsname);
