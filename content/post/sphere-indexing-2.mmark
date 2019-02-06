@@ -1,7 +1,6 @@
 +++
 date = "2019-02-06T13:13:00+01:00"
 draft = false
-hidden = false
 title = "Fast, Constant Time Sphere Indexing, Part 2"
 hasMath = true
 ghcommentid = 20
@@ -14,7 +13,9 @@ ghcommentid = 20
   image = "http://donw.io/img/SphereIndexing2/summary.png"
 +++
 
-Let's take the final solution from [Part 1]({{<relref "post/sphere-indexing.mmark">}}):
+To start, let's take the final solution from [Part 1]({{<relref "post/sphere-indexing.mmark">}}). The goal is to reduce this even further so that the technique can be used frequently in shaders.
+
+<!--more-->
 
 {{< wglsbx_include >}}
 
@@ -500,7 +501,7 @@ xy.x *= 2;
 xy.x = (uv.x + uv.y > 1.0) ? xy.x + 1 : xy.x;
 ```
 
-Through determined reduction we've managed to derive the core of Octahedral Normal Vectors and use them, maybe, where they weren't expected. The final code is below. While the indices now are different -- something the colour changes visually demonstrate -- they are still unique.
+Through determined reduction we've managed to derive the core of [Octahedral Normal Vectors](http://jcgt.org/published/0003/02/01/) and use them, maybe, where they weren't expected. The final code is below. While the indices now are different -- something the colour changes visually demonstrate -- they are still unique.
 
 {{< wglsbx name="FinalMap" localstore="false" hidecode="false" >}}
 //
