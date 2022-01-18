@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="https://donw.io/post/sphere-indexing-2/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2019-02-06T13:13:00&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.51" />
+        <title>Fast, Constant Time Sphere Indexing, Part 2 &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="https://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="https://donw.io/css/main.css"/>
+        <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <link rel="icon" href="https://donw.io/favicon.ico?v=2" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
+          <link rel="stylesheet" href="/extern/katex/0.6.0/katex.min.css">
+          <script src="/extern/katex/0.6.0/katex.min.js"></script>
+          <script src="/extern/katex/0.6.0/auto-render.min.js"></script>
+        
+
+        
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@Donzanoid">
+<meta name="twitter:description" content="Reduction of Triangle-Subdivided Sphere Indexing from Ray Intersection to Octahedral Vectors">
+<meta name="twitter:title" content="Fast, Constant Time Sphere Indexing, Part 2">
+<meta name="twitter:image" content="https://donw.io/img/SphereIndexing2/summary.png">
+
+<meta name="twitter:creator" content="@Donzanoid">
+
+
+
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="https://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">Fast, Constant Time Sphere Indexing, Part 2</h3>
+    </header>
+
+    <section class="post-content">
+        <p>To start, let's take the final solution from <a href="/post/sphere-indexing/">Part 1</a>. The goal is to reduce this even further so that the technique can be used frequently in shaders.</p>
+
+
+<link rel="stylesheet" type="text/css" href="/extern/codemirror-3.0/lib/codemirror.css">
+<link rel="stylesheet" type="text/css" href="/extern/codemirror-3.0/theme/monokai.css">
+<link rel="stylesheet" type="text/css" href="/css/sandbox.css">
+
+<script type="text/javascript" src="/extern/codemirror-3.0/lib/codemirror.js"></script>
+<script type="text/javascript" src="/extern/codemirror-3.0/mode/javascript/javascript.js"></script>
+<script type="text/javascript" src="/extern/gl-matrix-min.js"></script>
+<script type="text/javascript" src="/js/sandbox.js"></script>
+
+
+
+<textarea id='InitialMap'>
+//
+// Given a 3D point on the sphere, map to a unique, sub-divided triangle
+// index in O(1) with no recursive searching or table lookups.
+//
+
+// Generate initial octahedron and subdivide it
+var octahedron_geometry = CreateOctahedronGeometry();
+var depth = 3;
+for (var i = 0; i &lt; depth; i&#43;&#43;)
+	SubdivideGeometryTriangleList(octahedron_geometry, false);
+
+// Use nlerp to project onto sphere. Would be better to slerp to get less
+// distortion but that breaks the indexing scheme. UNCOMMENT to see source
+// octahedron.
+ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
+
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
+mesh.FloatUniforms[&#34;Rows&#34;] = (1 &lt;&lt; depth);
+mesh.FloatUniforms[&#34;TriHalfBasesPerEdge&#34;] = (1 &lt;&lt; depth) * 2;
+mesh.FloatUniforms[&#34;GridLUT&#34;] = (1 &lt;&lt; depth) * 2 - 1;
+
+
+//===================================================================
+//@buffer(OctahedronShader)
+//===================================================================
+
+
+precision highp float;
+
+uniform vec3 glColour;
+uniform float Rows;
+uniform float TriHalfBasesPerEdge;
+uniform float GridLUT;
+
+varying vec3 ls_Position;
+
+
+// Some silly boolean logic code because WebGL...
+bool And(int x, int y)
+{
+	return mod(float(x), exp2(float(y))) != 0.0;
+}
+
+
+int GetTriangleIndex(vec3 P)
+{
+	// Get octant index
+	ivec3 side;
+	side.x = P.x &gt;= 0.0 ? 1 : 0;
+	side.y = P.y &gt;= 0.0 ? 2 : 0;
+	side.z = P.z &gt;= 0.0 ? 4 : 0;
+	int octant_index = side.x &#43; side.y &#43; side.z;
+
+	// Generate face direction from sidedness
+	vec3 face_dir = vec3(side) * vec3(2.0, 1.0, 0.5) - 1.0;
+
+	// Get triangle vertices for the current face
+	// Winding order relative to other faces is irrelevant so we&#39;re free to assume all meridian
+	// edges start at one of the two points on the z-axis and point toward one of the two
+	// points on the x-axis...
+	vec3 v0 = vec3(0, 0, face_dir.z);
+	vec3 v1 = vec3(face_dir.x, 0, 0);
+
+	// ...the last vertex is one of the two poles on the y-axis
+	vec3 v2 = vec3(0, face_dir.y, 0);
+
+	// Find a point on the octahedron face that maps to the current point on the sphere surface
+	// As edge subdivisions were generated using normalized midpoints, tracing a ray back from the
+	// sphere to the origin and finding where it intersects the face will yield the original position.
+	// There is less distortion generating midpoints with a slerp, but that then makes this back-trace
+	// technique a lot trickier to use.
+	// Note use of unnormalised face direction as length factors out
+	float d = dot(v0 - P, face_dir) / dot(P, face_dir);
+	vec3 point_on_plane = P &#43; P * d;
+
+	// Assume octahedron is circumscribed by the unit sphere, length of its meridian edges is known
+	float inv_oct_side_len = 2.0 / sqrt(2.0);
+
+	// What remains is normalisation of Y, which has a length equal to the octahedron triangle&#39;s height.
+	float inv_oct_tri_height = 1.0 / sqrt(1.5);
+
+	// Make 2D basis in the face plane using the meridian edge midpoint as the origin
+	vec3 O = (v0 &#43; v1) * 0.5;
+	vec3 X = (v1 - O) * inv_oct_side_len;
+	vec3 Y = (v2 - O) * inv_oct_tri_height;
+
+	// Project the intersection point onto this plane
+	vec2 uv;
+	uv.x = dot(point_on_plane - v0, X);
+	uv.y = dot(point_on_plane - v0, Y);
+
+	// Normalise plane x position to units of sub triangle half-edges
+	float sub_tri_edge_len = inv_oct_side_len / TriHalfBasesPerEdge;
+	uv.x = uv.x / sub_tri_edge_len;
+
+	// Normalise plane y position to units of sub triangle heights (the easy bit)
+	uv.y = (uv.y * inv_oct_tri_height) * Rows;
+
+	// Get integer indices, y is already in its final form
+	int x = int(uv.x);
+	int y = int(uv.y);
+
+	// Get fractionals
+	float u = uv.x - float(x);
+	float v = uv.y - float(y);
+
+	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
+	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
+	// direction based on parity of y index.
+	if (And(x, 1) != And(y, 1))
+	{
+		if (u &#43; v &lt; 1.0)
+			x--;
+	}
+	else
+	{
+		if (v - u &gt; 0.0)
+			x--;
+	}
+
+	// This is a nice way of making sure that triangles on each row start off at index 0
+	// x -= y;
+	// However, can&#39;t easily turn that into a linear index as row starting indices form
+	// the following sequence
+	// 0, 15, 28, 39, 48, 55, 60, 63
+	// Instead, juse assume a square grid and only store data for those triangles within the
+	// octahedron face bounds.
+	int l = int(GridLUT);
+	return octant_index * l * l &#43; y * l &#43; x;
+}
+
+
+void main(void)
+{
+	int tri_index = GetTriangleIndex(ls_Position);
+	tri_index = int(mod(float(tri_index), 8.0));
+
+	vec3 debug_colour;
+	if (tri_index == 0) debug_colour = vec3(0.7, 0.5, 0.2);
+	if (tri_index == 1) debug_colour = vec3(0.6, 0.7, 0.2);
+	if (tri_index == 2) debug_colour = vec3(0.2, 0.7, 0.2);
+	if (tri_index == 3) debug_colour = vec3(0.2, 0.7, 0.6);
+	if (tri_index == 4) debug_colour = vec3(0.2, 0.5, 0.7);
+	if (tri_index == 5) debug_colour = vec3(0.3, 0.2, 0.7);
+	if (tri_index == 6) debug_colour = vec3(0.7, 0.2, 0.7);
+	if (tri_index == 7) debug_colour = vec3(0.7, 0.2, 0.3);
+
+	gl_FragColor = vec4(glColour &#43; debug_colour * 1.1, 1);
+}
+
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('InitialMap');
+    new WebGLSandbox(textarea, 'InitialMapLS', "false" == "true", "false" == "true", "" == "true");
+
+</script>
+
+<p>The code is conceptually simple but is a mess of maths and constants screaming out to be simplified. This could be <em>much</em> faster so let's kick a can down the road of simplification and see if it hits anything.</p>
+
+<h5 id="initial-reduction">Initial Reduction</h5>
+
+<p>Take the original point projection onto the plane:</p>
+
+<pre><code class="language-cpp">float d = dot(v0 - P, face_dir) / dot(P, face_dir);
+vec3 point_on_plane = P + P * d;
+</code></pre>
+
+<p>The numerator dot product distributes:</p>
+
+<pre><code class="language-cpp">float d = (dot(v0, face_dir) - dot(P, face_dir)) / dot(P, face_dir);
+</code></pre>
+
+<p>and the second <code>dot(P, face_dir)</code> division cancels:</p>
+
+<pre><code class="language-cpp">float d = dot(v0, face_dir) / dot(P, face_dir) - 1.0;
+</code></pre>
+
+<p>Only <code>v0.z</code> is set here so we can immediately multiply that through:</p>
+
+<pre><code class="language-cpp">float d = face_dir.z * face_dir.z / dot(P, face_dir) - 1.0;
+</code></pre>
+
+<p>Face direction components can only be 1 or -1 so their square will always be 1:</p>
+
+<pre><code class="language-cpp">float d = 1.0 / dot(P, face_dir) - 1.0;
+</code></pre>
+
+<p>Now substitute <code>d</code> back into the projection:</p>
+
+<pre><code class="language-cpp">vec3 point_on_plane = P + P * (1.0 / dot(P, face_dir) - 1.0);
+</code></pre>
+
+<p>Distribute <code>P</code>:</p>
+
+<pre><code class="language-cpp">vec3 point_on_plane = P + P  / dot(P, face_dir) - P;
+</code></pre>
+
+<p>And <code>P</code> disappears!</p>
+
+<pre><code class="language-cpp">vec3 point_on_plane = P / dot(P, face_dir);
+</code></pre>
+
+<p>Next up are the three basis vectors:</p>
+
+<pre><code class="language-cpp">vec3 O = (v0 + v1) * 0.5;
+vec3 X = (v1 - O) * inv_oct_side_len;
+vec3 Y = (v2 - O) * inv_oct_tri_height;
+</code></pre>
+
+<p>There are a bunch of zero components in here that should allow some simplification. <code>O</code> sums as:</p>
+
+<pre><code class="language-cpp">vec3 O = vec3(face_dir.x, 0.0, face_dir.z) * 0.5;
+</code></pre>
+
+<p><code>X</code> sums as:</p>
+
+<pre><code class="language-cpp">vec3 X = vec3(face_dir.x - face_dir.x * 0.5, 0.0, -face_dir.z * 0.5) * inv_oct_side_len;
+</code></pre>
+
+<p>Given that <code>k - k * 0.5</code> is always <code>k * 0.5</code> this simplifies a little:</p>
+
+<pre><code class="language-cpp">vec3 X = vec3(face_dir.x, 0.0, -face_dir.z) * inv_oct_side_len * 0.5;
+</code></pre>
+
+<p><code>Y</code> sums as:</p>
+
+<pre><code class="language-cpp">vec3 Y = vec3(-face_dir.x * 0.5, face_dir.y, -face_dir.z * 0.5) * inv_oct_tri_height;
+</code></pre>
+
+<p>If we pair the calculation of <code>X</code> with <code>uv.x</code> it's easy to notice something:</p>
+
+<pre><code class="language-cpp">vec3 X = vec3(face_dir.x, 0.0, -face_dir.z) * inv_oct_side_len * 0.5;
+float sub_tri_edge_len = inv_oct_side_len / TriHalfBasesPerEdge;
+uv.x = uv.x / sub_tri_edge_len;
+</code></pre>
+
+<p><code>inv_oct_side_len</code> cancels leaving only:</p>
+
+<pre><code class="language-cpp">vec3 X = vec3(face_dir.x, 0.0, -face_dir.z);
+uv.x = uv.x * TriHalfBasesPerEdge * 0.5;
+</code></pre>
+
+<p><code>inv_oct_tri_height</code> unfortunately doesn't cancel but it distributes, allowing the multiply to be deferred to a single scalar later:</p>
+
+<pre><code class="language-cpp">vec3 Y = vec3(-face_dir.x * 0.5, face_dir.y, -face_dir.z * 0.5);
+uv.y = (uv.y * inv_oct_tri_height * inv_oct_tri_height) * Rows;
+</code></pre>
+
+<p>Folding all the immediates into shader constants leaves us with:</p>
+
+<pre><code class="language-cpp">// Get octant index
+ivec3 side;
+side.x = P.x &gt;= 0.0 ? 1 : 0;
+side.y = P.y &gt;= 0.0 ? 2 : 0;
+side.z = P.z &gt;= 0.0 ? 4 : 0;
+int octant_index = side.x + side.y + side.z;
+
+// Generate face direction from sidedness
+vec3 face_dir = vec3(side) * vec3(2.0, 1.0, 0.5) - 1.0;
+
+// Projection onto face
+vec3 point_on_plane = P / dot(P, face_dir);	
+vec3 X = face_dir * vec3(1.0, 0.0, -1.0);
+vec3 Y = face_dir * vec3(-0.5, 1.0, -0.5);
+
+// 2D projection
+vec2 uv;
+uv.x = dot(point_on_plane, X) + 1.0;
+uv.y = dot(point_on_plane, Y) + 0.5;
+
+// Scale for indexing
+uv.x = uv.x * Constants.x;
+uv.y = uv.y * Constants.y;
+</code></pre>
+
+<p>and:</p>
+
+<pre><code class="language-cpp">Constants.x = 1 &lt;&lt; depth;
+Constants.y = (1 &lt;&lt; depth) / 1.5;
+</code></pre>
+
+<p>This is looking great! But we're not done yet...</p>
+
+<h5 id="constraining-to-an-octant">Constraining to an Octant</h5>
+
+<p>Something feels redundant here: the octant that a point projects to is used twice in the calculation; first to determine and octant index offset and then to project onto the correct face. Conceptually the projection for all faces can be treated as a projection onto one face only, using the octant index to offset and make unique. Let's try it!</p>
+
+<p>Let's project all vertices onto the face with <code>face_dir={1,1,1}</code>. All points that don't project onto this face are simply flipped around using <code>abs</code>:</p>
+
+<pre><code class="language-cpp">// Get octant index
+int side_x = P.x &gt;= 0.0 ? 1 : 0;
+int side_y = P.y &gt;= 0.0 ? 2 : 0;
+int side_z = P.z &gt;= 0.0 ? 4 : 0;
+int octant_index = side_x + side_y + side.z;
+
+// Projection onto face
+vec3 point_on_plane = abs(P) / dot(abs(P), vec3(1));
+vec3 X = vec3(1.0, 0.0, -1.0);
+vec3 Y = vec3(-0.5, 1.0, -0.5);
+
+// 2D projection
+vec2 uv;
+uv.x = dot(point_on_plane, X) + 1.0;
+uv.y = dot(point_on_plane, Y) + 0.5;
+
+// Scale for indexing
+uv.x = uv.x * Constants.x;
+uv.y = uv.y * Constants.y;
+</code></pre>
+
+<p>There's a couple of very interesting geometric operations in here that are worth investigating in more detail.</p>
+
+<h5 id="visualising-the-planes">Visualising the Planes</h5>
+
+<p>The last two dot products look like plane/distance equations, except the plane normals aren't unit length. They can be normalised by pushing the the required scale factor into the CPU constants. The length of the first normal is <code>sqrt(2)</code> and the second is <code>sqrt(1.5)</code>, so:</p>
+
+<pre><code class="language-cpp">// Projection onto face and point/plane distances using 4x vectors
+vec4 point_on_plane = vec4(abs(P) / dot(abs(P), vec3(1)), 1.0);
+vec4 X = vec4(1.0, 0.0, -1.0, 1.0) / sqrt(2.0);
+vec4 Y = vec4(-0.5, 1.0, -0.5, 0.5) / sqrt(1.5);
+vec2 uv;
+uv.x = dot(point_on_plane, X);
+uv.y = dot(point_on_plane, Y);
+</code></pre>
+
+<p>and the CPU constants are then:</p>
+
+<pre><code class="language-cpp">k = 1 &lt;&lt; depth;
+Constants.x = k * Math.sqrt(2);
+Constants.y = k / 1.5 * Math.sqrt(1.5);
+</code></pre>
+
+<p>Rendering the planes gives:</p>
+
+
+<textarea id='RayCast'>
+
+var SoftWhite = [ 0.8, 0.8, 0.8 ];
+
+// Subdivided octahedron face corner lays down no-overwrite stencil
+var geom_face = CreateOctahedronFaceGeometry();
+for (var i = 0; i &lt; 3; i&#43;&#43;)
+    SubdivideGeometryTriangleList(geom_face, false);
+var mesh_face = scene.AddMesh(DrawType.WIREFRAME, geom_face);
+mesh_face.Colour = SoftWhite;
+
+var plane0 = vec4_create(1, 0, -1, 1);
+vec4.scale(plane0, plane0, 1.0 / Math.sqrt(2.0));
+var plane1 = vec4_create(-0.5, 1, -0.5, 0.5);
+vec4.scale(plane1, plane1, 1.0 / Math.sqrt(1.5));
+
+var pm0 = scene.AddPlane(plane0, 2, 2);
+pm0.Colour = SoftWhite;
+pm0.FillColour = [ 0.6, 0.2, 0.2 ];
+var pm1 = scene.AddPlane(plane1, 2, 2);
+pm1.Colour = SoftWhite;
+pm1.FillColour = [ 0.2, 0.6, 0.2 ];
+
+scene.SetCameraPosition(0.25, 0.25, 4.2);
+scene.SetCameraRotation(-0.6, 1.2, 0);
+
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('RayCast');
+    new WebGLSandbox(textarea, 'RayCastLS', "false" == "true", "true" == "true", "" == "true");
+
+</script>
+
+<p>These two planes are clearly orthogonal and have a line of intersection that passes through the bottom left point, as we worked through in <a href="/post/sphere-indexing/">Part 1</a>.</p>
+
+<p>The scale constants also make sense: both distances are initially normalised by the meridian length (<span  class="math">\(\frac{2}{\sqrt{2}}\)</span>)/face height (<span  class="math">\(\sqrt{1.5}\)</span>) and then multiplied by the the number of rows/columns to get a 2D index.</p>
+
+<h5 id="changing-the-frame-of-reference">Changing the Frame of Reference</h5>
+
+<p>It's important to note that this is an orthogonal projection and that as long as the planes stay orthogonal, you can rotate them and re-run the projection with adjusted constants to get a unique 2D position. Index reconstruction will be difficult, however, as the planes will no longer be aligned with the rows and columns...</p>
+
+<p>...except for one special case that is easier to visualise with an orthographic projection:</p>
+
+
+<textarea id='OrthogonalFrame'>
+
+var SoftWhite = [ 0.8, 0.8, 0.8 ];
+
+// Subdivided octahedron face corner lays down no-overwrite stencil
+var geom_face = CreateOctahedronFaceGeometry();
+for (var i = 0; i &lt; 3; i&#43;&#43;)
+    SubdivideGeometryTriangleList(geom_face, false);
+var mesh_face = scene.AddMesh(DrawType.WIREFRAME, geom_face);
+mesh_face.Colour = SoftWhite;
+
+var plane0 = vec4_create(1, 0, 0, 0);
+var plane1 = vec4_create(0, 1, 0, 0);
+
+var pm0 = scene.AddPlane(plane0, 2, 2);
+pm0.Colour = SoftWhite;
+pm0.FillColour = [ 0.6, 0.2, 0.2 ];
+var pm1 = scene.AddPlane(plane1, 2, 2);
+pm1.Colour = SoftWhite;
+pm1.FillColour = [ 0.2, 0.6, 0.2 ];
+
+scene.SetCameraPosition(0.25, 0.25, 4.2);
+scene.SetCameraRotation(0, 0, 0);
+
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('OrthogonalFrame');
+    new WebGLSandbox(textarea, 'OrthogonalFrameLS', "false" == "true", "true" == "true", "true" == "true");
+
+</script>
+
+<p>Go ahead and rotate the view to get a clear picture of what's going on here. Immediately we can see:</p>
+
+<ul>
+<li>The planes are much simpler: <span  class="math">\(<1,0,0,0>\)</span> and <span  class="math">\(<0, 1, 0, 0>\)</span>.</li>
+<li>The two planes clearly align with rows and columns.</li>
+<li>There is no difference of triangle orientation between rows.</li>
+<li>Rows and columns are now scaled equally with no arbitrary scale factors anywhere.</li>
+</ul>
+
+<p>The initial version of this in code looks like:</p>
+
+<pre><code class="language-cpp">// Get octant index
+int side_x = P.x &gt;= 0.0 ? 1 : 0;
+int side_y = P.y &gt;= 0.0 ? 2 : 0;
+int side_z = P.z &gt;= 0.0 ? 4 : 0;
+int octant_index = side_x + side_y + side_z;
+
+// Projection onto face
+vec3 point_on_plane = abs(P) / dot(abs(P), vec3(1));
+vec3 X = vec3(1.0, 0.0, 0.0);
+vec3 Y = vec3(0.0, 1.0, 0.0);
+
+// 2D projection
+vec2 uv;
+uv.x = dot(point_on_plane, X);
+uv.y = dot(point_on_plane, Y);
+
+// Scale for indexing
+uv.x = uv.x * Constants.x;
+uv.y = uv.y * Constants.x;
+</code></pre>
+
+<p>where:</p>
+
+<pre><code class="language-cpp">Constants.x = 1 &lt;&lt; depth;
+</code></pre>
+
+<p>Look at all those zeroes! Multiplying them out, we're left with:</p>
+
+<pre><code class="language-cpp">// Get octant index
+int side_x = P.x &gt;= 0.0 ? 1 : 0;
+int side_y = P.y &gt;= 0.0 ? 2 : 0;
+int side_z = P.z &gt;= 0.0 ? 4 : 0;
+int octant_index = side_x + side_y + side_z;
+
+// Projection onto face
+vec2 point_on_plane = abs(P.xy) / dot(abs(P), vec3(1));
+
+// Projection onto 2D domain
+vec2 uv = point_on_plane * Constants.xx;
+</code></pre>
+
+<p>Even better, there's no need to check for parity anymore as the triangle orientation doesn't change between rows so the nested if statements are gone:</p>
+
+<pre><code class="language-cpp">// Get indices and fractionals
+ivec2 xy = ivec2(uv);
+uv -= vec2(xy);
+
+// Double x to account for two trangles per square 
+xy.x *= 2;
+
+// Offset by one for the upper triangle
+xy.x = (uv.x + uv.y &gt; 1.0) ? xy.x + 1 : xy.x;
+</code></pre>
+
+<p>Through determined reduction we've managed to derive the core of <a href="http://jcgt.org/published/0003/02/01/">Octahedral Normal Vectors</a> and use them, maybe, where they weren't expected. The final code is below. While the indices now are different -- something the colour changes visually demonstrate -- they are still unique.</p>
+
+
+<textarea id='FinalMap'>
+//
+// Given a 3D point on the sphere, map to a unique, sub-divided triangle
+// index in O(1) with no recursive searching or table lookups.
+//
+
+// Generate initial octahedron and subdivide it
+var octahedron_geometry = CreateOctahedronGeometry();
+var depth = 3;
+for (var i = 0; i &lt; depth; i&#43;&#43;)
+	SubdivideGeometryTriangleList(octahedron_geometry, false);
+
+// Use nlerp to project onto sphere. Would be better to slerp to get less
+// distortion but that breaks the indexing scheme. UNCOMMENT to see source
+// octahedron.
+ProjectVerticesToSphere(octahedron_geometry.Vertices, 1);
+
+var k = 1 &lt;&lt; depth;
+var mesh = scene.AddMesh(DrawType.WIREFRAME_TRIS, octahedron_geometry, undefined, OctahedronShader);
+mesh.FloatUniforms[&#34;GridLUT&#34;] = k * 2 - 1;
+mesh.Vec3Uniforms[&#34;Constants&#34;] = vec3_create(k, 0, 0);
+
+
+//===================================================================
+//@buffer(OctahedronShader)
+//===================================================================
+
+
+precision highp float;
+
+uniform vec3 glColour;
+uniform float GridLUT;
+uniform vec3 Constants;
+
+varying vec3 ls_Position;
+
+
+int GetTriangleIndex(vec3 P)
+{
+	// Get octant index
+	int side_x = P.x &gt;= 0.0 ? 1 : 0;
+	int side_y = P.y &gt;= 0.0 ? 2 : 0;
+	int side_z = P.z &gt;= 0.0 ? 4 : 0;
+	int octant_index = side_x &#43; side_y &#43; side_z;
+
+	// Projection onto face
+	vec2 point_on_plane = abs(P.xy) / dot(abs(P), vec3(1));
+
+	// Projection onto 2D domain
+	vec2 uv = point_on_plane * Constants.xx;
+
+	// Get indices and fractionals
+	ivec2 xy = ivec2(uv);
+	uv -= vec2(xy);
+	
+	// Double x to account for two trangles per square 
+	xy.x *= 2;
+
+	// Offset by one for the upper triangle
+	xy.x = (uv.x &#43; uv.y &gt; 1.0) ? xy.x &#43; 1 : xy.x;
+
+	// Composite indices
+	int l = int(GridLUT);
+	return octant_index * l * l &#43; xy.y * l &#43; xy.x;
+}
+
+
+void main(void)
+{
+	int tri_index = GetTriangleIndex(ls_Position);
+	tri_index = int(mod(float(tri_index), 8.0));
+	
+	vec3 debug_colour;
+	if (tri_index == 0) debug_colour = vec3(0.7, 0.5, 0.2);
+	if (tri_index == 1) debug_colour = vec3(0.6, 0.7, 0.2);
+	if (tri_index == 2) debug_colour = vec3(0.2, 0.7, 0.2);
+	if (tri_index == 3) debug_colour = vec3(0.2, 0.7, 0.6);
+	if (tri_index == 4) debug_colour = vec3(0.2, 0.5, 0.7);
+	if (tri_index == 5) debug_colour = vec3(0.3, 0.2, 0.7);
+	if (tri_index == 6) debug_colour = vec3(0.7, 0.2, 0.7);
+	if (tri_index == 7) debug_colour = vec3(0.7, 0.2, 0.3);
+
+	gl_FragColor = vec4(glColour &#43; debug_colour * 1.1, 1);
+}
+</textarea>
+
+<script type="text/javascript">
+    
+    var textarea = document.getElementById('FinalMap');
+    new WebGLSandbox(textarea, 'FinalMapLS', "false" == "true", "false" == "true", "" == "true");
+
+</script>
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+            <p class="f-post-time"><time datetime="2019-02-06T13:13:00&#43;01:00">February 6, 2019</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=Fast%2c%20Constant%20Time%20Sphere%20Indexing%2c%20Part%202&url=https%3a%2f%2fdonw.io%2fpost%2fsphere-indexing-2%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fdonw.io%2fpost%2fsphere-indexing-2%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=https%3a%2f%2fdonw.io%2fpost%2fsphere-indexing-2%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+    </footer>
+    
+<div id="gh-comments">
+    <br/><br/>
+    <h6>COMMENTS</h6>
+    <div id="gh-comments-list"></div>
+    <a href="javascript:void(0)" id="gh-load-comments" class="btn" style="display:none">Load more comments</a>
+</div>
+
+<script type="text/javascript" src="https://donw.io/js/github-comments.js"></script>
+<script type="text/javascript">
+    DoGithubComments( 20 );
+</script>
+
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="https://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="https://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="https://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    
+        <script>renderMathInElement(document.body);</script>
+    
+
+
+
+</body>
+</html>
