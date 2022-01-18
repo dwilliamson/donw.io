@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Simd on Gazoo.vrv</title>
-    <link>http://donw.io/tags/simd/</link>
+    <link>https://donw.io/tags/simd/</link>
     <description>Recent content in Simd on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 17 Dec 2012 11:38:22 +0100</lastBuildDate>
     
-	<atom:link href="http://donw.io/tags/simd/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://donw.io/tags/simd/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Very Fast, High-Precision SIMD/GPU Gradient Noise</title>
-      <link>http://donw.io/post/high-prec-gradient-noise/</link>
+      <link>https://donw.io/post/high-prec-gradient-noise/</link>
       <pubDate>Mon, 17 Dec 2012 11:38:22 +0100</pubDate>
       
-      <guid>http://donw.io/post/high-prec-gradient-noise/</guid>
+      <guid>https://donw.io/post/high-prec-gradient-noise/</guid>
       <description>&lt;p&gt;A recently published article by Inigo Quilez on &lt;a href=&#34;http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm&#34;&gt;Voronoi Edges&lt;/a&gt; highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.&lt;/p&gt;</description>
     </item>
     

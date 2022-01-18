@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Blog on Gazoo.vrv</title>
-    <link>http://donw.io/tags/blog/</link>
+    <link>https://donw.io/tags/blog/</link>
     <description>Recent content in Blog on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 21 Apr 2017 20:30:00 +0100</lastBuildDate>
     
-	<atom:link href="http://donw.io/tags/blog/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://donw.io/tags/blog/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Replacing Disqus with Github Comments</title>
-      <link>http://donw.io/post/github-comments/</link>
+      <link>https://donw.io/post/github-comments/</link>
       <pubDate>Fri, 21 Apr 2017 20:30:00 +0100</pubDate>
       
-      <guid>http://donw.io/post/github-comments/</guid>
+      <guid>https://donw.io/post/github-comments/</guid>
       <description>&lt;p&gt;I&#39;ve been considering removing comments from this blog for a while; mainly because the site doesn&#39;t
 trigger much discussion and I didn&#39;t like keeping the overhead of &lt;a href=&#34;https://disqus.com/&#34;&gt;Disqus&lt;/a&gt;
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing

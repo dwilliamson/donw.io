@@ -2,40 +2,49 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on Gazoo.vrv</title>
-    <link>http://donw.io/post/</link>
+    <link>https://donw.io/post/</link>
     <description>Recent content in Posts on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 21 Nov 2018 14:27:21 +0100</lastBuildDate>
+    <lastBuildDate>Wed, 06 Feb 2019 13:13:00 +0100</lastBuildDate>
     
-	<atom:link href="http://donw.io/post/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://donw.io/post/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
+      <title>Fast, Constant Time Sphere Indexing, Part 2</title>
+      <link>https://donw.io/post/sphere-indexing-2/</link>
+      <pubDate>Wed, 06 Feb 2019 13:13:00 +0100</pubDate>
+      
+      <guid>https://donw.io/post/sphere-indexing-2/</guid>
+      <description>&lt;p&gt;To start, let&#39;s take the final solution from &lt;a href=&#34;https://donw.io/post/sphere-indexing/&#34;&gt;Part 1&lt;/a&gt;. The goal is to reduce this even further so that the technique can be used frequently in shaders.&lt;/p&gt;</description>
+    </item>
+    
+    <item>
       <title>Fast, Constant Time Sphere Indexing, Part 1</title>
-      <link>http://donw.io/post/sphere-indexing/</link>
+      <link>https://donw.io/post/sphere-indexing/</link>
       <pubDate>Wed, 21 Nov 2018 14:27:21 +0100</pubDate>
       
-      <guid>http://donw.io/post/sphere-indexing/</guid>
+      <guid>https://donw.io/post/sphere-indexing/</guid>
       <description>The problem statement is: Assuming a triangle-subdivided sphere, map any 3D point on or above it to a triangle index in constant-time, without using recursion, table lookups or complicated branching logic. Even better; make it so simple you can use it in a pixel shader. This is useful for when your playing field is on/above a sphere and you have some lookup tables you want to reference based on player/camera position.</description>
     </item>
     
     <item>
       <title>20 Years since Terminal Pacity</title>
-      <link>http://donw.io/post/terminal-pacity/</link>
+      <link>https://donw.io/post/terminal-pacity/</link>
       <pubDate>Fri, 19 May 2017 15:21:27 +0100</pubDate>
       
-      <guid>http://donw.io/post/terminal-pacity/</guid>
+      <guid>https://donw.io/post/terminal-pacity/</guid>
       <description>Around the age of 15 I started to code after a family friend gave me a BBC Microcomputer Model B that his local army barracks were throwing away. Though primitive, it was a wonderful machine that showed me where my future lay. I learned BBC BASIC and a smattering of 6502 Assembly to gain performance and then moved on to PC.
 I bought a second-hand 286 PC for something like £20 and migrated to QBasic and x86 Assembly using Gavin Estey&#39;s tutorials.</description>
     </item>
     
     <item>
       <title>Replacing Disqus with Github Comments</title>
-      <link>http://donw.io/post/github-comments/</link>
+      <link>https://donw.io/post/github-comments/</link>
       <pubDate>Fri, 21 Apr 2017 20:30:00 +0100</pubDate>
       
-      <guid>http://donw.io/post/github-comments/</guid>
+      <guid>https://donw.io/post/github-comments/</guid>
       <description>&lt;p&gt;I&#39;ve been considering removing comments from this blog for a while; mainly because the site doesn&#39;t
 trigger much discussion and I didn&#39;t like keeping the overhead of &lt;a href=&#34;https://disqus.com/&#34;&gt;Disqus&lt;/a&gt;
 around. After looking into Disqus load-time behaviour I was pretty shocked what I was forcing
@@ -44,65 +53,65 @@ on people loading the site (although you really should be using the likes of &lt
     
     <item>
       <title>Three Methods to Extract Frustum Points</title>
-      <link>http://donw.io/post/frustum-point-extraction/</link>
+      <link>https://donw.io/post/frustum-point-extraction/</link>
       <pubDate>Sun, 23 Oct 2016 19:14:32 +0100</pubDate>
       
-      <guid>http://donw.io/post/frustum-point-extraction/</guid>
+      <guid>https://donw.io/post/frustum-point-extraction/</guid>
       <description>&lt;p&gt;Getting frustum points in world-space can be useful in a number of scenarios, such as debug visualisation or building a coarse volume around a partition in your frustum. Each method can be used depending what information you have available to you and what you want to avoid recalculating.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>A Convenient Expression for Packed Circle Radius</title>
-      <link>http://donw.io/post/packed-circle-radius/</link>
+      <link>https://donw.io/post/packed-circle-radius/</link>
       <pubDate>Sat, 15 Oct 2016 21:45:31 +0100</pubDate>
       
-      <guid>http://donw.io/post/packed-circle-radius/</guid>
+      <guid>https://donw.io/post/packed-circle-radius/</guid>
       <description>&lt;p&gt;When you develop a solver for the Tammes problem you&#39;re usually concerned with &lt;a href=&#34;http://paulbourke.net/geometry/circlesphere/#spherepoints&#34;&gt;distributing points evenly on the sphere&lt;/a&gt;, ensuring they are equidistant from each other. The radius of the circles you place at those points is generally not considered:&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Mixed Precision GPU Noise with HLSL</title>
-      <link>http://donw.io/post/high-prec-noise-hlsl/</link>
+      <link>https://donw.io/post/high-prec-noise-hlsl/</link>
       <pubDate>Thu, 25 Aug 2016 22:05:56 +0100</pubDate>
       
-      <guid>http://donw.io/post/high-prec-noise-hlsl/</guid>
-      <description>&lt;p&gt;I posted an article a while back, entitled &lt;a href=&#34;http://donw.io/post/high-prec-gradient-noise/&#34;&gt;Very Fast, High-Precision SIMD/GPU Gradient Noise&lt;/a&gt;, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that &lt;code&gt;floor&lt;/code&gt; could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.&lt;/p&gt;</description>
+      <guid>https://donw.io/post/high-prec-noise-hlsl/</guid>
+      <description>&lt;p&gt;I posted an article a while back, entitled &lt;a href=&#34;https://donw.io/post/high-prec-gradient-noise/&#34;&gt;Very Fast, High-Precision SIMD/GPU Gradient Noise&lt;/a&gt;, where I outlined a technique for achieving double-resolution noise at speeds close to that when using float arithmetic. The key observation was that &lt;code&gt;floor&lt;/code&gt; could be used on cell boundaries to mask off the ranges that require double arithmetic, allowing the bulk of the work to use float arithmetic.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>A New Host, Server and Site Generator</title>
-      <link>http://donw.io/post/a-new-host-server-site/</link>
+      <link>https://donw.io/post/a-new-host-server-site/</link>
       <pubDate>Sun, 19 Jun 2016 21:48:11 +0100</pubDate>
       
-      <guid>http://donw.io/post/a-new-host-server-site/</guid>
+      <guid>https://donw.io/post/a-new-host-server-site/</guid>
       <description>And we are back! It must be a year now since my old site donw.org went dark for many reasons, including being busy working on my own game. There&#39;s some big changes with this new setup:
  I own the domain donw.io this time round. I&#39;ve gone through a bunch of domains -- donw.org, donw.co.uk, etc. -- that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</description>
     </item>
     
     <item>
       <title>Distant Spherical Area Light Sources</title>
-      <link>http://donw.io/post/distant-sphere-lights/</link>
+      <link>https://donw.io/post/distant-sphere-lights/</link>
       <pubDate>Wed, 11 Feb 2015 12:58:23 +0100</pubDate>
       
-      <guid>http://donw.io/post/distant-sphere-lights/</guid>
+      <guid>https://donw.io/post/distant-sphere-lights/</guid>
       <description>&lt;p&gt;This is a small test post exercising math notation with &lt;a href=&#34;http://www.mathjax.org/&#34;&gt;MathJax&lt;/a&gt; in &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Very Fast, High-Precision SIMD/GPU Gradient Noise</title>
-      <link>http://donw.io/post/high-prec-gradient-noise/</link>
+      <link>https://donw.io/post/high-prec-gradient-noise/</link>
       <pubDate>Mon, 17 Dec 2012 11:38:22 +0100</pubDate>
       
-      <guid>http://donw.io/post/high-prec-gradient-noise/</guid>
+      <guid>https://donw.io/post/high-prec-gradient-noise/</guid>
       <description>&lt;p&gt;A recently published article by Inigo Quilez on &lt;a href=&#34;http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm&#34;&gt;Voronoi Edges&lt;/a&gt; highlights the technique of shifting the co-ordinate frame of procedural algorithms to improve precision. This is a really important little trick that I felt was worth reviewing, as it provides huge benefits to world generation at a planetary scale.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Skeletal Animation Looping with Autocorrelation</title>
-      <link>http://donw.io/post/animation-autocorrelation/</link>
+      <link>https://donw.io/post/animation-autocorrelation/</link>
       <pubDate>Mon, 20 Aug 2012 16:07:23 +0100</pubDate>
       
-      <guid>http://donw.io/post/animation-autocorrelation/</guid>
+      <guid>https://donw.io/post/animation-autocorrelation/</guid>
       <description>This is a bit of a fun post highlighting how some simple maths can be used to create great visual results. With some basic statistics, we can create looping skeletal animations from an input data set that contains non-exact loops. A typical example is a motion capture sampled run animation:
 
 This is derived from the CMU Graphics Lab Motion Capture Database, which has been converted to BVH files by Bruce Hahne.</description>
@@ -110,38 +119,38 @@ This is derived from the CMU Graphics Lab Motion Capture Database, which has bee
     
     <item>
       <title>Quaternions and Dual Quaternion Skinning</title>
-      <link>http://donw.io/post/dual-quaternion-skinning/</link>
+      <link>https://donw.io/post/dual-quaternion-skinning/</link>
       <pubDate>Thu, 19 Jul 2012 12:52:03 +0100</pubDate>
       
-      <guid>http://donw.io/post/dual-quaternion-skinning/</guid>
+      <guid>https://donw.io/post/dual-quaternion-skinning/</guid>
       <description>For some reason I like quaternions. I fell in love with complex numbers back in school when I found out that they made more sense than real numbers. While it might not exactly be helpful to visualise quaternions as an extension of complex numbers, there&#39;s something in there that just grabs at me. Unlike previous posts, I&#39;ve managed to update to D3D11 so I&#39;ll be discussing implementation details in terms of HLSL (Shader Model 4, as I also have a D3D10 dev machine).</description>
     </item>
     
     <item>
       <title>An RPC Debugging Framework with Visual Studio</title>
-      <link>http://donw.io/post/rpc-debugging-vs/</link>
+      <link>https://donw.io/post/rpc-debugging-vs/</link>
       <pubDate>Tue, 07 Feb 2012 00:27:21 +0100</pubDate>
       
-      <guid>http://donw.io/post/rpc-debugging-vs/</guid>
+      <guid>https://donw.io/post/rpc-debugging-vs/</guid>
       <description>I used to love Sublime Text 2 (UPDATE: I&#39;m now a Visual Studio Code convert). For me, it does nearly everything a modern C++ code editing platform should do and is constantly moving in a direction that is pleasing to the soul. I&#39;ve worked with Visual Studio since 1998 for editing my C++ code, and I don&#39;t like it. It gets slower year on year, adds many features which are not helpful to your average game developer and consistently ignores our needs as a community.</description>
     </item>
     
     <item>
       <title>Reflection in C&#43;&#43;, Part2: The Simple Implementation of Splinter Cell</title>
-      <link>http://donw.io/post/reflection-cpp-2/</link>
+      <link>https://donw.io/post/reflection-cpp-2/</link>
       <pubDate>Tue, 03 Jan 2012 07:21:58 +0100</pubDate>
       
-      <guid>http://donw.io/post/reflection-cpp-2/</guid>
+      <guid>https://donw.io/post/reflection-cpp-2/</guid>
       <description>The first part in this series on Reflection in C++ gave a high level overview of many of the possibilities open to you when adding reflection to your games. In this second part I&#39;m going to go into details and cover the system used to aid the rendering engine in Splinter Cell: Conviction (SC5).
 The motivation for the development of the SC5 engine was a clean break from the past. We were working with a very, very large code base that used Unreal 2.</description>
     </item>
     
     <item>
       <title>Reflection in C&#43;&#43;, Part 1: Introduction</title>
-      <link>http://donw.io/post/reflection-cpp-1/</link>
+      <link>https://donw.io/post/reflection-cpp-1/</link>
       <pubDate>Sun, 25 Sep 2011 23:34:13 +0100</pubDate>
       
-      <guid>http://donw.io/post/reflection-cpp-1/</guid>
+      <guid>https://donw.io/post/reflection-cpp-1/</guid>
       <description>If there was one job I&#39;d love to do other than writing games it&#39;d be writing compilers. This probably explains my obsession with the subject of reflection; a topic I&#39;ve been hammering away at for almost 10 years now. Having written a few compilers in the past, it became glaringly obvious to me that reflection would be quite simple to add to C++ -- if you&#39;re willing to place some limits on it -- and that the language has suffered from its absence.</description>
     </item>
     

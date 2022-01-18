@@ -3,161 +3,166 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>http://donw.io/post/sphere-indexing/</loc>
+    <loc>https://donw.io/post/sphere-indexing-2/</loc>
+    <lastmod>2019-02-06T13:13:00+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://donw.io/post/sphere-indexing/</loc>
     <lastmod>2018-11-21T14:27:21+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/terminal-pacity/</loc>
+    <loc>https://donw.io/post/terminal-pacity/</loc>
     <lastmod>2017-05-19T15:21:27+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/github-comments/</loc>
+    <loc>https://donw.io/post/github-comments/</loc>
     <lastmod>2017-04-21T20:30:00+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/frustum-point-extraction/</loc>
+    <loc>https://donw.io/post/frustum-point-extraction/</loc>
     <lastmod>2016-10-23T19:14:32+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/packed-circle-radius/</loc>
+    <loc>https://donw.io/post/packed-circle-radius/</loc>
     <lastmod>2016-10-15T21:45:31+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/high-prec-noise-hlsl/</loc>
+    <loc>https://donw.io/post/high-prec-noise-hlsl/</loc>
     <lastmod>2016-08-25T22:05:56+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/a-new-host-server-site/</loc>
+    <loc>https://donw.io/post/a-new-host-server-site/</loc>
     <lastmod>2016-06-19T21:48:11+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/distant-sphere-lights/</loc>
+    <loc>https://donw.io/post/distant-sphere-lights/</loc>
     <lastmod>2015-02-11T12:58:23+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/high-prec-gradient-noise/</loc>
+    <loc>https://donw.io/post/high-prec-gradient-noise/</loc>
     <lastmod>2012-12-17T11:38:22+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/animation-autocorrelation/</loc>
+    <loc>https://donw.io/post/animation-autocorrelation/</loc>
     <lastmod>2012-08-20T16:07:23+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/dual-quaternion-skinning/</loc>
+    <loc>https://donw.io/post/dual-quaternion-skinning/</loc>
     <lastmod>2012-07-19T12:52:03+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/rpc-debugging-vs/</loc>
+    <loc>https://donw.io/post/rpc-debugging-vs/</loc>
     <lastmod>2012-02-07T00:27:21+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/reflection-cpp-2/</loc>
+    <loc>https://donw.io/post/reflection-cpp-2/</loc>
     <lastmod>2012-01-03T07:21:58+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/post/reflection-cpp-1/</loc>
+    <loc>https://donw.io/post/reflection-cpp-1/</loc>
     <lastmod>2011-09-25T23:34:13+01:00</lastmod>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/animation/</loc>
+    <loc>https://donw.io/tags/animation/</loc>
     <lastmod>2012-08-20T16:07:23+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/blog/</loc>
+    <loc>https://donw.io/tags/blog/</loc>
     <lastmod>2017-04-21T20:30:00+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/c&#43;&#43;/</loc>
+    <loc>https://donw.io/tags/c&#43;&#43;/</loc>
     <lastmod>2012-01-03T07:21:58+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/</loc>
-    <lastmod>2018-11-21T14:27:21+01:00</lastmod>
+    <loc>https://donw.io/</loc>
+    <lastmod>2019-02-06T13:13:00+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/gpu/</loc>
+    <loc>https://donw.io/tags/gpu/</loc>
     <lastmod>2016-08-25T22:05:56+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/lighting/</loc>
+    <loc>https://donw.io/tags/lighting/</loc>
     <lastmod>2015-02-11T12:58:23+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/math/</loc>
+    <loc>https://donw.io/tags/math/</loc>
     <lastmod>2016-10-23T19:14:32+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/noise/</loc>
+    <loc>https://donw.io/tags/noise/</loc>
     <lastmod>2016-08-25T22:05:56+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/pbr/</loc>
+    <loc>https://donw.io/tags/pbr/</loc>
     <lastmod>2015-02-11T12:58:23+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/post/</loc>
-    <lastmod>2018-11-21T14:27:21+01:00</lastmod>
+    <loc>https://donw.io/post/</loc>
+    <lastmod>2019-02-06T13:13:00+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/quaternions/</loc>
+    <loc>https://donw.io/tags/quaternions/</loc>
     <lastmod>2012-07-19T12:52:03+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/reflection/</loc>
+    <loc>https://donw.io/tags/reflection/</loc>
     <lastmod>2012-01-03T07:21:58+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/simd/</loc>
+    <loc>https://donw.io/tags/simd/</loc>
     <lastmod>2012-12-17T11:38:22+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/</loc>
+    <loc>https://donw.io/tags/</loc>
     <lastmod>2012-08-20T16:07:23+01:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://donw.io/tags/website/</loc>
+    <loc>https://donw.io/tags/website/</loc>
     <lastmod>2016-06-19T21:48:11+01:00</lastmod>
     <priority>0</priority>
   </url>

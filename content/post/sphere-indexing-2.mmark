@@ -10,7 +10,7 @@ ghcommentid = 20
   creator = "@Donzanoid"
   title = "Fast, Constant Time Sphere Indexing, Part 2"
   description = "Reduction of Triangle-Subdivided Sphere Indexing from Ray Intersection to Octahedral Vectors"
-  image = "http://donw.io/img/SphereIndexing2/summary.png"
+  image = "https://donw.io/img/SphereIndexing2/summary.png"
 +++
 
 To start, let's take the final solution from [Part 1]({{<relref "post/sphere-indexing.mmark">}}). The goal is to reduce this even further so that the technique can be used frequently in shaders.
@@ -58,7 +58,7 @@ varying vec3 ls_Position;
 
 
 // Some silly boolean logic code because WebGL...
-bool and(int x, int y)
+bool And(int x, int y)
 {
 	return mod(float(x), exp2(float(y))) != 0.0;
 }
@@ -129,7 +129,7 @@ int GetTriangleIndex(vec3 P)
 	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
 	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
 	// direction based on parity of y index.
-	if (and(x, 1) != and(y, 1))
+	if (And(x, 1) != And(y, 1))
 	{
 		if (u + v < 1.0)
 			x--;

@@ -94,6 +94,15 @@ function vec3_create(x, y, z)
 	v[2] = z;
 	return v;
 }
+function vec4_create(x, y, z, w)
+{
+	var v = vec4.create();
+	v[0] = x;
+	v[1] = y;
+	v[2] = z;
+	v[3] = w;
+	return v;
+}
 
 
 Basis = (function()
@@ -153,23 +162,66 @@ Geometry = (function()
 })();
 
 
-function CreatePlaneGeometry(scale, nb_vertices_x)
+function PointOnPlane(plane)
+{
+	var d = plane[3];
+	var p = vec3_create(plane[0], plane[1], plane[2]);
+	vec3.scale(p, p, -d);
+	return p;
+}
+
+
+function CreatePlaneGeometry(plane, scale, nb_vertices_x)
 {
 	var positions = new Array();
+
+	// Arbitrary basis around plane normal
+	var basis = new Basis(plane);
+
+	// Total span of plane on each axis
+	var x_span = vec3.create();
+	vec3.scale(x_span, basis.x, scale);
+	var y_span = vec3.create();
+	vec3.scale(y_span, basis.y, scale);
+
+	// Half of span for locating the origin
+	var half_x_span = vec3.create();
+	vec3.scale(half_x_span, x_span, 0.5);
+	var half_y_span = vec3.create();
+	vec3.scale(half_y_span, y_span, 0.5);
+
+	// Zero origin offset by plane distance along normal
+	var origin = PointOnPlane(plane);
+	vec3.sub(origin, origin, half_x_span);
+	vec3.sub(origin, origin, half_y_span);
+
+	// Step size between vertices on each axis
+	var x_step = vec3.create();
+	vec3.scale(x_step, x_span, 1.0 / (nb_vertices_x - 1));
+	var y_step = vec3.create();
+	vec3.scale(y_step, y_span, 1.0 / (nb_vertices_x - 1));
 
 	// Generate a linear array of vertices
 	var mid = scale / 2.0;
 	scale *= (1.0 / (nb_vertices_x - 1.0));
 	for (var y = 0, i = 0; y < nb_vertices_x; y++)
 	{
+		// Row step
+		var y_offset = vec3.create();
+		vec3.scale(y_offset, y_step, y);
+
 		for (var x = 0; x < nb_vertices_x; x++, i++)
 		{
-			// Calculate position
-			var p = vec3.create();
-			p[0] = x * scale - mid;
-			p[1] = 1;
-			p[2] = y * scale - mid;
-			positions.push(p);
+			// Column step
+			var x_offset = vec3.create();
+			vec3.scale(x_offset, x_step, x);
+
+			// Offset position from origin
+			var pos = vec3.create();
+			vec3.copy(pos, origin);
+			vec3.add(pos, pos, x_offset);
+			vec3.add(pos, pos, y_offset);
+			positions.push(pos);
 		}
 	}
 
@@ -206,41 +258,14 @@ function CreateCubeGeometry(scale_x, nb_vertices_x)
 	// Iterate over every face on the box
 	for (var i = 0; i < 6; i++)
 	{
-		var axis = Math.floor(i / 2);
-		var angle = (i & 1) ? Math.PI / 2 : -Math.PI / 2;
+		// Generate the plane for this face
 		var side = (i & 1) ? 1.0 : -1.0;
+		var plane = [ 0, 0, 0, scale_x * side * 0.5 ];
+		var axis = Math.floor(i / 2);
+		plane[axis] = 1;
 
-		var scale = vec3.create();
-		var rotation = mat4.create();
-		var position = vec3.create();
-
-		// Determine the scale, rotation and position for the plane vertices
-		vec3.set(scale, scale_x, 1, scale_x);
-		switch (axis)
-		{
-			case 0:
-				mat4.rotateZ(rotation, rotation, angle);
-				vec3.set(position, scale_x * side, 0, 0);
-				break;
-			case 1:
-				mat4.rotateX(rotation, rotation, angle + Math.PI / 2);
-				vec3.set(position, 0, scale_x * side, 0);
-				break;
-			case 2:
-				mat4.rotateX(rotation, rotation, angle);
-				vec3.set(position, 0, 0, scale_x * side);
-				break;
-		}
-
-		// Generate a plane for each face and transform its vertices to fit the face
-		var plane_geom = CreatePlaneGeometry(1, nb_vertices_x);
+		var plane_geom = CreatePlaneGeometry(plane, scale_x, nb_vertices_x);
 		var plane_vertices = plane_geom.Vertices;
-		for (var j = 0; j < plane_vertices.length; j++)
-		{
-			var v = plane_vertices[j];
-			vec3.mul(v, v, scale);
-			vec3.transformMat4(v, v, rotation);
-		}
 
 		// Merge
 		// Indices have already been double-tapped for join
@@ -1265,7 +1290,7 @@ Transform = (function()
 
 Scene = (function()
 {
-	function Scene(gl, vshader, fshader, canvas, overlay)
+	function Scene(gl, vshader, fshader, canvas, overlay, orthographic)
 	{
 		this.Overlay = overlay;
 
@@ -1289,9 +1314,18 @@ Scene = (function()
 		this.CanvasHeight = canvas.height;
 		this.AspectRatio = this.CanvasWidth / this.CanvasHeight;
 
-		// Set a default perspective matrix
+		// Set a default clip matrix
 		this.CameraToClip = mat4.create();
-		mat4.perspective(this.CameraToClip, 45, this.AspectRatio, 0.1, 100.0);
+		if (orthographic)
+		{
+			var y = 2;
+			var x = y * this.AspectRatio;
+			mat4.ortho(this.CameraToClip, -x, x, -y, y, 0.1, 100.0);
+		}
+		else
+		{
+			mat4.perspective(this.CameraToClip, 45, this.AspectRatio, 0.1, 100.0);
+		}
 
 		// Set default camera orientation
 		this.FlyCameraTransform = new Transform(0, 0, 3, 0, 0, 0);
@@ -1499,6 +1533,13 @@ Scene = (function()
 		}
 	}
 
+
+	Scene.prototype.AddPlane = function(plane, scale, nb_vertices_x)
+	{
+		var geom = CreatePlaneGeometry(plane, scale, nb_vertices_x);
+		return this.AddMesh(DrawType.WIREFRAME_QUADS, geom);
+	}
+
 	
 	Scene.prototype.DrawObjects = function()
 	{
@@ -1570,7 +1611,7 @@ Scene = (function()
 		for (var name in mesh.Vec3Uniforms)
 		{
 			var value = mesh.Vec3Uniforms[name];
-			SetShaderUniformVec3(gl, mesh.Program, name, value, optional=true);
+			SetShaderUniformVector3(gl, mesh.Program, name, value, optional=true);
 		}
 
 		// Apply mesh-specific gl state
@@ -1677,7 +1718,7 @@ function DrawScene(gl, scene, input)
 }
 
 
-function main(canvas, status_bar, overlay)
+function main(canvas, status_bar, overlay, orthographic)
 {
 	// Resize the width of the canvas to that of its parent
 	canvas.width = canvas.parentNode.offsetWidth;
@@ -1730,7 +1771,7 @@ function main(canvas, status_bar, overlay)
 	if (fshader == null || vshader == null)
 		return null;
 
-	var scene = new Scene(gl, vshader, fshader, canvas, overlay);
+	var scene = new Scene(gl, vshader, fshader, canvas, overlay, orthographic);
 
 	(function animloop(){
 		DrawScene(gl, scene, input);
@@ -1871,7 +1912,7 @@ SandboxHTML = (function()
 })();
 
 
-function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
+function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode, orthographic)
 {
 	var html = new SandboxHTML(textarea, lsname);
 
@@ -1907,7 +1948,7 @@ function SetupLiveEditEnvironment(textarea, lsname, loadls, hidecode)
 	window.setTimeout(function(){
 
 		// Create the WebGL context/scene
-		var scene = main(html.Canvas, html.Status, html.Overlay);
+		var scene = main(html.Canvas, html.Status, html.Overlay, orthographic);
 		if (scene == null)
 			return;
 

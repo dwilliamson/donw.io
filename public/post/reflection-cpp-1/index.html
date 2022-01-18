@@ -17,7 +17,7 @@
 	
         <meta property="og:site_name" content="Gazoo.vrv">
         <meta property="og:title" content="Gazoo.vrv">
-        <meta property="og:url" content="http://donw.io/post/reflection-cpp-1/">
+        <meta property="og:url" content="https://donw.io/post/reflection-cpp-1/">
         <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
     
         <meta property="og:type" content="article" />
@@ -26,14 +26,14 @@
     
         <meta name="generator" content="Hugo 0.51" />
         <title>Reflection in C&#43;&#43;, Part 1: Introduction &middot; Gazoo.vrv </title>
-        <link rel="canonical" href="http://donw.io/" />
+        <link rel="canonical" href="https://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
-        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
-        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" type='text/css' href="https://donw.io/css/main.css"/>
+        <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
         <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
         <link href="/css/syntax-highlighting.css" rel="stylesheet" />
-        <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
+        <link rel="icon" href="https://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
 
@@ -47,7 +47,7 @@
 
     <header id="site-header">
         <div class="container">
-            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <a href="https://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
             <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
 			
         	
@@ -164,45 +164,45 @@
 
 <pre><code class="language-cpp">struct Name
 {
-	int hash;
-	string text;
+    int hash;
+    string text;
 };
 struct Primitive
 {
-	Name name;
+    Name name;
 };
 struct Type : public Primitive
 {
-	int size;
+    int size;
 };
 struct EnumConstant : public Primitive
 {
-	int value;
+    int value;
 }
 struct Enum : public Type
 {
-	EnumConstant constants[];
+    EnumConstant constants[];
 };
 struct Field : public Primitive
 {
-	Type type;
-	int offset;
+    Type type;
+    int offset;
 };
 struct Function : public Primitive
 {
-	Field return_parameter;
-	Field parameters[];
+    Field return_parameter;
+    Field parameters[];
 };
 struct Class : public Type
 {
-	Field fields[];
-	Function functions[];
+    Field fields[];
+    Function functions[];
 };
 struct Namespace : public Primitive
 {
-	Enum enums[];
-	Class classes[];
-	Function functions[];
+    Enum enums[];
+    Class classes[];
+    Function functions[];
 };
 </code></pre>
 
@@ -216,19 +216,19 @@ struct Namespace : public Primitive
 
 <pre><code class="language-cpp">struct Vector
 {
-	float x, y, z;
+    float x, y, z;
 };
 
 struct PhysicsComponent
 {
-	Vector position;
-	Vector velocity;
-	Vector acceleration;
+    Vector position;
+    Vector velocity;
+    Vector acceleration;
 };
-	
+    
 struct GameObject : public Object
 {
-	PhysicsComponent physics;
+    PhysicsComponent physics;
 };
 </code></pre>
 
@@ -244,7 +244,7 @@ struct GameObject : public Object
 
 <pre><code class="language-cpp">struct Object
 {
-	Type* type;
+    Type* type;
 };
 </code></pre>
 
@@ -252,43 +252,43 @@ struct GameObject : public Object
 
 <pre><code class="language-cpp">void SaveObject(Object* object)
 {
-	// Types that inherit from Object already know their type so can call
-	// the overloaded SaveObject directly
-	SaveObject(object, object-&gt;type);
+    // Types that inherit from Object already know their type so can call
+    // the overloaded SaveObject directly
+    SaveObject(object, object-&gt;type);
 }
 
 void SaveObject(char* data, Type* type)
 {
-	// Using the description of the type, iterate over all fields in
-	// the object
-	for (Field* field in type-&gt;fields)
-	{
-		// Each field knows its offset so add that to the base address of the
-		// object being saved to get at the individual field data
-		char* field_data = data + field-&gt;offset;
+    // Using the description of the type, iterate over all fields in
+    // the object
+    for (Field* field in type-&gt;fields)
+    {
+        // Each field knows its offset so add that to the base address of the
+        // object being saved to get at the individual field data
+        char* field_data = data + field-&gt;offset;
 
-		// If the field type is a known built-in type then we're at leaf nodes of
-		// our object field hierarchies. These can be saved with explicit save
-		// functions that know their type. If not, then we need to further
-		// recurse until we reach a leaf node.
-		Type* field_type = field-&gt;type;
-		if (field_type is builtin)
-			SaveBuiltin(field_data, field_type);
-		else
-			SaveObject(field_data, field_type);
-	}
+        // If the field type is a known built-in type then we're at leaf nodes of
+        // our object field hierarchies. These can be saved with explicit save
+        // functions that know their type. If not, then we need to further
+        // recurse until we reach a leaf node.
+        Type* field_type = field-&gt;type;
+        if (field_type is builtin)
+            SaveBuiltin(field_data, field_type);
+        else
+            SaveObject(field_data, field_type);
+    }
 }
 
 void SaveBuiltin(char* data, Type* type)
 {
-	switch (type)
-	{
-		case (char): WriteChar(data);
-		case (short): WriteShort(data);
-		case (int): WriteInt(data);
-		case (float): WriteFloat(data);
-		// ... etc ...
-	}
+    switch (type)
+    {
+        case (char): WriteChar(data);
+        case (short): WriteShort(data);
+        case (int): WriteInt(data);
+        case (float): WriteFloat(data);
+        // ... etc ...
+    }
 }
 </code></pre>
 
@@ -310,40 +310,40 @@ void SaveBuiltin(char* data, Type* type)
 
 <pre><code class="language-cpp">void SaveObject(char* data, Type* type)
 {
-	// ... start of function ...
-	
-		if (field_type is builtin)
-			SaveBuiltin(field_data, field_type);
-		else if (field_type is container)
-			SaveContainer(field_data, field_type);
-		else
-			SaveObject(field_data, field_type);
-	
-	// ... rest of function ...
+    // ... start of function ...
+    
+        if (field_type is builtin)
+            SaveBuiltin(field_data, field_type);
+        else if (field_type is container)
+            SaveContainer(field_data, field_type);
+        else
+            SaveObject(field_data, field_type);
+    
+    // ... rest of function ...
 }
 
 void SaveContainer(char* data, Type* type)
 {
-	switch (type)
-	{
-		case (vector): WriteVector(data, type);
-		case (list): WriteList(data, type);
-		// ... etc ...
-	}
+    switch (type)
+    {
+        case (vector): WriteVector(data, type);
+        case (list): WriteList(data, type);
+        // ... etc ...
+    }
 }
 
 void SaveVector(char* data, Type* type)
 {
-	// Cast the data to your vector type
-	vector&amp; vec = data cast as vector;
-	
-	Type* stored_type = type-&gt;container_value_type;
-	
-	for (int i in vec.count)
-	{
-		char* value_data = data + i * stored_type-&gt;size;
-		SaveObject(value_data, stored_type);
-	}
+    // Cast the data to your vector type
+    vector&amp; vec = data cast as vector;
+    
+    Type* stored_type = type-&gt;container_value_type;
+    
+    for (int i in vec.count)
+    {
+        char* value_data = data + i * stored_type-&gt;size;
+        SaveObject(value_data, stored_type);
+    }
 }
 </code></pre>
 
@@ -360,30 +360,30 @@ void SaveVector(char* data, Type* type)
 
 <pre><code class="language-cpp">interface IContainer
 {
-	Type* GetKeyType() const;
-	Type* GetValueType() const;
-	
-	ReadIterator GetReadIterator();
-	WriteIterator GetWriteIterator();
+    Type* GetKeyType() const;
+    Type* GetValueType() const;
+    
+    ReadIterator GetReadIterator();
+    WriteIterator GetWriteIterator();
 };
 
 interface IReadIterator
 {
-	char* GetKey() const;
-	char* GetValue() const;
-	int GetCount() const;
-	
-	void MoveNext();
-	bool IsValid();
+    char* GetKey() const;
+    char* GetValue() const;
+    int GetCount() const;
+    
+    void MoveNext();
+    bool IsValid();
 };
 
 interface IWriteIterator
 {
-	void SetKey(char* data);
-	void SetValue(char* data);
-	
-	void MoveNext();
-	bool IsValid();
+    void SetKey(char* data);
+    void SetValue(char* data);
+    
+    void MoveNext();
+    bool IsValid();
 };
 </code></pre>
 
@@ -393,22 +393,22 @@ interface IWriteIterator
 
 <pre><code class="language-cpp">void SaveContainer(char* data, Type* type)
 {
-	ContainerInterface* container = type-&gt;GetContainerInterface(data);
-	Type* key_type = container-&gt;GetKeyType();
-	Type* value_type = container-&gt;GetValueType();
-	
-	Serialise iterator-&gt;GetCount();
-	
-	WriteIterator* iterator = container-&gt;GetWriteIterator();
-	while (iterator-&gt;IsValid())
-	{
-		if (key_type)
-			SaveObject(iterator-&gt;GetKey(), key_type);
-		
-		SaveObject(iterator-&gt;GetValue(), value_type);
-		
-		iterator-&gt;Next();
-	}
+    ContainerInterface* container = type-&gt;GetContainerInterface(data);
+    Type* key_type = container-&gt;GetKeyType();
+    Type* value_type = container-&gt;GetValueType();
+    
+    Serialise iterator-&gt;GetCount();
+    
+    WriteIterator* iterator = container-&gt;GetWriteIterator();
+    while (iterator-&gt;IsValid())
+    {
+        if (key_type)
+            SaveObject(iterator-&gt;GetKey(), key_type);
+        
+        SaveObject(iterator-&gt;GetValue(), value_type);
+        
+        iterator-&gt;Next();
+    }
 }
 </code></pre>
 
@@ -422,19 +422,19 @@ interface IWriteIterator
 
 <pre><code class="language-cpp">struct Name
 {
-	u32 id;
-	const char* text;
+    u32 id;
+    const char* text;
 };
 
 struct Object
 {
-	Name name;
-	Type* type;
+    Name name;
+    Type* type;
 };
 
 class ObjectDatabase
 {
-	Object* CreateObject(const char* type_name);
+    Object* CreateObject(const char* type_name);
 };
 </code></pre>
 
@@ -444,8 +444,8 @@ class ObjectDatabase
 
 <pre><code class="language-cpp">if (field_type is pointer)
 {
-	Object* object = (Object*)field_data;
-	Serialise object-&gt;hash as u32
+    Object* object = (Object*)field_data;
+    Serialise object-&gt;hash as u32
 }
 else if (field_type is builtin) ...
 </code></pre>
@@ -469,7 +469,7 @@ else if (field_type is builtin) ...
 <pre><code class="language-cpp">// Serialisation code for the XML file format
 if (SaveFunc f = field_type-&gt;save_funcs.find(FORMAT_XML))
 {
-	f(field_data, field_type);
+    f(field_data, field_type);
 }
 </code></pre>
 
@@ -479,16 +479,16 @@ if (SaveFunc f = field_type-&gt;save_funcs.find(FORMAT_XML))
 
 <pre><code class="language-cpp">enum Format
 {
-	FORMAT_BINARY,
-	FORMAT_TEXT_XML,
-	FORMAT_BINARY_XML,
-	FORMAT_COUNT
+    FORMAT_BINARY,
+    FORMAT_TEXT_XML,
+    FORMAT_BINARY_XML,
+    FORMAT_COUNT
 };
 
 struct Type
 {
-	SaveFunc save_funcs[FORMAT_COUNT];
-	LoadFunc load_funcs[FORMAT_COUNT];
+    SaveFunc save_funcs[FORMAT_COUNT];
+    LoadFunc load_funcs[FORMAT_COUNT];
 };
 </code></pre>
 
@@ -498,27 +498,27 @@ struct Type
 
 <pre><code class="language-cpp">void SaveObject(char* data, Type* type)
 {
-	// Using the description of the type, iterate over all fields in
-	// the object
-	for (Field* field in type-&gt;fields)
-	{
-		// Each field knows its offset so add that to the base address of the
-		// object being saved to get at the individual field data
-		char* field_data = data + field-&gt;offset;
+    // Using the description of the type, iterate over all fields in
+    // the object
+    for (Field* field in type-&gt;fields)
+    {
+        // Each field knows its offset so add that to the base address of the
+        // object being saved to get at the individual field data
+        char* field_data = data + field-&gt;offset;
 
-		// Branch on field type
-		Type* field_type = field-&gt;type;
-		if (field_type is pointer)
-			Serialise ((Object*)field_data)-&gt;hash as u32
-		else if (SaveFunc f = field_type-&gt;save_funcs[FORMAT_XML])
-			f(field_data, field_type);
-		else if (field_type is builtin)
-			SaveBuiltin(field_data, field_type);
-		else if (field_type is container)
-			SaveContainer(field_data, field_type);
-		else
-			SaveObject(field_data, field_type);
-	}
+        // Branch on field type
+        Type* field_type = field-&gt;type;
+        if (field_type is pointer)
+            Serialise ((Object*)field_data)-&gt;hash as u32
+        else if (SaveFunc f = field_type-&gt;save_funcs[FORMAT_XML])
+            f(field_data, field_type);
+        else if (field_type is builtin)
+            SaveBuiltin(field_data, field_type);
+        else if (field_type is container)
+            SaveContainer(field_data, field_type);
+        else
+            SaveObject(field_data, field_type);
+    }
 }
 </code></pre>
 
@@ -530,22 +530,22 @@ struct Type
 
 <pre><code class="language-cpp">void LoadObject(char* data, const Type* type)
 {
-	for (Field* field in type-&gt;fields)
-	{
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		
-		if (field_type is pointer)
-			// Load u32 hash, lookup in Object Database, point to it (or create, or proxy object, impl defined...)
-		else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
-			f(data, field_type);
-		else if (field_type is container)
-			LoadContainer(field_data, field_type);
-		else if (field_type is builtin)
-			LoadBuiltin(field_data, field_type);
-		else
-			LoadObject(field_data, field_type);
-	}
+    for (Field* field in type-&gt;fields)
+    {
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        
+        if (field_type is pointer)
+            // Load u32 hash, lookup in Object Database, point to it (or create, or proxy object, impl defined...)
+        else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
+            f(data, field_type);
+        else if (field_type is container)
+            LoadContainer(field_data, field_type);
+        else if (field_type is builtin)
+            LoadBuiltin(field_data, field_type);
+        else
+            LoadObject(field_data, field_type);
+    }
 }
 </code></pre>
 
@@ -594,30 +594,30 @@ struct Type
 
 <pre><code class="language-cpp">void LoadObject(char* data, const Type* type)
 {
-	for (string tag in xml_nodes)
-	{
-		// Skip any fields that have been removed
-		Field* field = type-&gt;find_field(tag);
-		if (field == 0)
-			continue;
+    for (string tag in xml_nodes)
+    {
+        // Skip any fields that have been removed
+        Field* field = type-&gt;find_field(tag);
+        if (field == 0)
+            continue;
 
-		// Normal loading
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		if (field_type is pointer)
-			// Load u32 hash, lookup in Object Database, point to/create it
-		else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
-			f(data, field_type);
-		else if (field_type is builtin)
-			LoadBuiltin(field_data, field_type);
-		else if (field_type is container)
-			LoadContainer(field_data, field_type);
-		else
-			LoadObject(field_data, field_type);
-	}
-	
-	// Any added fields in the type won't be present in the data so are
-	// naturally handled if you provide them with a default value
+        // Normal loading
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        if (field_type is pointer)
+            // Load u32 hash, lookup in Object Database, point to/create it
+        else if (LoadFunc f = field_type-&gt;load_funcs[FORMAT_XML])
+            f(data, field_type);
+        else if (field_type is builtin)
+            LoadBuiltin(field_data, field_type);
+        else if (field_type is container)
+            LoadContainer(field_data, field_type);
+        else
+            LoadObject(field_data, field_type);
+    }
+    
+    // Any added fields in the type won't be present in the data so are
+    // naturally handled if you provide them with a default value
 }
 </code></pre>
 
@@ -625,31 +625,31 @@ struct Type
 
 <pre><code class="language-cpp">void LoadObject(char* data, const Type* type)
 {
-	int nb_fields = read from file;
-	
-	for (i in nb_fields)
-	{
-		// Read the chunk header
-		u32 field_hash = read from file;
-		u32 data_size = read from file;
-		
-		// Skip any fields that have been removed
-		Field* field = type-&gt;find_field(field_hash);
-		if (field == 0)
-		{
-			// seek from current position over the data_size
-			continue;
-		}
-		
-		// Normal loading
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		// ...
-		
-		// You can insert an extra check here to verify that the loading code has
-		// consumed the number of bytes equal to data_size. Very useful for tracking
-		// errors in custom loading functions.
-	}
+    int nb_fields = read from file;
+    
+    for (i in nb_fields)
+    {
+        // Read the chunk header
+        u32 field_hash = read from file;
+        u32 data_size = read from file;
+        
+        // Skip any fields that have been removed
+        Field* field = type-&gt;find_field(field_hash);
+        if (field == 0)
+        {
+            // seek from current position over the data_size
+            continue;
+        }
+        
+        // Normal loading
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        // ...
+        
+        // You can insert an extra check here to verify that the loading code has
+        // consumed the number of bytes equal to data_size. Very useful for tracking
+        // errors in custom loading functions.
+    }
 }
 </code></pre>
 
@@ -674,24 +674,24 @@ struct Type
 
 <pre><code class="language-cpp">void SaveEnum(char* data, Type* type)
 {
-	// Cast the type to an enum and retrieve the value
-	Enum* enum_type = type-&gt;AsEnum();
-	int enum_value = *(int*)data;
+    // Cast the type to an enum and retrieve the value
+    Enum* enum_type = type-&gt;AsEnum();
+    int enum_value = *(int*)data;
 
-	// Lookup the constant and save its hash
-	EnumConstant* constant = enum_type-&gt;find_constant(enum_value);
-	WriteU32(constant-&gt;name.hash);
+    // Lookup the constant and save its hash
+    EnumConstant* constant = enum_type-&gt;find_constant(enum_value);
+    WriteU32(constant-&gt;name.hash);
 }
 
 void LoadEnum(char* data, Type* type)
 {
-	// Cast the type to an enum and read the constant hash
-	Enum* enum_type = type-&gt;AsEnum();
-	int hash = ReadU32();
-	
-	// Lookup the constant and assign the value
-	EnumConstant* constant = enum_type-&gt;find_constant(hash);
-	*(int*)data = constant-&gt;value;
+    // Cast the type to an enum and read the constant hash
+    Enum* enum_type = type-&gt;AsEnum();
+    int hash = ReadU32();
+    
+    // Lookup the constant and assign the value
+    EnumConstant* constant = enum_type-&gt;find_constant(hash);
+    *(int*)data = constant-&gt;value;
 }
 </code></pre>
 
@@ -705,34 +705,34 @@ void LoadEnum(char* data, Type* type)
 
 <pre><code class="language-cpp">void BakeSerialisationFunctions(Field* field, Format format)
 {
-	// Don't bake anything for transient fields
-	if (&quot;transient&quot; in field-&gt;attributes)
-		return;
+    // Don't bake anything for transient fields
+    if (&quot;transient&quot; in field-&gt;attributes)
+        return;
 
-	// Bake the save function based on the type
-	if (field_type is pointer)
-		field-&gt;save_funcs[FORMAT_XML] = SavePointer;
-	else if (field_type-&gt;save_funcs[FORMAT_XML])
-		field-&gt;save_funcs[FORMAT_XML] = field_type-&gt;save_funcs[FORMAT_XML];
-	else if (field_type is builtin)
-		field-&gt;save_funcs[FORMAT_XML] = SaveBuiltin;		
-	else if (field_type is enum)
-		field-&gt;save_funcs[FORMAT_XML] = SaveEnum
-	else if (field_type is container)
-		field-&gt;save_funcs[FORMAT_XML] = SaveContainer;
-	else
-		field-&gt;save_funcs[FORMAT_XML] = SaveObject;
+    // Bake the save function based on the type
+    if (field_type is pointer)
+        field-&gt;save_funcs[FORMAT_XML] = SavePointer;
+    else if (field_type-&gt;save_funcs[FORMAT_XML])
+        field-&gt;save_funcs[FORMAT_XML] = field_type-&gt;save_funcs[FORMAT_XML];
+    else if (field_type is builtin)
+        field-&gt;save_funcs[FORMAT_XML] = SaveBuiltin;        
+    else if (field_type is enum)
+        field-&gt;save_funcs[FORMAT_XML] = SaveEnum
+    else if (field_type is container)
+        field-&gt;save_funcs[FORMAT_XML] = SaveContainer;
+    else
+        field-&gt;save_funcs[FORMAT_XML] = SaveObject;
 }
 
 void SaveObject(char* data, Type* type)
 {
-	// Call the save for each field
-	for (Field* field in type-&gt;fields)
-	{
-		char* field_data = data + field-&gt;offset;
-		Type* field_type = field-&gt;type;
-		field-&gt;save_funcs[FORMAT_XML](field_data, field_type);
-	}
+    // Call the save for each field
+    for (Field* field in type-&gt;fields)
+    {
+        char* field_data = data + field-&gt;offset;
+        Type* field_type = field-&gt;type;
+        field-&gt;save_funcs[FORMAT_XML](field_data, field_type);
+    }
 }
 </code></pre>
 
@@ -744,11 +744,11 @@ void SaveObject(char* data, Type* type)
 
 <pre><code class="language-cpp">void SaveObject(char* data, Type* type)
 {
-	// ... end of the function ...
-	
-	// Recurse into base types
-	if (type is class &amp;&amp; type-&gt;base_class)
-		SaveObject(data, type);
+    // ... end of the function ...
+    
+    // Recurse into base types
+    if (type is class &amp;&amp; type-&gt;base_class)
+        SaveObject(data, type);
 }
 </code></pre>
 
@@ -909,19 +909,19 @@ int ret = params.GetReturnValue();
 
 <pre><code class="language-cpp">void NativeFunctionExample(BindLanguageContext* ctx)
 {
-	// Pop some parameters off the script language stack
-	int param0 = ctx-&gt;PopInt();
-	string param1 = ctx-&gt;PopString();
+    // Pop some parameters off the script language stack
+    int param0 = ctx-&gt;PopInt();
+    string param1 = ctx-&gt;PopString();
 
-	// ...do some work with the parameters...
-	
-	// Push a return value result of the work done
-	ctx-&gt;PushInt(1);
+    // ...do some work with the parameters...
+    
+    // Push a return value result of the work done
+    ctx-&gt;PushInt(1);
 }
 
 void RegisterFunctions(BindLanguageContext* ctx)
 {
-	ctx-&gt;RegisterFunction(&quot;NativeFunctionExample&quot;, NativeFunctionExample);
+    ctx-&gt;RegisterFunction(&quot;NativeFunctionExample&quot;, NativeFunctionExample);
 }
 </code></pre>
 
@@ -929,15 +929,15 @@ void RegisterFunctions(BindLanguageContext* ctx)
 
 <pre><code class="language-cpp">int NativeFunctionExample(int param0, string param1)
 {
-	// ...do some work with the parameters...
+    // ...do some work with the parameters...
 }
 
 void NativeFunctionExample_Wrapper(BindLanguageContext* ctx)
 {
-	int param0 = ctx-&gt;PopInt();
-	string param1 = ctx-&gt;PopString();
-	int ret = NativeFunctionExample(param0, param1);
-	ctx-&gt;PushInt(ret);
+    int param0 = ctx-&gt;PopInt();
+    string param1 = ctx-&gt;PopString();
+    int ret = NativeFunctionExample(param0, param1);
+    ctx-&gt;PushInt(ret);
 }
 </code></pre>
 
@@ -958,35 +958,35 @@ void NativeFunctionExample_Wrapper(BindLanguageContext* ctx)
 
 <pre><code class="language-cpp">void MakeParameterStack(ParameterStack&amp; params, BindLanguageContext* ctx)
 {
-	// Iterate over every value pushed onto the script stack
-	for (int i = 0; i &lt; ctx-&gt;ParametersOnStack(); i++)
-	{
-		BindLanguageVal* val = ctx-&gt;GetStackRef();
-		
-		switch (val-&gt;type)
-		{
-			// If required, convert the script value to a native equivalent
-			// In the case of ints, floats, etc, nothing may need to be done
-			// In the case of object references, you need a means of preserving
-			//    the reference in the target language
-		}
-		
-		// Add to the intermediate stack
-		params.Add(val);
-	}
+    // Iterate over every value pushed onto the script stack
+    for (int i = 0; i &lt; ctx-&gt;ParametersOnStack(); i++)
+    {
+        BindLanguageVal* val = ctx-&gt;GetStackRef();
+        
+        switch (val-&gt;type)
+        {
+            // If required, convert the script value to a native equivalent
+            // In the case of ints, floats, etc, nothing may need to be done
+            // In the case of object references, you need a means of preserving
+            //    the reference in the target language
+        }
+        
+        // Add to the intermediate stack
+        params.Add(val);
+    }
 }
 
 void CallFunctionFromScript(BindLanguageContext* ctx, string function_name)
 {
-	// Retrieve the function from the reflecton database
-	Function* function = db.GetFunction(function_name);
-	
-	// Build the parameter stack
-	ParameterStack params;
-	MakeParameterStack(params, ctx);
-	
-	// Call the native function
-	function-&gt;Call(params);
+    // Retrieve the function from the reflecton database
+    Function* function = db.GetFunction(function_name);
+    
+    // Build the parameter stack
+    ParameterStack params;
+    MakeParameterStack(params, ctx);
+    
+    // Call the native function
+    function-&gt;Call(params);
 }
 </code></pre>
 
@@ -1070,8 +1070,8 @@ ReadBlob(object, type-&gt;size);
 // Lookup each pointer hash
 for (ptr in type-&gt;pointers)
 {
-	void* ref = object_db.GetObject((u32)ptr);
-	ptr = ref;
+    void* ref = object_db.GetObject((u32)ptr);
+    ptr = ref;
 }
 </code></pre>
 
@@ -1079,16 +1079,16 @@ for (ptr in type-&gt;pointers)
 
 <pre><code class="language-cpp">for (ptr in type-&gt;pointers)
 {
-	// The ptr now represents an index into the link table and a single bit representing
-	// which link table to use
-	u32 ptr_id = (u32)ptr;
-	bool is_import = ptr_id &amp; 0x80000000;
-	
-	// Pointer lookup is a simple array index
-	if (is_import)
-		ptr = import_table[ptr_id &amp; 0x7FFFFFFF];
-	else
-		ptr = export_table[ptr_id &amp; 0x7FFFFFFF];		
+    // The ptr now represents an index into the link table and a single bit representing
+    // which link table to use
+    u32 ptr_id = (u32)ptr;
+    bool is_import = ptr_id &amp; 0x80000000;
+    
+    // Pointer lookup is a simple array index
+    if (is_import)
+        ptr = import_table[ptr_id &amp; 0x7FFFFFFF];
+    else
+        ptr = export_table[ptr_id &amp; 0x7FFFFFFF];        
 }
 </code></pre>
 
@@ -1150,15 +1150,15 @@ for (ptr in type-&gt;pointers)
         <section class="f-2">
             <section class="share">
                 <span>Share:
-                <a class="icon-twitter" href="http://twitter.com/share?text=Reflection%20in%20C%2b%2b%2c%20Part%201%3a%20Introduction&url=http%3a%2f%2fdonw.io%2fpost%2freflection-cpp-1%2f"
+                <a class="icon-twitter" href="http://twitter.com/share?text=Reflection%20in%20C%2b%2b%2c%20Part%201%3a%20Introduction&url=https%3a%2f%2fdonw.io%2fpost%2freflection-cpp-1%2f"
                     onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
                     <i class="fa fa-twitter"></i>
                 </a>
-                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2freflection-cpp-1%2f"
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fdonw.io%2fpost%2freflection-cpp-1%2f"
                     onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
                     <i class="fa fa-facebook"></i>
                 </a>
-                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2freflection-cpp-1%2f"
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=https%3a%2f%2fdonw.io%2fpost%2freflection-cpp-1%2f"
                    onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
                     <i class="fa fa-google-plus"></i>
                 </a>
@@ -1174,7 +1174,7 @@ for (ptr in type-&gt;pointers)
     <a href="javascript:void(0)" id="gh-load-comments" class="btn" style="display:none">Load more comments</a>
 </div>
 
-<script type="text/javascript" src="http://donw.io/js/github-comments.js"></script>
+<script type="text/javascript" src="https://donw.io/js/github-comments.js"></script>
 <script type="text/javascript">
     DoGithubComments( null );
 </script>
@@ -1184,12 +1184,12 @@ for (ptr in type-&gt;pointers)
 </main>
     <footer id="site-footer">
         <div class="container">
-            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
+            <a href="https://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="https://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
-    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript" src="https://donw.io/js/fittext.js"></script>
     <script type="text/javascript">
       $(".heading").fitText();
     </script>

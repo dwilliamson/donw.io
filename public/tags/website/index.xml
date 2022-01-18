@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Website on Gazoo.vrv</title>
-    <link>http://donw.io/tags/website/</link>
+    <link>https://donw.io/tags/website/</link>
     <description>Recent content in Website on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 19 Jun 2016 21:48:11 +0100</lastBuildDate>
     
-	<atom:link href="http://donw.io/tags/website/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://donw.io/tags/website/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>A New Host, Server and Site Generator</title>
-      <link>http://donw.io/post/a-new-host-server-site/</link>
+      <link>https://donw.io/post/a-new-host-server-site/</link>
       <pubDate>Sun, 19 Jun 2016 21:48:11 +0100</pubDate>
       
-      <guid>http://donw.io/post/a-new-host-server-site/</guid>
+      <guid>https://donw.io/post/a-new-host-server-site/</guid>
       <description>And we are back! It must be a year now since my old site donw.org went dark for many reasons, including being busy working on my own game. There&#39;s some big changes with this new setup:
  I own the domain donw.io this time round. I&#39;ve gone through a bunch of domains -- donw.org, donw.co.uk, etc. -- that I used to pay somebody else to manage for me. That was obviously not the right way of going about this as I no longer own them.</description>
     </item>

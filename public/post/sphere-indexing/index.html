@@ -17,7 +17,7 @@
 	
         <meta property="og:site_name" content="Gazoo.vrv">
         <meta property="og:title" content="Gazoo.vrv">
-        <meta property="og:url" content="http://donw.io/post/sphere-indexing/">
+        <meta property="og:url" content="https://donw.io/post/sphere-indexing/">
         <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
     
         <meta property="og:type" content="article" />
@@ -26,14 +26,14 @@
     
         <meta name="generator" content="Hugo 0.51" />
         <title>Fast, Constant Time Sphere Indexing, Part 1 &middot; Gazoo.vrv </title>
-        <link rel="canonical" href="http://donw.io/" />
+        <link rel="canonical" href="https://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
-        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
-        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" type='text/css' href="https://donw.io/css/main.css"/>
+        <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
         <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
         <link href="/css/syntax-highlighting.css" rel="stylesheet" />
-        <link rel="icon" href="http://donw.io/favicon.ico?v=2" />
+        <link rel="icon" href="https://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
 
@@ -48,7 +48,7 @@
 <meta name="twitter:site" content="@Donzanoid">
 <meta name="twitter:description" content="Assuming a triangle-subdivided sphere, map any 3D point on or above it to a triangle index in constant-time.">
 <meta name="twitter:title" content="Fast, Constant Time Sphere Indexing, Part 1">
-<meta name="twitter:image" content="http://donw.io/img/SphereIndexing/summary.png">
+<meta name="twitter:image" content="https://donw.io/img/SphereIndexing/summary.png">
 
 <meta name="twitter:creator" content="@Donzanoid">
 
@@ -60,7 +60,7 @@
 
     <header id="site-header">
         <div class="container">
-            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <a href="https://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
             <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
 			
         	
@@ -152,7 +152,7 @@ varying vec3 ls_Position;
 
 
 // Some silly boolean logic code because WebGL...
-bool and(int x, int y)
+bool And(int x, int y)
 {
 	return mod(float(x), exp2(float(y))) != 0.0;
 }
@@ -226,7 +226,7 @@ int GetTriangleIndex(vec3 P)
 	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
 	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
 	// direction based on parity of y index.
-	if (and(x, 1) != and(y, 1))
+	if (And(x, 1) != And(y, 1))
 	{
 		if (u &#43; v &lt; 1.0)
 			x--;
@@ -271,7 +271,7 @@ void main(void)
 <script type="text/javascript">
     
     var textarea = document.getElementById('FinalResult');
-    new WebGLSandbox(textarea, 'FinalResultLS', "false" == "true", "true" == "true");
+    new WebGLSandbox(textarea, 'FinalResultLS', "false" == "true", "true" == "true", "" == "true");
 
 </script>
 
@@ -279,20 +279,20 @@ void main(void)
 
 <pre><code class="language-cpp">void main(void)
 {
-	int tri_index = GetTriangleIndex(ls_Position);
-	tri_index = int(mod(float(tri_index), 8.0));
+    int tri_index = GetTriangleIndex(ls_Position);
+    tri_index = int(mod(float(tri_index), 8.0));
 
-	vec3 debug_colour;
-	if (tri_index == 0) debug_colour = vec3(0.7, 0.5, 0.2);
-	if (tri_index == 1) debug_colour = vec3(0.6, 0.7, 0.2);
-	if (tri_index == 2) debug_colour = vec3(0.2, 0.7, 0.2);
-	if (tri_index == 3) debug_colour = vec3(0.2, 0.7, 0.6);
-	if (tri_index == 4) debug_colour = vec3(0.2, 0.5, 0.7);
-	if (tri_index == 5) debug_colour = vec3(0.3, 0.2, 0.7);
-	if (tri_index == 6) debug_colour = vec3(0.7, 0.2, 0.7);
-	if (tri_index == 7) debug_colour = vec3(0.7, 0.2, 0.3);
+    vec3 debug_colour;
+    if (tri_index == 0) debug_colour = vec3(0.7, 0.5, 0.2);
+    if (tri_index == 1) debug_colour = vec3(0.6, 0.7, 0.2);
+    if (tri_index == 2) debug_colour = vec3(0.2, 0.7, 0.2);
+    if (tri_index == 3) debug_colour = vec3(0.2, 0.7, 0.6);
+    if (tri_index == 4) debug_colour = vec3(0.2, 0.5, 0.7);
+    if (tri_index == 5) debug_colour = vec3(0.3, 0.2, 0.7);
+    if (tri_index == 6) debug_colour = vec3(0.7, 0.2, 0.7);
+    if (tri_index == 7) debug_colour = vec3(0.7, 0.2, 0.3);
 
-	gl_FragColor = vec4(glColour + debug_colour * 1.1, 1);
+    gl_FragColor = vec4(glColour + debug_colour * 1.1, 1);
 }
 </code></pre>
 
@@ -520,7 +520,7 @@ scene.SetCameraPosition(0, 0, 7);
 <script type="text/javascript">
     
     var textarea = document.getElementById('PolarIcosahedron');
-    new WebGLSandbox(textarea, 'PolarIcosahedronLS', "false" == "true", "false" == "true");
+    new WebGLSandbox(textarea, 'PolarIcosahedronLS', "false" == "true", "false" == "true", "" == "true");
 
 </script>
 
@@ -607,7 +607,7 @@ void main(void)
 <script type="text/javascript">
     
     var textarea = document.getElementById('Octants');
-    new WebGLSandbox(textarea, 'OctantsLS', "false" == "true", "true" == "true");
+    new WebGLSandbox(textarea, 'OctantsLS', "false" == "true", "true" == "true", "" == "true");
 
 </script>
 
@@ -752,7 +752,7 @@ scene.SetCameraRotation(-0.2, -0.25, 0);
 <script type="text/javascript">
     
     var textarea = document.getElementById('RayCast');
-    new WebGLSandbox(textarea, 'RayCastLS', "false" == "true", "true" == "true");
+    new WebGLSandbox(textarea, 'RayCastLS', "false" == "true", "true" == "true", "" == "true");
 
 </script>
 
@@ -912,7 +912,7 @@ scene.SetCameraRotation(-0.2, 0.2, 0);
 <script type="text/javascript">
     
     var textarea = document.getElementById('Basis');
-    new WebGLSandbox(textarea, 'BasisLS', "false" == "true", "true" == "true");
+    new WebGLSandbox(textarea, 'BasisLS', "false" == "true", "true" == "true", "" == "true");
 
 </script>
 
@@ -974,7 +974,7 @@ scene.SetCameraPosition(0, 0, 3);
 <script type="text/javascript">
     
     var textarea = document.getElementById('Circumscribe');
-    new WebGLSandbox(textarea, 'CircumscribeLS', "false" == "true", "true" == "true");
+    new WebGLSandbox(textarea, 'CircumscribeLS', "false" == "true", "true" == "true", "" == "true");
 
 </script>
 
@@ -1041,7 +1041,7 @@ scene.SetCameraPosition(0, 0.4, 1.15);
 <script type="text/javascript">
     
     var textarea = document.getElementById('SubdividedTriangle');
-    new WebGLSandbox(textarea, 'SubdividedTriangleLS', "false" == "true", "true" == "true");
+    new WebGLSandbox(textarea, 'SubdividedTriangleLS', "false" == "true", "true" == "true", "" == "true");
 
 </script>
 
@@ -1085,7 +1085,7 @@ scene.SetCameraPosition(0, 0, 1.12);
 <script type="text/javascript">
     
     var textarea = document.getElementById('TriangleRow');
-    new WebGLSandbox(textarea, 'TriangleRowLS', "false" == "true", "true" == "true");
+    new WebGLSandbox(textarea, 'TriangleRowLS', "false" == "true", "true" == "true", "" == "true");
 
 </script>
 
@@ -1116,15 +1116,15 @@ float v = uv.y - float(y);
 // Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
 // Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
 // direction based on parity of y index.
-if (and(x, 1) != and(y, 1))
+if (And(x, 1) != And(y, 1))
 {
-	if (u + v &lt; 1.0)
-		x--;
+    if (u + v &lt; 1.0)
+        x--;
 }
 else
 {
-	if (v - u &gt; 0.0)
-		x--;
+    if (v - u &gt; 0.0)
+        x--;
 }
 </code></pre>
 
@@ -1190,7 +1190,7 @@ varying vec3 ls_Position;
 
 
 // Some silly boolean logic code because WebGL...
-bool and(int x, int y)
+bool And(int x, int y)
 {
 	return mod(float(x), exp2(float(y))) != 0.0;
 }
@@ -1261,7 +1261,7 @@ int GetTriangleIndex(vec3 P)
 	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
 	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
 	// direction based on parity of y index.
-	if (and(x, 1) != and(y, 1))
+	if (And(x, 1) != And(y, 1))
 	{
 		if (u &#43; v &lt; 1.0)
 			x--;
@@ -1307,7 +1307,7 @@ void main(void)
 <script type="text/javascript">
     
     var textarea = document.getElementById('InitialMap');
-    new WebGLSandbox(textarea, 'InitialMapLS', "false" == "true", "false" == "true");
+    new WebGLSandbox(textarea, 'InitialMapLS', "false" == "true", "false" == "true", "" == "true");
 
 </script>
 
@@ -1330,15 +1330,15 @@ void main(void)
         <section class="f-2">
             <section class="share">
                 <span>Share:
-                <a class="icon-twitter" href="http://twitter.com/share?text=Fast%2c%20Constant%20Time%20Sphere%20Indexing%2c%20Part%201&url=http%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
+                <a class="icon-twitter" href="http://twitter.com/share?text=Fast%2c%20Constant%20Time%20Sphere%20Indexing%2c%20Part%201&url=https%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
                     onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
                     <i class="fa fa-twitter"></i>
                 </a>
-                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
                     onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
                     <i class="fa fa-facebook"></i>
                 </a>
-                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=https%3a%2f%2fdonw.io%2fpost%2fsphere-indexing%2f"
                    onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
                     <i class="fa fa-google-plus"></i>
                 </a>
@@ -1354,7 +1354,7 @@ void main(void)
     <a href="javascript:void(0)" id="gh-load-comments" class="btn" style="display:none">Load more comments</a>
 </div>
 
-<script type="text/javascript" src="http://donw.io/js/github-comments.js"></script>
+<script type="text/javascript" src="https://donw.io/js/github-comments.js"></script>
 <script type="text/javascript">
     DoGithubComments( 18 );
 </script>
@@ -1364,12 +1364,12 @@ void main(void)
 </main>
     <footer id="site-footer">
         <div class="container">
-            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
+            <a href="https://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="https://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
-    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript" src="https://donw.io/js/fittext.js"></script>
     <script type="text/javascript">
       $(".heading").fitText();
     </script>

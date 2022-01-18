@@ -10,7 +10,7 @@ ghcommentid = 18
   creator = "@Donzanoid"
   title = "Fast, Constant Time Sphere Indexing, Part 1"
   description = "Assuming a triangle-subdivided sphere, map any 3D point on or above it to a triangle index in constant-time."
-  image = "http://donw.io/img/SphereIndexing/summary.png"
+  image = "https://donw.io/img/SphereIndexing/summary.png"
 +++
 
 The problem statement is: Assuming a triangle-subdivided sphere, map any 3D point on or above it to a triangle index in constant-time, without using recursion, table lookups or complicated branching logic. Even better; make it so simple you can use it in a pixel shader. This is useful for when your playing field is on/above a sphere and you have some lookup tables you want to reference based on player/camera position.
@@ -58,7 +58,7 @@ varying vec3 ls_Position;
 
 
 // Some silly boolean logic code because WebGL...
-bool and(int x, int y)
+bool And(int x, int y)
 {
 	return mod(float(x), exp2(float(y))) != 0.0;
 }
@@ -132,7 +132,7 @@ int GetTriangleIndex(vec3 P)
 	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
 	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
 	// direction based on parity of y index.
-	if (and(x, 1) != and(y, 1))
+	if (And(x, 1) != And(y, 1))
 	{
 		if (u + v < 1.0)
 			x--;
@@ -966,7 +966,7 @@ float v = uv.y - float(y);
 // Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
 // Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
 // direction based on parity of y index.
-if (and(x, 1) != and(y, 1))
+if (And(x, 1) != And(y, 1))
 {
 	if (u + v < 1.0)
 		x--;
@@ -1040,7 +1040,7 @@ varying vec3 ls_Position;
 
 
 // Some silly boolean logic code because WebGL...
-bool and(int x, int y)
+bool And(int x, int y)
 {
 	return mod(float(x), exp2(float(y))) != 0.0;
 }
@@ -1111,7 +1111,7 @@ int GetTriangleIndex(vec3 P)
 	// Assuming a grid of equilateral triangles (guaranteed with octahedron midpoint/normalize subd)
 	// Shift x index 1 to the left for each rise above the diagonals. Need to alternate diagonal
 	// direction based on parity of y index.
-	if (and(x, 1) != and(y, 1))
+	if (And(x, 1) != And(y, 1))
 	{
 		if (u + v < 1.0)
 			x--;

@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Pbr on Gazoo.vrv</title>
-    <link>http://donw.io/tags/pbr/</link>
+    <link>https://donw.io/tags/pbr/</link>
     <description>Recent content in Pbr on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 11 Feb 2015 12:58:23 +0100</lastBuildDate>
     
-	<atom:link href="http://donw.io/tags/pbr/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://donw.io/tags/pbr/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Distant Spherical Area Light Sources</title>
-      <link>http://donw.io/post/distant-sphere-lights/</link>
+      <link>https://donw.io/post/distant-sphere-lights/</link>
       <pubDate>Wed, 11 Feb 2015 12:58:23 +0100</pubDate>
       
-      <guid>http://donw.io/post/distant-sphere-lights/</guid>
+      <guid>https://donw.io/post/distant-sphere-lights/</guid>
       <description>&lt;p&gt;This is a small test post exercising math notation with &lt;a href=&#34;http://www.mathjax.org/&#34;&gt;MathJax&lt;/a&gt; in &lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;.&lt;/p&gt;</description>
     </item>
     
