@@ -6,10 +6,35 @@
     <description>Recent content in Website on Gazoo.vrv</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 19 Jun 2016 21:48:11 +0100</lastBuildDate>
+    <lastBuildDate>Thu, 05 Oct 2023 19:35:05 +0100</lastBuildDate>
     
 	<atom:link href="https://donw.io/tags/website/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>The History of a Future Platform, Part 2: Stunt Island</title>
+      <link>https://donw.io/post/future-platform-2/</link>
+      <pubDate>Thu, 05 Oct 2023 19:35:05 +0100</pubDate>
+      
+      <guid>https://donw.io/post/future-platform-2/</guid>
+      <description>Part 1: Why
+Part 2: Stunt Island 
+
+I&#39;m a late 80s to late 90s gamer: some of my most imprinted memories come from that period. I remember vividly two incredible WOW! moments that changed my life. The first was seeing the DOOM screen melt on one of my dad&#39;s school&#39;s library machines:
+
+  With a Master System at home as my only point of reference, DOOM was so many worlds apart</description>
+    </item>
+    
+    <item>
+      <title>The History of a Future Platform, Part 1: Why</title>
+      <link>https://donw.io/post/future-platform-1/</link>
+      <pubDate>Thu, 28 Sep 2023 08:18:11 +0100</pubDate>
+      
+      <guid>https://donw.io/post/future-platform-1/</guid>
+      <description>My attempt to rethink the way games are made 
+
+In 2012, after shipping Fable 3 on Xbox 360 and PC, supporting some DLCs, creating Fable Heroes with some funky new rendering research and helping the team understand the workflows and transition to Unreal Engine 3.... (phew)... I was completely worn down and demoralised. As a team we did some amazing things. I made some life-long friends and was immensely satisfied with the journey we&#39;d taken (no, not that one).</description>
+    </item>
     
     <item>
       <title>A New Host, Server and Site Generator</title>

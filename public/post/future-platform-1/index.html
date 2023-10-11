@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js" prefix="og: http://ogp.me/ns#" xmlns:og="http://ogp.me/ns#"><!--<![endif]-->
+
+    <head>
+                <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="author" content="Don Williamson">
+        <meta name="keywords" content="awesome, definitely">
+	
+        <meta property="og:site_name" content="Gazoo.vrv">
+        <meta property="og:title" content="Gazoo.vrv">
+        <meta property="og:url" content="https://donw.io/post/future-platform-1/">
+        <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
+    
+        <meta property="og:type" content="article" />
+        <meta property="og:article:author" content="Don Williamson" />
+        <meta property="og:article:published_time" content="2023-09-28T08:18:11&#43;01:00" />
+    
+        <meta name="generator" content="Hugo 0.51" />
+        <title>The History of a Future Platform, Part 1: Why &middot; Gazoo.vrv </title>
+        <link rel="canonical" href="https://donw.io/" />
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="">
+        <link rel="stylesheet" type='text/css' href="https://donw.io/css/main.css"/>
+        <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+        <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <link rel="icon" href="https://donw.io/favicon.ico?v=2" />
+        <script src="/js/prism.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+        <link rel="me" href="https://mastodon.social/@Donzanoid" />
+
+        
+
+        
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@Donzanoid">
+<meta name="twitter:description" content="My attempt to rethink the way games are made">
+<meta name="twitter:title" content="The History of a Future Platform, Part 1: Why">
+<meta name="twitter:image" content="https://donw.io/img/FuturePlatform/TwitterCard.jpg">
+
+<meta name="twitter:creator" content="@Donzanoid">
+
+
+
+    </head>
+<body>
+<!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
+
+    <header id="site-header">
+        <div class="container">
+            <a href="https://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
+			
+        	
+        	<li class="navigation__item">
+            	<a href="http://twitter.com/Donzanoid" title="@Donzanoid on Twitter"> <i class='fa fa-twitter'></i> <span class="label">@Donzanoid</span> </a>
+        	</li>
+        	
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://github.com/dwilliamson" title="dwilliamson on github"> <i class='fa fa-github'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	        
+            
+            
+            <li class="navigation__item">
+                <a href="https://github.com/Celtoys" title="Celtoys on github"> <i class='fa fa-github'></i> <span class="label">Celtoys</span> </a>
+            </li>
+                    
+			
+        	
+        	<li class="navigation__item">
+            	<a href="https://bitbucket.org/dwilliamson" title="dwilliamson on bitbucket"> <i class='fa fa-bitbucket'></i> <span class="label">dwilliamson</span> </a>
+        	</li>
+        	
+			
+        </div>
+    </header>
+<main class="content" role="main">
+	<div class="container">
+		<article class="post">
+	<header class="post-header">
+        <h3 class="p-post-title">The History of a Future Platform, Part 1: Why</h3>
+    </header>
+
+    <section class="post-content">
+        <p><center>
+<em>My attempt to rethink the way games are made</em>
+</center></p>
+
+<p><br></p>
+
+<p>In 2012, after shipping <a href="https://www.xbox.com/en-GB/games/store/fable-iii/BR46KM4D5B9L">Fable 3 on Xbox 360</a> and PC, supporting <a href="https://fable.fandom.com/wiki/Fable_III_Downloadable_Content">some DLCs</a>, creating <a href="https://www.xbox.com/en-GB/games/store/fable-heroes/BTR2D4ZQ2ZB7">Fable Heroes</a> with some funky new rendering research and helping the team understand the workflows and transition <a href="https://docs.unrealengine.com/udk/Three/WebHome.html">to Unreal Engine 3</a>.... (<em>phew</em>)... I was completely worn down and demoralised. As a team we did some amazing things. I made some life-long friends and was immensely satisfied with the journey we'd taken (no, not that one). But it wasn't enough.</p>
+
+<p><br></p>
+
+<p><center>
+
+<iframe
+    id="video_painterly"
+    width="560"
+    height="315"
+    frameborder="0"
+    allowfullscreen>
+</iframe>
+
+
+<script type="text/javascript">
+    var video_url = "https://www.youtube.com/embed/kbgZHUGa510?vq=hd1080&modestbranding=1&fs=1&rel=0&autoplay=1"
+
+    var embed = document.getElementById("video_painterly")
+    var embed_doc = embed.contentWindow.document;
+    embed_doc.write(`
+    <html>
+        <head>
+            <style>
+                body {
+                    background-image: url("/img/FuturePlatform/FableHeroesPainterlyThumbnail.png");
+                    background-size: 560px 315px;
+                    width: 560;
+                    height: 315;
+                    padding: 0px;
+                    margin: 0px;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+    </html>`);
+    var callback = function(element, url) {
+        element.src = url;
+    }
+    embed_doc.onclick = callback.bind(null, embed, video_url)
+</script>
+</center>
+<style>
+    .image-gallery {overflow: auto; margin-left: -1%!important;}
+    .image-gallery li {float: left; display: block; margin: 0 0 1% 1%; width: 19%;}
+    .image-gallery li a {text-align: center; text-decoration: none!important; color: #777;}
+    .image-gallery li a span {display: block; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; padding: 3px 0;}
+    .image-gallery li a img {width: 100%; display: block;}
+</style>
+
+
+<ul class="image-gallery">
+<li>
+      <a href="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified001_hud125e10be1229a234083d7e9643c7ff8_1829036_1600x1600_fit_q50_box_2.png" title="Modified001" class="lightbox-image">
+        <img src="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified001_hud125e10be1229a234083d7e9643c7ff8_1829036_300x300_fill_q50_box_smart1_2.png" alt="Modified001" title="Modified001">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified002_hu037e26e31e8c88569b3d6f5efca1a1bd_1773094_1600x1600_fit_q50_box_2.png" title="Modified002" class="lightbox-image">
+        <img src="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified002_hu037e26e31e8c88569b3d6f5efca1a1bd_1773094_300x300_fill_q50_box_smart1_2.png" alt="Modified002" title="Modified002">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified003_hu0edfa47f8f5f4174078ff78c30b972e4_1603952_1600x1600_fit_q50_box_2.png" title="Modified003" class="lightbox-image">
+        <img src="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified003_hu0edfa47f8f5f4174078ff78c30b972e4_1603952_300x300_fill_q50_box_smart1_2.png" alt="Modified003" title="Modified003">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified004_hub1f50036b5096420d78fd04a55dfc686_1616137_1600x1600_fit_q50_box_2.png" title="Modified004" class="lightbox-image">
+        <img src="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified004_hub1f50036b5096420d78fd04a55dfc686_1616137_300x300_fill_q50_box_smart1_2.png" alt="Modified004" title="Modified004">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified005_hue9afeb618aa81b5ef7912b67746068fc_1932502_1600x1600_fit_q50_box_2.png" title="Modified005" class="lightbox-image">
+        <img src="https://donw.io/img/FuturePlatform/FableHeroesPainterly/Modified005_hue9afeb618aa81b5ef7912b67746068fc_1932502_300x300_fill_q50_box_smart1_2.png" alt="Modified005" title="Modified005">
+      </a>
+    </li>
+  
+
+</ul>
+<center style="font-size:small;">
+<em>Rendering research for Fable Heroes running on Xbox 360, that never shipped</em><br>
+<em>Stable painterly/splat rendering, temporally depth-sorted between frames to maintain performance</em>
+</center></p>
+
+<p><br></p>
+
+<p>For context: several years before, I was turning my life upside-down again and moving from Montreal -- where I built the rendering engine for <a href="https://www.xbox.com/en-GB/games/store/tom-clancys-splinter-cell-conviction/BP58JN2GVQS8">Splinter Cell: Conviction</a> -- to Aarhus, to start a tiny XBLA indie game studio with friends. I stopped in Leamington to stay with family for a few weeks rest and <a href="https://en.wikipedia.org/wiki/Lionhead_Studios">Lionhead</a> got wind I was on the loose.</p>
+
+<p><br></p>
+
+<p><center>
+<img src="/img/FuturePlatform/SplinterCellConviction.jpg">
+</center>
+<center style="font-size:small;">
+<em>Splinter Cell: Conviction was a ground-up rewrite of the rendering engine and asset pipeline, all within Unreal Engine 2.5</em>
+</center></p>
+
+<p><br></p>
+
+<p>Lionhead needed help with Fable 2 but I was too obsessed with the idea of a startup with my own tech. After talking to Peter Molyneux for a while, he convinced me to temporarily help out until ship, after which I'd head straight to Denmark. I'd make back the money I lost moving to and from Canada, so it seemed a clear win for all.</p>
+
+<p>We did some great stuff. Fable 2 was a total unknown until several months before ship, where suddenly everybody realised a fun, great looking game was under all that uncertainty. Getting the game from 150ms a frame to 30ms on the Xbox 360 was one of the biggest challenges I'd ever taken on, but I was up for it.</p>
+
+<p><br></p>
+
+<p><center>
+<img src="/img/FuturePlatform/Fable2Windmill.jpg">
+</center>
+<center style="font-size:small;">
+<em>An unreleased press level, representing a breakthrough unifying all our teams to demo Fable 2 at full performance</em>
+</center></p>
+
+<p><br></p>
+
+<p>The game shipped, DLCs shipped and the engine was in a good place; it was time to move on! Or so I thought... the long development time of Fable 2 had understandably burned a few people out, as the whole game engine and tools were a rewrite from the original Fable. The engine team needed a lead and I was asked.</p>
+
+<p>I initially wasn't interested. I had a once-in-a-lifetime opportunity to start a fully-funded indie company on my own tech, but time was running out. On the other side, Fable 3 was to be a much shorter development period with limited room for engine improvements; especially with the upcoming Microsoft hiring freeze. However, I was promised that after Fable 3 we'd get complete control to make the engine much bigger and better on whatever came next.</p>
+
+<p>I relented on my own personal vision and gave my friends the bad news.</p>
+
+<p><br></p>
+
+<p><center>
+
+<iframe
+    id="video_asteroids"
+    width="560"
+    height="315"
+    frameborder="0"
+    allowfullscreen>
+</iframe>
+
+
+<script type="text/javascript">
+    var video_url = "https://www.youtube.com/embed/JnQD75amEFE?vq=hd1080&modestbranding=1&fs=1&rel=0&autoplay=1"
+
+    var embed = document.getElementById("video_asteroids")
+    var embed_doc = embed.contentWindow.document;
+    embed_doc.write(`
+    <html>
+        <head>
+            <style>
+                body {
+                    background-image: url("/img/FuturePlatform/AsteroidCowboysThumbnail.png");
+                    background-size: 560px 315px;
+                    width: 560;
+                    height: 315;
+                    padding: 0px;
+                    margin: 0px;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+    </html>`);
+    var callback = function(element, url) {
+        element.src = url;
+    }
+    embed_doc.onclick = callback.bind(null, embed, video_url)
+</script>
+</center>
+<center style="font-size:small;">
+<em>My friends did end up creating a pretty fun game with some unusual twin-stick controls</em>
+</center></p>
+
+<p><br></p>
+
+<p>Fable 3 development was one of the happiest periods of my life. Despite the tighter development time, we managed to do some amazing things, and I worked with so many talented and positive people every day. I saw our future vividly and knew exactly what needed to be done to get there. Fable Heroes was a happy accident where a group of us got to claim we seeded a small idea in Lionhead that eventually turned into a genuine product.</p>
+
+<p><br></p>
+
+<style>
+    .image-gallery {overflow: auto; margin-left: -1%!important;}
+    .image-gallery li {float: left; display: block; margin: 0 0 1% 1%; width: 19%;}
+    .image-gallery li a {text-align: center; text-decoration: none!important; color: #777;}
+    .image-gallery li a span {display: block; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; padding: 3px 0;}
+    .image-gallery li a img {width: 100%; display: block;}
+</style>
+
+
+<ul class="image-gallery">
+<li>
+      <a href="https://donw.io/img/Fable3/13815_4b752dae57534_hu4e44d887c38c8ba81afb5f5192accb2b_171517_1600x1600_fit_q50_box.jpg" title="13815_4b752dae57534" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/13815_4b752dae57534_hu4e44d887c38c8ba81afb5f5192accb2b_171517_300x300_fill_q50_box_smart1.jpg" alt="13815_4b752dae57534" title="13815_4b752dae57534">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/14097_4b993b72c1046_hu6d9d2e9c1020bd69e04ea8cee5aaeda1_211496_1600x1600_fit_q50_box.jpg" title="14097_4b993b72c1046" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/14097_4b993b72c1046_hu6d9d2e9c1020bd69e04ea8cee5aaeda1_211496_300x300_fill_q50_box_smart1.jpg" alt="14097_4b993b72c1046" title="14097_4b993b72c1046">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/14097_4b993b7d48be4_hud00a00f084a9bd77bd49b8dc173220c7_128553_1600x1600_fit_q50_box.jpg" title="14097_4b993b7d48be4" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/14097_4b993b7d48be4_hud00a00f084a9bd77bd49b8dc173220c7_128553_300x300_fill_q50_box_smart1.jpg" alt="14097_4b993b7d48be4" title="14097_4b993b7d48be4">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/14097_4b993b7f824e8_hu331472a06643bc98dd286b03da11eeae_146789_1600x1600_fit_q50_box.jpg" title="14097_4b993b7f824e8" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/14097_4b993b7f824e8_hu331472a06643bc98dd286b03da11eeae_146789_300x300_fill_q50_box_smart1.jpg" alt="14097_4b993b7f824e8" title="14097_4b993b7f824e8">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/15230_4c2b489793121_hu66ac05e2ee44ca46aadacff0b68c1b7d_338720_1600x1600_fit_q50_box.jpg" title="15230_4c2b489793121" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/15230_4c2b489793121_hu66ac05e2ee44ca46aadacff0b68c1b7d_338720_300x300_fill_q50_box_smart1.jpg" alt="15230_4c2b489793121" title="15230_4c2b489793121">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/15230_4c2b489e536a5_hu14b5f0e9ce81eb3295f470658317b936_344734_1600x1600_fit_q50_box.jpg" title="15230_4c2b489e536a5" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/15230_4c2b489e536a5_hu14b5f0e9ce81eb3295f470658317b936_344734_300x300_fill_q50_box_smart1.jpg" alt="15230_4c2b489e536a5" title="15230_4c2b489e536a5">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/15230_4c2b48b39d11a_hu5e6ba1622e6aaddbabe1fd7344131376_281221_1600x1600_fit_q50_box.jpg" title="15230_4c2b48b39d11a" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/15230_4c2b48b39d11a_hu5e6ba1622e6aaddbabe1fd7344131376_281221_300x300_fill_q50_box_smart1.jpg" alt="15230_4c2b48b39d11a" title="15230_4c2b48b39d11a">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/15230_4c2b48bf19e87_hu0019e6c4f944a43bbfe417a779d8d25a_220242_1600x1600_fit_q50_box.jpg" title="15230_4c2b48bf19e87" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/15230_4c2b48bf19e87_hu0019e6c4f944a43bbfe417a779d8d25a_220242_300x300_fill_q50_box_smart1.jpg" alt="15230_4c2b48bf19e87" title="15230_4c2b48bf19e87">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/15382_4c483c5e0c535_huc34e57f067410f8e3595dfb8320db514_109626_1600x1600_fit_q50_box.jpg" title="15382_4c483c5e0c535" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/15382_4c483c5e0c535_huc34e57f067410f8e3595dfb8320db514_109626_300x300_fill_q50_box_smart1.jpg" alt="15382_4c483c5e0c535" title="15382_4c483c5e0c535">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/15633_4c6d93b2d6b8b_hu115bd435474076e3eab8bdbaa914aadf_98253_1600x1600_fit_q50_box.jpg" title="15633_4c6d93b2d6b8b" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/15633_4c6d93b2d6b8b_hu115bd435474076e3eab8bdbaa914aadf_98253_300x300_fill_q50_box_smart1.jpg" alt="15633_4c6d93b2d6b8b" title="15633_4c6d93b2d6b8b">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/15633_4c6d93b461a82_hu708f2fb8dad7435b3f46fcbeb96e6c0b_78292_1600x1600_fit_q50_box.jpg" title="15633_4c6d93b461a82" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/15633_4c6d93b461a82_hu708f2fb8dad7435b3f46fcbeb96e6c0b_78292_300x300_fill_q50_box_smart1.jpg" alt="15633_4c6d93b461a82" title="15633_4c6d93b461a82">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/fable3dlc004_17088_hua4a5ec37853b6b871c47a6869c140611_813506_1600x1600_fit_q50_box.jpg" title="fable3dlc004_17088" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/fable3dlc004_17088_hua4a5ec37853b6b871c47a6869c140611_813506_300x300_fill_q50_box_smart1.jpg" alt="fable3dlc004_17088" title="fable3dlc004_17088">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/fable3pc002_17087_hu62498d7b78b45aaf088b23b5ba94d307_750793_1600x1600_fit_q50_box.jpg" title="fable3pc002_17087" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/fable3pc002_17087_hu62498d7b78b45aaf088b23b5ba94d307_750793_300x300_fill_q50_box_smart1.jpg" alt="fable3pc002_17087" title="fable3pc002_17087">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/fable3pc017_17087_hud8c74ada69833a5a8adad3be51a67785_662013_1600x1600_fit_q50_box.jpg" title="fable3pc017_17087" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/fable3pc017_17087_hud8c74ada69833a5a8adad3be51a67785_662013_300x300_fill_q50_box_smart1.jpg" alt="fable3pc017_17087" title="fable3pc017_17087">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/Fable3/fable3pc019_17087_hu5f13262ef132bbf7ad797c6c5ba28bcc_859621_1600x1600_fit_q50_box.jpg" title="fable3pc019_17087" class="lightbox-image">
+        <img src="https://donw.io/img/Fable3/fable3pc019_17087_hu5f13262ef132bbf7ad797c6c5ba28bcc_859621_300x300_fill_q50_box_smart1.jpg" alt="fable3pc019_17087" title="fable3pc019_17087">
+      </a>
+    </li>
+  
+
+</ul>
+
+<p><center style="font-size:small;">
+<em>Fable 3 was a darker, lower contrast game, with much finer detail in a larger, more populated world</em><br>
+<em>I preferred the more saturated look of Fable 2, but we were going for a visually despotic environment</em>
+</center></p>
+
+<p><br></p>
+
+<p><center>
+<iframe src="https://player.vimeo.com/video/869099824?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" width="640" height="693" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" title="lighting"></iframe>
+</center>
+<center style="font-size:small;">
+<em>Summer, 2009: Realtime GPU raytracing demo for Ambient Occlusion and Indirect Lighting on Fable 3<br>
+ Used for generating level lightmaps, reducing lighting build times by 10,000x and removing dynamic lighting limitations</em>
+</center></p>
+
+<p><br></p>
+
+<style>
+    .image-gallery {overflow: auto; margin-left: -1%!important;}
+    .image-gallery li {float: left; display: block; margin: 0 0 1% 1%; width: 19%;}
+    .image-gallery li a {text-align: center; text-decoration: none!important; color: #777;}
+    .image-gallery li a span {display: block; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; padding: 3px 0;}
+    .image-gallery li a img {width: 100%; display: block;}
+</style>
+
+
+<ul class="image-gallery">
+<li>
+      <a href="https://donw.io/img/FableHeroes/fableheroes_042912_1_huc1490046577a53535c88814e0bc88455_586360_1600x1600_fit_q50_box_2.png" title="fableheroes_042912_1" class="lightbox-image">
+        <img src="https://donw.io/img/FableHeroes/fableheroes_042912_1_huc1490046577a53535c88814e0bc88455_586360_300x300_fill_q50_box_smart1_2.png" alt="fableheroes_042912_1" title="fableheroes_042912_1">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FableHeroes/fableheroes_042912_2_hue5b8e204d3fade79633696854921b409_114421_1600x1600_fit_q50_box.jpg" title="fableheroes_042912_2" class="lightbox-image">
+        <img src="https://donw.io/img/FableHeroes/fableheroes_042912_2_hue5b8e204d3fade79633696854921b409_114421_300x300_fill_q50_box_smart1.jpg" alt="fableheroes_042912_2" title="fableheroes_042912_2">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FableHeroes/fableheroes_042912_3_hud74ce3c70aaed379714520a60d9c6870_95502_1600x1600_fit_q50_box.jpg" title="fableheroes_042912_3" class="lightbox-image">
+        <img src="https://donw.io/img/FableHeroes/fableheroes_042912_3_hud74ce3c70aaed379714520a60d9c6870_95502_300x300_fill_q50_box_smart1.jpg" alt="fableheroes_042912_3" title="fableheroes_042912_3">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FableHeroes/fableheroes_042912_4_hu8453202f094c4c37f623be3676315acc_102143_1600x1600_fit_q50_box.jpg" title="fableheroes_042912_4" class="lightbox-image">
+        <img src="https://donw.io/img/FableHeroes/fableheroes_042912_4_hu8453202f094c4c37f623be3676315acc_102143_300x300_fill_q50_box_smart1.jpg" alt="fableheroes_042912_4" title="fableheroes_042912_4">
+      </a>
+    </li>
+  
+<li>
+      <a href="https://donw.io/img/FableHeroes/fableheroes_042912_5_hucca35e313117a4681caa4fef41dc7604_126975_1600x1600_fit_q50_box.jpg" title="fableheroes_042912_5" class="lightbox-image">
+        <img src="https://donw.io/img/FableHeroes/fableheroes_042912_5_hucca35e313117a4681caa4fef41dc7604_126975_300x300_fill_q50_box_smart1.jpg" alt="fableheroes_042912_5" title="fableheroes_042912_5">
+      </a>
+    </li>
+  
+
+</ul>
+
+<p><center style="font-size:small;">
+<em>Fable Heroes started as our Creative Day project, worked on in our spare time after Fable 3</em><br>
+<em>It impressed Peter so much that the team grew and we eventually published it</em>
+</center></p>
+
+<p><br></p>
+
+<p>I had big ideas for the next Fable; mostly based around content creation, and how much time we forced artists to waste by individually placing asset instances to build huge caves, cities and landscapes. However, the plates shifted and it was never to be. I stuck around for a while to help the team transition to Unreal, as I knew its workflow intimately from Splinter Cell.</p>
+
+<p><br></p>
+
+<p><center>
+<img src="/img/FuturePlatform/FableCave.jpg">
+</center>
+<center style="font-size:small;">
+<em>Caves were especially problematic for Level Design and I was constantly in awe of what they could do with such difficult tooling</em>
+</center></p>
+
+<p>But I was broken. We had an amazing team, an unparalleled engine for this type of game and so many ideas on how to make lots of things better. Our tools and pipeline were flawed, but the energy and understanding was there to revolutionise workflows for the next game. We could have shipped another Fable in 2-3 years that would have scraped every ounce of performance possible from the Xbox 360, building a huge, beautiful world, filled with life and giving the console the send-off it deserved.</p>
+
+<p>With a heavy heart so full of pain and love for the world of Albion, I quit and moved my life from Aldershot/Guildford to Brighton: I would build my own game, engine and tools for real this time. I still miss the morning Christmas Pie Trail, but everything in life changes, and the view from Brighton isn't actually half bad...</p>
+
+<p><center>
+<img src="/img/FuturePlatform/Brighton.jpg">
+</center>
+<center style="font-size:small;">
+<em>Home</em>
+</center></p>
+
+    </section>
+
+    <hr>
+
+    <footer class="post-footer">
+        <section class="f-1">            
+            
+                <span class="f-post-tags"><i class="fa fa-tag"></i>
+                website
+                </span>
+            
+            <p class="f-post-time"><time datetime="2023-09-28T08:18:11&#43;01:00">September 28, 2023</time></p>
+        </section>
+                        
+        <section class="f-2">
+            <section class="share">
+                <span>Share:
+                <a class="icon-twitter" href="http://twitter.com/share?text=The%20History%20of%20a%20Future%20Platform%2c%20Part%201%3a%20Why&url=https%3a%2f%2fdonw.io%2fpost%2ffuture-platform-1%2f"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fdonw.io%2fpost%2ffuture-platform-1%2f"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=https%3a%2f%2fdonw.io%2fpost%2ffuture-platform-1%2f"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <i class="fa fa-google-plus"></i>
+                </a>
+                </span>
+            </section>
+        </section>
+    </footer>
+    
+<div id="gh-comments">
+    <br/><br/>
+    <h6>COMMENTS</h6>
+    <div id="gh-comments-list"></div>
+    <a href="javascript:void(0)" id="gh-load-comments" class="btn" style="display:none">Load more comments</a>
+</div>
+
+<script type="text/javascript" src="https://donw.io/js/github-comments.js"></script>
+<script type="text/javascript">
+    DoGithubComments( 23 );
+</script>
+
+</article>
+	</div>
+</main>
+    <footer id="site-footer">
+        <div class="container">
+            <a href="https://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="https://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="https://donw.io/js/fittext.js"></script>
+    <script type="text/javascript">
+      $(".heading").fitText();
+    </script>
+
+    
+
+
+
+</body>
+</html>

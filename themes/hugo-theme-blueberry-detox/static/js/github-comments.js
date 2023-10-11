@@ -5,16 +5,19 @@ var CurrentPage = 0;
 
 function ParseLinkHeader(link)
 {
-    var entries = link.split(",");
     var links = { };
-    for (var i in entries)
+    if (link)
     {
-        var entry = entries[i];
-        var link = { };
-        link.name = entry.match(/rel=\"([^\"]*)/)[1];
-        link.url = entry.match(/<([^>]*)/)[1];
-        link.page = entry.match(/page=(\d+).*$/)[1];
-        links[link.name] = link;
+        var entries = link.split(",");
+        for (var i in entries)
+        {
+            var entry = entries[i];
+            var link = { };
+            link.name = entry.match(/rel=\"([^\"]*)/)[1];
+            link.url = entry.match(/<([^>]*)/)[1];
+            link.page = entry.match(/page=(\d+).*$/)[1];
+            links[link.name] = link;
+        }
     }
     return links;
 }

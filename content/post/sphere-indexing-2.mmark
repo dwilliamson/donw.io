@@ -13,7 +13,7 @@ ghcommentid = 20
   image = "https://donw.io/img/SphereIndexing2/summary.png"
 +++
 
-To start, let's take the final solution from [Part 1]({{<relref "post/sphere-indexing.mmark">}}). The goal is to reduce this even further so that the technique can be used frequently in shaders.
+To start, let's take the final solution from [Part 1]({{<relref "/post/sphere-indexing.mmark">}}). The goal is to reduce this even further so that the technique can be used frequently in shaders.
 
 <!--more-->
 
@@ -398,7 +398,7 @@ scene.SetCameraRotation(-0.6, 1.2, 0);
 
 {{< /wglsbx >}}
 
-These two planes are clearly orthogonal and have a line of intersection that passes through the bottom left point, as we worked through in [Part 1]({{<relref "post/sphere-indexing.mmark">}}).
+These two planes are clearly orthogonal and have a line of intersection that passes through the bottom left point, as we worked through in [Part 1]({{<relref "/post/sphere-indexing.mmark">}}).
 
 The scale constants also make sense: both distances are initially normalised by the meridian length ($$\frac{2}{\sqrt{2}}$$)/face height ($$\sqrt{1.5}$$) and then multiplied by the the number of rows/columns to get a 2D index.
 

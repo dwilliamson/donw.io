@@ -1,0 +1,101 @@
++++
+date = "2023-10-05T19:35:05+01:00"
+draft = false
+title = "The History of a Future Platform, Part 2: Stunt Island"
+tags = [ "website" ]
+ghcommentid = 24
+[twitter]
+  card = "summary_large_image"
+  site = "@Donzanoid"
+  creator = "@Donzanoid"
+  title = "The History of a Future Platform, Part 2: Stunt Island"
+  description = "What was I going to work on?"
+  image = "https://donw.io/img/FuturePlatform/2/TwitterCard.jpg"
++++
+
+<br>
+
+<center>
+[Part 1: Why]({{<relref "/post/future-platform-1.mmark">}})<br>
+[Part 2: Stunt Island]({{<relref "/post/future-platform-2.mmark">}})
+</center>
+
+<br>
+
+I'm a late 80s to late 90s gamer: some of my most imprinted memories come from that period. I remember vividly two incredible WOW! moments that changed my life. The first was seeing the DOOM screen melt on one of my dad's school's library machines:
+
+<br>
+
+<center>
+<img src="/img/FuturePlatform/2/Screen_melt.webp">
+</center>
+<center style="font-size:small;">
+*With a Master System at home as my only point of reference, DOOM was so many worlds apart*<br>
+</center>
+
+<br>
+
+The fluidity of the melt followed by the kind of 3D rendering I'd never seen before made me want a PC instantly. Of course, I had to wait a while for one of them. The next was a little later playing Stunt Island on a friend's PC:
+
+<br>
+
+<center>
+{{< youtube_embed video_painterly T0YcO25-tKU "/img/FuturePlatform/2/stuntislandpreview.jpg" >}}
+</center>
+<center style="font-size:small;">
+*Play the game, drive the cars and fly the planes. Film and replay your work. Edit your movie and release to the world!*<br>
+</center>
+
+<br>
+
+Stunt Island was a technical masterpiece, released almost 2 years before DOOM and 4 months before Wolfenstein 3D, running on a 386SX with only 640KB of RAM. There is an amazing [story of passion](https://fabiensanglard.net/stunt_island/) behind the game which is well worth a read. To this day people are [still making and distributing movies](https://www.armknechted.com/sicentral/stunt.html) for Stunt Island and you can [buy it on GOG](https://www.gog.com/en/game/stunt_island?pp=0ca9277f91e40054767f69afeb0426711ca0fddd), so go check it out for yourself!
+
+<br>
+
+<center>
+<img src="/img/FuturePlatform/2/city.png" width="100%" style="image-rendering: pixelated">
+</center>
+<center style="font-size:small;">
+*The ultimate early 90s flex: let's render a city with a whole bunch of overdraw*<br>
+</center>
+
+<br>
+
+I've always wanted to make something similar so I figured sticking to the basic formula with my own game would allow me to make this on my own. I had already burned bridges with my friends when I passed over on the startup offer, so that was an unfortunate necessity. I also figured I could put some good spins on the idea, especially with distribution.
+
+I have attempted to do this once before:
+
+<br>
+<center>
+<img src="/img/FuturePlatform/2/Hyperdock.jpg" width="70%">
+</center>
+<center style="font-size:small;">
+*There are probably not many people on the internet today that remember this*<br>
+</center>
+<br>
+
+We were a small team making a variation on the multiplayer [Subspace](https://www.mobygames.com/game/725/subspace/) game, popular at the time. The community that Michael Doyle built for our game, Hyperspace, was pretty incredible. But I realised very quickly that working from an office in my house was woefully depressing: not having people to talk to every day and not leaving the house was hitting me hard. After 3 months it was also clearly noted that I was the only one who'd given up everything to work full-time and self-funded, so I swiftly ended the first big mistake of my career and moved on to [crazier things](https://www.sega-dreamcast-info-games-preservation.com/en/flinstone-viva-las-vegas-dreamcast).
+
+With all that in mind I decided to rent an office in the middle of Brighton.
+
+<br>
+<center>
+<img src="/img/FuturePlatform/2/FirstOffice.jpg" width="70%">
+</center>
+<center style="font-size:small;">
+*Lovely big desk from Ebay and some cheap monitors I'd bought years before. Computer was new, though!*<br>
+</center>
+<br>
+
+I still have my old planning notes and this was the overview I pulled from them:
+
+* Secure initial funding for up to a year self-employed.
+* Locate some office space in Brighton. I already have some candidates lined up and the prices are pretty good. This is purely going to be desk-space among an open office with other startup developers so that I don't go insane working on my own from home!
+* Spend a month setting up code and development infrastructure.
+* Spend 5 months on the prototype. I'm only really going to give myself a month to exceed the schedule by. The two main goals with this process are to see if the product idea works and if it's achievable with the man power and investment I'll have at my disposal. If not, this is the first point at which I'll consider another product.
+* Demo to as many close friends/developers as possible and see if they "get it." Does the idea make sense? Can it be changed in ways to make more sense?
+* Investigate alternative investment opportunities (absolutely anything helps here - even claiming back tax from HMRC based on an income less than 5k a year).
+* Start investigating the product art style, interface and branding. This will be super important as it will be the first thing people see.
+* Have an alpha/beta product out on the market within 12-15 months. Release as early as possible and continuously update for a period of 2-3 years.
+
+Oh, I can still feel that excitement, uncertainty, naivety and optimism; a potent mix that keeps you coming back for more, despite the sleepless nights. I had a nice cycle to the office every day and some people to talk to in the other parts of the building, so there was nothing stopping me... let's get started!

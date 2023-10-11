@@ -1,0 +1,36 @@
+
+<iframe
+    id="{{.Get 0}}"
+    width="560"
+    height="315"
+    frameborder="0"
+    allowfullscreen>
+</iframe>
+
+
+<script type="text/javascript">
+    var video_url = "https://www.youtube.com/embed/{{.Get 1}}?vq=hd1080&modestbranding=1&fs=1&rel=0&autoplay=1"
+
+    var embed = document.getElementById("{{.Get 0}}")
+    var embed_doc = embed.contentWindow.document;
+    embed_doc.write(`
+    <html>
+        <head>
+            <style>
+                body {
+                    background-image: url({{.Get 2}});
+                    background-size: 560px 315px;
+                    width: 560;
+                    height: 315;
+                    padding: 0px;
+                    margin: 0px;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+    </html>`);
+    var callback = function(element, url) {
+        element.src = url;
+    }
+    embed_doc.onclick = callback.bind(null, embed, video_url)
+</script>

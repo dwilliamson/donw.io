@@ -17,31 +17,37 @@
 	
         <meta property="og:site_name" content="Gazoo.vrv">
         <meta property="og:title" content="Gazoo.vrv">
-        <meta property="og:url" content="http://donw.io/post/std-function-alt/">
+        <meta property="og:url" content="https://donw.io/post/std-function-alt/">
         <meta property="og:description" content="Don Williamson, Consultant Game Technology Programmer/Director of Celtoys">
     
         <meta property="og:type" content="article" />
         <meta property="og:article:author" content="Don Williamson" />
         <meta property="og:article:published_time" content="2016-10-06T00:04:20&#43;01:00" />
     
-        <meta name="generator" content="Hugo 0.15" />
+        <meta name="generator" content="Hugo 0.51" />
         <title>A Simpler, Bindable std::function &middot; Gazoo.vrv </title>
-        <link rel="canonical" href="http://donw.io/" />
+        <link rel="canonical" href="https://donw.io/" />
         <link rel="alternate" type="application/rss+xml" title="RSS" href="">
-        <link rel="stylesheet" type='text/css' href="http://donw.io/css/main.css"/>
-        <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" type='text/css' href="https://donw.io/css/main.css"/>
+        <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:300|Montserrat:700' rel='stylesheet' type='text/css'>
         <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
         <link href="/css/syntax-highlighting.css" rel="stylesheet" />
+        <link rel="icon" href="https://donw.io/favicon.ico?v=2" />
         <script src="/js/prism.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined-dev.js"></script>
+
+        
+
+        
+
     </head>
 <body>
 <!--[if lt IE 7]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chrome/‎">install Google Chrome</a> to experience this site.</p><![endif]-->
 
     <header id="site-header">
         <div class="container">
-            <a href="http://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
+            <a href="https://donw.io/" alt="Gazoo.vrv"><h1 class="blog-title heading">Gazoo.vrv</h1></a>
             <p class="blog-description">Don Williamson, Consultant Game Technology Programmer/Director of Celtoys</p>
 			
         	
@@ -78,9 +84,7 @@
     </header>
 
     <section class="post-content">
-        
-
-<p>The purpose of <code>std::function</code> is to be a unified abstraction around callable entities such as:</p>
+        <p>The purpose of <code>std::function</code> is to be a unified abstraction around callable entities such as:</p>
 
 <ul>
 <li>Free functions (including class static functions).</li>
@@ -101,32 +105,32 @@ f();
 <p>Contents of this blog post:</p>
 
 <ul>
-<li><a href="#motivation:90fb4ac868415acc09e734b00e226dab">Motivation</a></li>
-<li><a href="#wrapping-function-pointers:90fb4ac868415acc09e734b00e226dab">Wrapping Function Pointers</a></li>
-<li><a href="#the-virtual-abstraction:90fb4ac868415acc09e734b00e226dab">The Virtual Abstraction</a></li>
-<li><a href="#wrapping-class-functions:90fb4ac868415acc09e734b00e226dab">Wrapping Class Functions</a></li>
-<li><a href="#storing-parameter-references:90fb4ac868415acc09e734b00e226dab">Storing Parameter References</a></li>
-<li><a href="#storing-parameter-copies:90fb4ac868415acc09e734b00e226dab">Storing Parameter Copies</a></li>
+<li><a href="#motivation">Motivation</a></li>
+<li><a href="#wrapping-function-pointers">Wrapping Function Pointers</a></li>
+<li><a href="#the-virtual-abstraction">The Virtual Abstraction</a></li>
+<li><a href="#wrapping-class-functions">Wrapping Class Functions</a></li>
+<li><a href="#storing-parameter-references">Storing Parameter References</a></li>
+<li><a href="#storing-parameter-copies">Storing Parameter Copies</a></li>
 <li>A Case for Language Support</li>
 <li>DO NOT USE std::function Variants</li>
 </ul>
 
-<hr />
+<hr>
 
-<h5 id="motivation:90fb4ac868415acc09e734b00e226dab">Motivation</h5>
+<h5 id="motivation">Motivation</h5>
 
-<p>While these types are largely well written within the scope of the problem they set out to solve, there is a lot of room for improvement if you&rsquo;re prepared to compromise. Specifically, these issues can be addressed:</p>
+<p>While these types are largely well written within the scope of the problem they set out to solve, there is a lot of room for improvement if you're prepared to compromise. Specifically, these issues can be addressed:</p>
 
 <ul>
 <li>The implementations are very large and drag in many thousands of lines of code that slow compile times and lead to more generated code than there needs to be.</li>
-<li>Debug builds are incredibly important and games should require them to perform well. STL implementations in particular lead to a maze of poorly-performing code that&rsquo;s very difficult to step-debug. That your implementation reduces to a single instruction in release is pointless if it renders your debug builds unusable.</li>
+<li>Debug builds are incredibly important and games should require them to perform well. STL implementations in particular lead to a maze of poorly-performing code that's very difficult to step-debug. That your implementation reduces to a single instruction in release is pointless if it renders your debug builds unusable.</li>
 <li>Large amounts of generated template code leads to an increased burden on the linker in builds that strive to coalesce sections of generated code that are the same.</li>
 <li>Simpler template code allows compilers to easier reason about side-effects and inline/discard more generated code.</li>
 <li>Compilers are notoriously bad at reporting user errors with template libraries. Simpler template code reduces this issue but will not solve it completely.</li>
-<li>STL versions differ between platforms, with enough subtle differences to cause a maintenance burden. STLport used to be a common way of addressing this but that hasn&rsquo;t been updated in many years.</li>
+<li>STL versions differ between platforms, with enough subtle differences to cause a maintenance burden. STLport used to be a common way of addressing this but that hasn't been updated in many years.</li>
 </ul>
 
-<p>It&rsquo;s important to bear in mind that the STL needs to cater for the needs of as many users as possible. We, in comparison, need to cater for orders of magnitude less scenarios and have room to work with much simpler code. As long as the implementation does also not introduce unnecessary technical debt (e.g you don&rsquo;t try to write a full-blown replacement), the returns can be good.</p>
+<p>It's important to bear in mind that the STL needs to cater for the needs of as many users as possible. We, in comparison, need to cater for orders of magnitude less scenarios and have room to work with much simpler code. As long as the implementation does also not introduce unnecessary technical debt (e.g you don't try to write a full-blown replacement), the returns can be good.</p>
 
 <p>Some compromises made:</p>
 
@@ -138,13 +142,13 @@ f();
 <li>No explicit allocator model (my main use-case could source non-heap allocations without this).</li>
 </ul>
 
-<p>The loss of more general argument binding was a net-win for me considering that everywhere I&rsquo;ve rolled out a similar solution in the past, people would complain of API complexity. The limited use-cases for partial argument binding did not warrant the obsfuscated call sites and larger implementation, especially given modern C++ supports lambdas.</p>
+<p>The loss of more general argument binding was a net-win for me considering that everywhere I've rolled out a similar solution in the past, people would complain of API complexity. The limited use-cases for partial argument binding did not warrant the obsfuscated call sites and larger implementation, especially given modern C++ supports lambdas.</p>
 
 <p>To summarise; this article will build a much simpler, bindable std::function with no standard library dependencies.</p>
 
-<hr />
+<hr>
 
-<h5 id="wrapping-function-pointers:90fb4ac868415acc09e734b00e226dab">Wrapping Function Pointers</h5>
+<h5 id="wrapping-function-pointers">Wrapping Function Pointers</h5>
 
 <p>First comes the class itself:</p>
 
@@ -218,11 +222,11 @@ template &lt;typename T&gt; T&amp;&amp; Forward(RemoveReference&lt;T&gt;&amp; ar
 
 <p>There is no actual need for a <code>std::forward</code> function as you can just use <code>static_cast&lt;T&amp;&amp;&gt;(t)</code> wherever you intend to use perfect forwarding. Introducing such a function requires you pay a library overhead for potentially making call sites a little clearer.</p>
 
-<hr />
+<hr>
 
-<h5 id="the-virtual-abstraction:90fb4ac868415acc09e734b00e226dab">The Virtual Abstraction</h5>
+<h5 id="the-virtual-abstraction">The Virtual Abstraction</h5>
 
-<p>Right now this is a pretty pointless abstraction as there is no benefit to using <code>Function</code> over a simple function pointer. The next step would be to add support for functors and lambdas. There&rsquo;s no exceptional reason for me to support functors, it&rsquo;s more that their support falls out of the code required for lambas. The use cases are:</p>
+<p>Right now this is a pretty pointless abstraction as there is no benefit to using <code>Function</code> over a simple function pointer. The next step would be to add support for functors and lambdas. There's no exceptional reason for me to support functors, it's more that their support falls out of the code required for lambas. The use cases are:</p>
 
 <pre><code class="language-cpp">// Support lambdas with capture
 int x = 3;
@@ -301,15 +305,15 @@ struct Function&lt;Return(Arguments...)&gt;
 };
 </code></pre>
 
-<hr />
+<hr>
 
-<h5 id="wrapping-class-functions:90fb4ac868415acc09e734b00e226dab">Wrapping Class Functions</h5>
+<h5 id="wrapping-class-functions">Wrapping Class Functions</h5>
 
 <p>The abstraction as it stands can accept class methods as construction arguments but there are some problems:</p>
 
 <ul>
 <li>The syntax for calling methods is different from that of functions and so will cause a compile errors.</li>
-<li>You need an object pointer to call the method on and that isn&rsquo;t specified or stored anywhere.</li>
+<li>You need an object pointer to call the method on and that isn't specified or stored anywhere.</li>
 <li>Methods can haave const/volatile qualifiers that change its type.</li>
 </ul>
 
@@ -373,9 +377,9 @@ f(2);
 
 <p>The original <code>std::function</code> requires the use of <code>std::bind</code> with the object in order to store references to methods. This simplified interface is a good example of the reduction in scope.</p>
 
-<hr />
+<hr>
 
-<h5 id="storing-parameter-references:90fb4ac868415acc09e734b00e226dab">Storing Parameter References</h5>
+<h5 id="storing-parameter-references">Storing Parameter References</h5>
 
 <p>The next challenge is to bind parameters to specific function calls, similar to what <code>std::bind</code> does. This requires parameters passed into a <code>Function</code> to be stored within the class. With variadic templates, it would be good if we could do this:</p>
 
@@ -387,7 +391,7 @@ struct Class
 };
 </code></pre>
 
-<p>Unfortunately, variadic template packing/unpacking only works in terms of parameter arguments and this isn&rsquo;t directly possible. One way to achieve this is to enlist compile-time Type Lists, a concept I first saw discussed in Alexandrescu&rsquo;s <a href="http://erdani.com/index.php/books/modern-c-design/">Modern C++ Design</a>. This can be expressed by the <code>Tuple</code> class:</p>
+<p>Unfortunately, variadic template packing/unpacking only works in terms of parameter arguments and this isn't directly possible. One way to achieve this is to enlist compile-time Type Lists, a concept I first saw discussed in Alexandrescu's <a href="http://erdani.com/index.php/books/modern-c-design/">Modern C++ Design</a>. This can be expressed by the <code>Tuple</code> class:</p>
 
 <pre><code class="language-cpp">// A Tuple is effectively a type linked list with values stored for each type
 // Repeatedly split a type list into (i, i+1...N) pairs, recursively inheriting
@@ -466,9 +470,9 @@ Function(const Functor&amp; functor, BoundArguments&amp;&amp;... arguments)
 
 <p>As mentioned in the title, this only stores references to the incoming parameters and we want to store copies. If you pass an <code>int</code> lvalue to the constructor, the argument type will be deduced as <code>int&amp;</code>. Even worse, the constructor will refuse to accept rvalues of type <code>int</code>.</p>
 
-<hr />
+<hr>
 
-<h5 id="storing-parameter-copies:90fb4ac868415acc09e734b00e226dab">Storing Parameter Copies</h5>
+<h5 id="storing-parameter-copies">Storing Parameter Copies</h5>
 
 <p>To make the problem a little clearer, consider this test:</p>
 
@@ -494,7 +498,7 @@ Deduce(x, t);
 
 </code></pre>
 
-<p>It&rsquo;s clear that the bound argument types need to be transformed into something that stores copies instead of references. The specific goals of this transformation would be:</p>
+<p>It's clear that the bound argument types need to be transformed into something that stores copies instead of references. The specific goals of this transformation would be:</p>
 
 <ul>
 <li>If the type is a C array convert it to a pointer.</li>
@@ -502,7 +506,7 @@ Deduce(x, t);
 <li>Else just remove all cv-qualifiers and references but maintain pointers.</li>
 </ul>
 
-<p>You&rsquo;ll need a whole bunch of little tools before you can address this problem and they can be reduced to:</p>
+<p>You'll need a whole bunch of little tools before you can address this problem and they can be reduced to:</p>
 
 <pre><code class="language-cpp">// Types can inherit from these to conveniently aggregate true/false values
 struct True     { static const bool value = true; };
@@ -585,7 +589,7 @@ struct BoundFunctorCaller : public Caller&lt;Return&gt;
 
 <p>Stored like this, parameters will have been taken out of their packed argument form and thus</p>
 
-<hr />
+<hr>
 
 <p>Decay functor ONLY for VC2013
 What you can achieve with custom allocators (use container storage)
@@ -595,7 +599,7 @@ Decay the function reference?
 Manual writing of template variants
 Use of pycgen</p>
 
-<hr />
+<hr>
 
 <ul>
 <li><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm</a></li>
@@ -621,68 +625,52 @@ Use of pycgen</p>
         <section class="f-2">
             <section class="share">
                 <span>Share:
-                <a class="icon-twitter" href="http://twitter.com/share?text=A%20Simpler%2c%20Bindable%20std%3a%3afunction&url=http%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
+                <a class="icon-twitter" href="http://twitter.com/share?text=A%20Simpler%2c%20Bindable%20std%3a%3afunction&url=https%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
                     onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
                     <i class="fa fa-twitter"></i>
                 </a>
-                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
                     onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
                     <i class="fa fa-facebook"></i>
                 </a>
-                <a class="icon-google-plus" href="https://plus.google.com/share?url=http%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=https%3a%2f%2fdonw.io%2fpost%2fstd-function-alt%2f"
                    onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
                     <i class="fa fa-google-plus"></i>
                 </a>
                 </span>
             </section>
         </section>
-                        
     </footer>
+    
+<div id="gh-comments">
+    <br/><br/>
+    <h6>COMMENTS</h6>
+    <div id="gh-comments-list"></div>
+    <a href="javascript:void(0)" id="gh-load-comments" class="btn" style="display:none">Load more comments</a>
+</div>
+
+<script type="text/javascript" src="https://donw.io/js/github-comments.js"></script>
+<script type="text/javascript">
+    DoGithubComments( null );
+</script>
+
 </article>
 	</div>
 </main>
     <footer id="site-footer">
         <div class="container">
-            <a href="http://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
-            <section>&copy; <a href="http://donw.io/">Don Williamson</a> 2016 | All rights reserved</section>
+            <a href="https://donw.io/index.xml" title="Get the RSS feed"><span class="tooltip"><i class="fa fa-rss"></i></span></a>
+            <section>&copy; <a href="https://donw.io/">Don Williamson</a> 2016-2018 | All rights reserved</section>
         </div>
     </footer>
 
-    <script type="text/javascript" src="http://donw.io/js/fittext.js"></script>
+    <script type="text/javascript" src="https://donw.io/js/fittext.js"></script>
     <script type="text/javascript">
       $(".heading").fitText();
     </script>
 
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
+    
 
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-        showProcessingMessages: false,
-        messageStyle: "none",
-          tex2jax: {
-            inlineMath: [['$','$'], ['\\(','\\)']],
-            displayMath: [['$$','$$'], ['\[','\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            TeX: { equationNumbers: { autoNumber: "AMS" },
-                 extensions: ["AMSmath.js", "AMSsymbols.js"] }
-          }
-        });
-    </script>
-
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Queue(function() {
-        
-        
-        
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i = 0; i < all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-    </script>
 
 
 </body>

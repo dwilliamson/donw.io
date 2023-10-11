@@ -1,1 +1,1 @@
-hugo -t hugo-theme-blueberry-detox 
+hugo -t hugo-theme-blueberry-detox
